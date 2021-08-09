@@ -5,6 +5,7 @@
 #pragma once
 
 #include <units/length.h>
+#include <units/velocity.h>
 
 /**
  * The Constants header provides a convenient place for teams to hold robot-wide
@@ -18,15 +19,14 @@
 namespace physical
 {
     // Alignment constants, for each swerve module.
-    constexpr int kFrontLeftAlignmentOffset = 0;
-    constexpr int kFrontRightAlignmentOffset = 0;
-    constexpr int kRearLeftAlignmentOffset = 0;
-    constexpr int kRearRightAlignmentOffset = 0;
+    constexpr int kFrontLeftAlignmentOffset = 981;
+    constexpr int kFrontRightAlignmentOffset = 3060;
+    constexpr int kRearLeftAlignmentOffset = 814;
+    constexpr int kRearRightAlignmentOffset = 1467;
 
-    // Drivebase geometry: distance between centers of right and left wheels on
-    // robot; distance between centers of front and back wheels on robot.
-    constexpr units::meter_t kTrackWidth = 0.5_m;
-    constexpr units::meter_t kWheelBase = 0.5_m;
+    // SDS Mk3 Standard (or Fast) Max Free Speed: 12.1 (or 14.4) feet/second;
+    // This is an upper bound, for various reasons.
+    constexpr units::meters_per_second_t kMaxDriveSpeed = 3.688_mps;
 
     // SPARK MAX counts/revolution: 42;
     // SDS Mk3 Standard (or Fast) Gear Ratio: 8.16:1 (or 6.86:1);
@@ -35,6 +35,11 @@ namespace physical
     // 42 * 8.16 / 0.3192 => ~1074.
     // This should be empirically determined!
     constexpr double kDriveCountsPerMeter = 1074.0;
+
+    // Drivebase geometry: distance between centers of right and left wheels on
+    // robot; distance between centers of front and back wheels on robot.
+    constexpr units::meter_t kTrackWidth = 0.5715_m; // 22.5"
+    constexpr units::meter_t kWheelBase = 0.5715_m;  // 22.5"
 
     // CAN ID and Digital I/O Port assignments.
     constexpr int kFrontLeftDriveMotorCanID = 7;

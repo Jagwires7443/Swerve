@@ -30,12 +30,11 @@
 
 // XXX init the module to home, do not do in test mode (do in auto/teleop init, via SetDesiredState()?)
 
-// XXX CAN timeouts may prevent burn flash from being called?  Bump them up here?
-// XXX explain error handling, consider CAN timeouts as non-fatal, do not flip coast/break flag until after
-// XXX call succeeds, consider other possible failure points
+// XXX explain error handling, consider CAN timeouts as non-fatal
+// XXX consider other possible failure points
 // XXX add comment on error handling strategy, update code to match
 
-// XXX can set wrong F/W version to force updating of controllers -- or add a switch for this in DriveSubsystsem or overall robot, move there?
+// XXX can set PID parameter to force updating of controllers -- or add a switch for this in DriveSubsystsem or overall robot, move there?
 
 #include "subsystems/SwerveModule.h"
 
@@ -123,10 +122,7 @@ namespace
 
         for (std::size_t i = faultBits.size(); i > 0; --i)
         {
-            // XXX Need to test (with limit switch input?) to be sure this isn't backwards...
-            // XXX verify with hard limit and normally closed switch setting
             faultInfo += std::string(1, faultBits[i - 1] ? letters[i - 1] : '.');
-            // faultInfo += std::string(1, faultBits[i - 1] ? letters[16 - i] : '.');
         }
 
         return faultInfo;
@@ -902,7 +898,7 @@ void SwerveModule::TestPeriodic() noexcept
     m_turningPositionOutput->GetEntry().SetDouble(output);
     m_turningPositionAlignment->GetEntry().SetDouble(static_cast<double>(m_alignmentOffset));
     m_turningPositionPosition->GetEntry().SetDouble(static_cast<double>(position));
-    m_headingGyro.Set(static_cast<double>(position) / 4096.0);
+    m_headingGyro.Set(static_cast<double>(position) * 360.0 / 4096.0);
 
     // Update shuffleboard data for turning CANSparkMax.
     m_turningMotorStatus->GetEntry().SetBoolean(m_turningMotor != nullptr && m_turningMotorControllerValidated);

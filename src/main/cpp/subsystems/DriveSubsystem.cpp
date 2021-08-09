@@ -128,7 +128,18 @@ void DriveSubsystem::TestInit() noexcept
                                                              pidf::kDriveVelocityD,
                                                              pidf::kDrivePositionF);
 
-  // XXX Enough test patterns to tune PID, plus maybe one or two fancy ones
+  // XXX Maybe just add commands here, as in several examples?  Allow this UI element to be exposed via public interface
+  // XXX and set up commands from some other file, then run chosen command in test mode?
+  // XXX Move this to Robot/RobotContainer
+  m_chooser = std::make_unique<frc::SendableChooser<frc2::Command *>>();
+
+  m_chooser->SetDefaultOption("Zero", nullptr);
+  m_chooser->AddOption("Xs and Os", nullptr);
+  m_chooser->AddOption("Orbit", nullptr);
+  m_chooser->AddOption("Spirograph", nullptr);
+  m_chooser->AddOption("Drive", nullptr);
+  // m_chooser->GetSelected()
+
   frc::ShuffleboardTab &shuffleboardTab = frc::Shuffleboard::GetTab("Swerve");
 
   frc::ShuffleboardLayout &shuffleboardLayoutSwerveTurning =
@@ -211,8 +222,39 @@ void DriveSubsystem::TestInit() noexcept
                           .WithPosition(1, 1)
                           .WithWidget(frc::BuiltInWidgets::kNumberBar);
 
-  // rotation, X, limit, distance/velocity
-  // status, Y, chooser, run/stop
+  m_swerveRotation = &shuffleboardLayoutControls.Add("Rotation", 0.0)
+                          .WithPosition(0, 0)
+                          .WithWidget(frc::BuiltInWidgets::kNumberBar);
+
+  m_swerveX = &shuffleboardLayoutControls.Add("X", 0.0)
+                   .WithPosition(1, 0)
+                   .WithWidget(frc::BuiltInWidgets::kNumberBar);
+
+  m_swerveY = &shuffleboardLayoutControls.Add("Y", 0.0)
+                   .WithPosition(1, 1)
+                   .WithWidget(frc::BuiltInWidgets::kNumberBar);
+
+  m_swerveStatus = &shuffleboardLayoutControls.Add("Status", false)
+                        .WithPosition(0, 1)
+                        .WithWidget(frc::BuiltInWidgets::kBooleanBox);
+
+  m_driveLimit = &shuffleboardLayoutControls.Add("Drive Limit", 0.1)
+                      .WithPosition(2, 0)
+                      .WithWidget(frc::BuiltInWidgets::kNumberSlider)
+                      .WithProperties(wpi::StringMap<std::shared_ptr<nt::Value>>{
+                          std::make_pair("Min", nt::Value::MakeDouble(0.0))});
+
+  m_driveMode = &shuffleboardLayoutControls.Add("Distance-Velocity", true)
+                     .WithPosition(3, 0)
+                     .WithWidget(frc::BuiltInWidgets::kToggleSwitch);
+
+  m_swerveEnable = &shuffleboardLayoutControls.Add("Run-Stop", false)
+                        .WithPosition(3, 1)
+                        .WithWidget(frc::BuiltInWidgets::kToggleButton);
+
+  m_commandChooser = &shuffleboardLayoutControls.Add("Command", *m_chooser)
+                          .WithPosition(2, 1)
+                          .WithWidget(frc::BuiltInWidgets::kComboBoxChooser);
 
   m_turningPositionPIDTable = nt::NetworkTableInstance::GetDefault().GetTable(
       "Shuffleboard/Swerve/PID Settings/Turning Position");
@@ -254,6 +296,10 @@ void DriveSubsystem::TestPeriodic() noexcept
   m_frontRightDrive->GetEntry().SetDouble(m_frontRightSwerveModule->GetDriveVelocity().to<double>());
   m_rearLeftDrive->GetEntry().SetDouble(m_rearLeftSwerveModule->GetDriveVelocity().to<double>());
   m_rearRightDrive->GetEntry().SetDouble(m_rearRightSwerveModule->GetDriveVelocity().to<double>());
+
+  m_swerveRotation->GetEntry().SetDouble(m_rotation);
+  m_swerveX->GetEntry().SetDouble(m_x);
+  m_swerveY->GetEntry().SetDouble(m_y);
 
   if (m_turningPositionPIDTable)
   {
@@ -317,16 +363,16 @@ void DriveSubsystem::Drive(units::meters_per_second_t xSpeed,
                            units::meters_per_second_t ySpeed, units::radians_per_second_t rot,
                            bool fieldRelative) noexcept
 {
-  // XXX
-  return;
-  // XXX
+  m_rotation = rot.to<double>();
+  m_x = xSpeed / physical::kMaxDriveSpeed;
+  m_y = ySpeed / physical::kMaxDriveSpeed;
 
   wpi::array<frc::SwerveModuleState, 4> states = kDriveKinematics.ToSwerveModuleStates(
       fieldRelative ? frc::ChassisSpeeds::FromFieldRelativeSpeeds(
                           xSpeed, ySpeed, rot, m_ahrs->GetRotation2d())
                     : frc::ChassisSpeeds{xSpeed, ySpeed, rot});
 
-  kDriveKinematics.NormalizeWheelSpeeds(&states, 1_mps);
+  kDriveKinematics.NormalizeWheelSpeeds(&states, physical::kMaxDriveSpeed);
 
   SetModuleStates(states);
 }

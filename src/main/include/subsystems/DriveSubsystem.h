@@ -19,7 +19,9 @@
 #include <frc/shuffleboard/SimpleWidget.h>
 #include <frc/smartdashboard/Sendable.h>
 #include <frc/smartdashboard/SendableBuilder.h>
+#include <frc/smartdashboard/SendableChooser.h>
 #include <frc/smartdashboard/SendableHelper.h>
+#include <frc2/command/Command.h>
 #include <frc2/command/SubsystemBase.h>
 #include <networktables/NetworkTable.h>
 #include <units/angle.h>
@@ -42,6 +44,12 @@ public:
 
   void TestInit() noexcept;
   void TestPeriodic() noexcept;
+
+  // Obtain a non-owning pointer to the Command chooser, in the Test Mode UI.
+  // Valid and unchanging, from return of TestInit() through destruction of
+  // the associated DriveSubsystem().  This provides a way to inject Commands
+  // into Test Mode, interactively.  If nullptr, TestInit() was never called.
+  frc::SendableChooser<frc2::Command *> *TestModeChooser() noexcept { return m_chooser.get(); }
 
   /**
    * Drives the robot at given x, y and theta speeds. Speeds range from [-1, 1]
@@ -208,9 +216,17 @@ private:
   std::unique_ptr<TuningPID> m_drivePositionPIDController;
   std::unique_ptr<TuningPID> m_driveVelocityPIDController;
 
+  std::unique_ptr<frc::SendableChooser<frc2::Command *>> m_chooser;
+
+  // Last commanded drive inputs, for Test Mode display.
+  double m_rotation;
+  double m_x;
+  double m_y;
+
   // Test Mode (only) instances of network table directories for each PID
   // controller.  These provide direct access to some entries which are not
   // exposed via PIDController.
+  // XXX Going away...
   std::shared_ptr<nt::NetworkTable> m_turningPositionPIDTable;
   std::shared_ptr<nt::NetworkTable> m_drivePositionPIDTable;
   std::shared_ptr<nt::NetworkTable> m_driveVelocityPIDTable;
@@ -229,4 +245,13 @@ private:
   frc::SimpleWidget *m_frontRightDrive = nullptr;
   frc::SimpleWidget *m_rearLeftDrive = nullptr;
   frc::SimpleWidget *m_rearRightDrive = nullptr;
+
+  frc::SimpleWidget *m_swerveRotation = nullptr;
+  frc::SimpleWidget *m_swerveX = nullptr;
+  frc::SimpleWidget *m_swerveY = nullptr;
+  frc::SimpleWidget *m_swerveStatus = nullptr;
+  frc::SimpleWidget *m_driveLimit = nullptr;
+  frc::SimpleWidget *m_driveMode = nullptr;
+  frc::SimpleWidget *m_swerveEnable = nullptr;
+  frc::ComplexWidget *m_commandChooser = nullptr;
 };
