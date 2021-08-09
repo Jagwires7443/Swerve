@@ -85,8 +85,6 @@ DriveSubsystem::DriveSubsystem() noexcept
       physical::kRearRightTurningMotorCanID,
       physical::kRearRightTurningEncoderPort,
       physical::kRearRightAlignmentOffset);
-
-  ResetEncoders();
 }
 
 void DriveSubsystem::Periodic() noexcept
@@ -115,61 +113,106 @@ void DriveSubsystem::TestInit() noexcept
 
   std::printf("Drive Subsystem Test Mode Init... ");
 
-  m_turningPositionPIDController = std::make_unique<frc2::PIDController>(pidf::kTurningPositionP,
-                                                                         pidf::kTurningPositionI,
-                                                                         pidf::kTurningPositionD);
+  m_turningPositionPIDController = std::make_unique<TuningPID>(pidf::kTurningPositionP,
+                                                               pidf::kTurningPositionI,
+                                                               pidf::kTurningPositionD,
+                                                               pidf::kTurningPositionF);
 
-  m_drivePositionPIDController = std::make_unique<frc2::PIDController>(pidf::kDrivePositionP,
-                                                                       pidf::kDrivePositionI,
-                                                                       pidf::kDrivePositionD);
+  m_drivePositionPIDController = std::make_unique<TuningPID>(pidf::kDrivePositionP,
+                                                             pidf::kDrivePositionI,
+                                                             pidf::kDrivePositionD,
+                                                             pidf::kDrivePositionF);
 
-  m_driveVelocityPIDController = std::make_unique<frc2::PIDController>(pidf::kDriveVelocityP,
-                                                                       pidf::kDriveVelocityI,
-                                                                       pidf::kDriveVelocityD);
+  m_driveVelocityPIDController = std::make_unique<TuningPID>(pidf::kDriveVelocityP,
+                                                             pidf::kDriveVelocityI,
+                                                             pidf::kDriveVelocityD,
+                                                             pidf::kDrivePositionF);
 
-  // XXX Test Mode -- set PIDs, do some test patterns
-  // XXX Three PID panels, each with 7 double values (number slider with range properties) and a button
   // XXX Enough test patterns to tune PID, plus maybe one or two fancy ones
   frc::ShuffleboardTab &shuffleboardTab = frc::Shuffleboard::GetTab("Swerve");
+
+  frc::ShuffleboardLayout &shuffleboardLayoutSwerveTurning =
+      shuffleboardTab.GetLayout("Swerve Turning",
+                                frc::BuiltInLayouts::kGrid)
+          .WithPosition(0, 0)
+          .WithSize(9, 13)
+          .WithProperties(wpi::StringMap<std::shared_ptr<nt::Value>>{
+              std::make_pair("Number of columns", nt::Value::MakeDouble(2.0)),
+              std::make_pair("Number of rows", nt::Value::MakeDouble(2.0))});
 
   frc::ShuffleboardLayout &shuffleboardLayoutPIDSettings =
       shuffleboardTab.GetLayout("PID Settings",
                                 frc::BuiltInLayouts::kGrid)
-          .WithPosition(0, 0)
-          .WithSize(28, 7)
+          .WithPosition(9, 0)
+          .WithSize(19, 7)
           .WithProperties(wpi::StringMap<std::shared_ptr<nt::Value>>{
               std::make_pair("Number of columns", nt::Value::MakeDouble(3.0)),
               std::make_pair("Number of rows", nt::Value::MakeDouble(1.0))});
 
-  frc::ShuffleboardLayout &shuffleboardLayoutDriveDistancePID =
-      shuffleboardTab.GetLayout("Temp 1",
+  frc::ShuffleboardLayout &shuffleboardLayoutSwerveDrive =
+      shuffleboardTab.GetLayout("Swerve Drive",
                                 frc::BuiltInLayouts::kGrid)
-          .WithPosition(0, 7)
-          .WithSize(14, 4)
+          .WithPosition(9, 7)
+          .WithSize(7, 6)
           .WithProperties(wpi::StringMap<std::shared_ptr<nt::Value>>{
               std::make_pair("Number of columns", nt::Value::MakeDouble(2.0)),
               std::make_pair("Number of rows", nt::Value::MakeDouble(2.0))});
 
-  frc::ShuffleboardLayout &shuffleboardLayoutDriveVelocityPID =
-      shuffleboardTab.GetLayout("Temp 2",
+  frc::ShuffleboardLayout &shuffleboardLayoutControls =
+      shuffleboardTab.GetLayout("Controls",
                                 frc::BuiltInLayouts::kGrid)
-          .WithPosition(14, 7)
-          .WithSize(14, 4)
+          .WithPosition(16, 7)
+          .WithSize(12, 6)
           .WithProperties(wpi::StringMap<std::shared_ptr<nt::Value>>{
-              std::make_pair("Number of columns", nt::Value::MakeDouble(2.0)),
+              std::make_pair("Number of columns", nt::Value::MakeDouble(4.0)),
               std::make_pair("Number of rows", nt::Value::MakeDouble(2.0))});
+
+  m_frontLeftTurning = &shuffleboardLayoutSwerveTurning.Add("Front Left", m_frontLeftGyro)
+                            .WithPosition(0, 0)
+                            .WithWidget(frc::BuiltInWidgets::kGyro);
+
+  m_frontRightTurning = &shuffleboardLayoutSwerveTurning.Add("Front Right", m_frontRightGyro)
+                             .WithPosition(0, 1)
+                             .WithWidget(frc::BuiltInWidgets::kGyro);
+
+  m_rearLeftTurning = &shuffleboardLayoutSwerveTurning.Add("Rear Left", m_rearLeftGyro)
+                           .WithPosition(0, 1)
+                           .WithWidget(frc::BuiltInWidgets::kGyro);
+
+  m_rearRightTurning = &shuffleboardLayoutSwerveTurning.Add("Rear Right", m_rearRightGyro)
+                            .WithPosition(1, 1)
+                            .WithWidget(frc::BuiltInWidgets::kGyro);
 
   m_turningPositionPID = &shuffleboardLayoutPIDSettings.Add("Turning Position", *m_turningPositionPIDController)
                               .WithPosition(0, 0)
                               .WithWidget(frc::BuiltInWidgets::kPIDController);
 
-  m_drivePositionPID = &shuffleboardLayoutPIDSettings.Add("Drive Position", *m_drivePositionPIDController)
+  m_drivePositionPID = &shuffleboardLayoutPIDSettings.Add("Drive Distance", *m_drivePositionPIDController)
                             .WithPosition(1, 0)
                             .WithWidget(frc::BuiltInWidgets::kPIDController);
 
   m_driveVelocityPID = &shuffleboardLayoutPIDSettings.Add("Drive Velocity", *m_driveVelocityPIDController)
                             .WithPosition(2, 0)
                             .WithWidget(frc::BuiltInWidgets::kPIDController);
+
+  m_frontLeftDrive = &shuffleboardLayoutSwerveDrive.Add("Front Left", 0.0)
+                          .WithPosition(0, 0)
+                          .WithWidget(frc::BuiltInWidgets::kNumberBar);
+
+  m_frontRightDrive = &shuffleboardLayoutSwerveDrive.Add("Front Right", 0.0)
+                           .WithPosition(1, 0)
+                           .WithWidget(frc::BuiltInWidgets::kNumberBar);
+
+  m_rearLeftDrive = &shuffleboardLayoutSwerveDrive.Add("Rear Left", 0.0)
+                         .WithPosition(0, 1)
+                         .WithWidget(frc::BuiltInWidgets::kNumberBar);
+
+  m_rearRightDrive = &shuffleboardLayoutSwerveDrive.Add("Rear Right", 0.0)
+                          .WithPosition(1, 1)
+                          .WithWidget(frc::BuiltInWidgets::kNumberBar);
+
+  // rotation, X, limit, distance/velocity
+  // status, Y, chooser, run/stop
 
   m_turningPositionPIDTable = nt::NetworkTableInstance::GetDefault().GetTable(
       "Shuffleboard/Swerve/PID Settings/Turning Position");
@@ -178,13 +221,11 @@ void DriveSubsystem::TestInit() noexcept
     std::printf(" Turning Position Table error...");
   }
 
-  // XXX set all values to those from constants (3x)?
-
   m_drivePositionPIDTable = nt::NetworkTableInstance::GetDefault().GetTable(
-      "Shuffleboard/Swerve/PID Settings/Drive Position");
+      "Shuffleboard/Swerve/PID Settings/Drive Distance");
   if (!m_drivePositionPIDTable)
   {
-    std::printf(" Drive Position Table error...");
+    std::printf(" Drive Distance Table error...");
   }
 
   m_driveVelocityPIDTable = nt::NetworkTableInstance::GetDefault().GetTable(
@@ -204,6 +245,16 @@ void DriveSubsystem::TestPeriodic() noexcept
   m_rearLeftSwerveModule->TestPeriodic();
   m_rearRightSwerveModule->TestPeriodic();
 
+  m_frontLeftGyro.Set(m_frontLeftSwerveModule->GetTurningPosition().to<double>());
+  m_frontRightGyro.Set(m_frontRightSwerveModule->GetTurningPosition().to<double>());
+  m_rearLeftGyro.Set(m_rearLeftSwerveModule->GetTurningPosition().to<double>());
+  m_rearRightGyro.Set(m_rearRightSwerveModule->GetTurningPosition().to<double>());
+
+  m_frontLeftDrive->GetEntry().SetDouble(m_frontLeftSwerveModule->GetDriveVelocity().to<double>());
+  m_frontRightDrive->GetEntry().SetDouble(m_frontRightSwerveModule->GetDriveVelocity().to<double>());
+  m_rearLeftDrive->GetEntry().SetDouble(m_rearLeftSwerveModule->GetDriveVelocity().to<double>());
+  m_rearRightDrive->GetEntry().SetDouble(m_rearRightSwerveModule->GetDriveVelocity().to<double>());
+
   if (m_turningPositionPIDTable)
   {
     // XXX refactor so there's less work here (move to init)?
@@ -212,29 +263,33 @@ void DriveSubsystem::TestPeriodic() noexcept
     std::shared_ptr<nt::Value> fValue = fEntry.GetValue();
     std::shared_ptr<nt::Value> enabledValue = enabledEntry.GetValue();
 
-    if (enabledValue && enabledValue->IsBoolean() && enabledValue->GetBoolean())
-    {
-      double p = m_turningPositionPIDController->GetP();
-      double i = m_turningPositionPIDController->GetI();
-      double d = m_turningPositionPIDController->GetD();
-      double setpoint = m_turningPositionPIDController->GetSetpoint();
-      double f = 0;
+    // if (enabledValue && enabledValue->IsBoolean() && enabledValue->GetBoolean()) {}
 
-      if (fValue && fValue->IsDouble())
-      {
-        f = fValue->GetDouble();
-      }
+    // if (fValue && fValue->IsDouble()) {}
+  }
 
-      enabledEntry.SetBoolean(false);
+  if (m_turningPositionPIDController->GetE())
+  {
+    double p = m_turningPositionPIDController->GetP();
+    double i = m_turningPositionPIDController->GetI();
+    double d = m_turningPositionPIDController->GetD();
+    double f = m_turningPositionPIDController->GetF();
+    double s = m_turningPositionPIDController->GetS();
 
-      std::printf("**** PID: %f/%f/%f/%f/%f\n", p, i, d, f, setpoint);
+    m_turningPositionPIDController->SetE(false);
 
-      // XXX fill in constants for all "0.0"
-      m_frontLeftSwerveModule->TurningPositionPID(p, i, 0.0, 0.0, d, 0.0, f);
-      m_frontRightSwerveModule->TurningPositionPID(p, i, 0.0, 0.0, d, 0.0, f);
-      m_rearLeftSwerveModule->TurningPositionPID(p, i, 0.0, 0.0, d, 0.0, f);
-      m_rearRightSwerveModule->TurningPositionPID(p, i, 0.0, 0.0, d, 0.0, f);
-    }
+    std::printf("**** PID: %f/%f/%f/%f/%f\n", p, i, d, f, s);
+
+    // XXX fill in constants for all "0.0"
+    m_frontLeftSwerveModule->TurningPositionPID(p, i, 0.0, 0.0, d, 0.0, f);
+    m_frontRightSwerveModule->TurningPositionPID(p, i, 0.0, 0.0, d, 0.0, f);
+    m_rearLeftSwerveModule->TurningPositionPID(p, i, 0.0, 0.0, d, 0.0, f);
+    m_rearRightSwerveModule->TurningPositionPID(p, i, 0.0, 0.0, d, 0.0, f);
+
+    m_frontLeftSwerveModule->SetTurningPosition(s * 360_deg);
+    m_frontRightSwerveModule->SetTurningPosition(s * 360_deg);
+    m_rearLeftSwerveModule->SetTurningPosition(s * 360_deg);
+    m_rearRightSwerveModule->SetTurningPosition(s * 360_deg);
   }
 
   // void DrivePositionPID(double P, double I, double IZ, double IM, double D, double DF, double F);

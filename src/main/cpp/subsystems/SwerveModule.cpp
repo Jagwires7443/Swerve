@@ -428,6 +428,12 @@ void SwerveModule::ConstructDriveMotor() noexcept
     });
 }
 
+// XXX
+bool SwerveModule::GetStatus() { return m_turningMotor != nullptr; }
+
+// XXX
+void SwerveModule::SetDriveBrakeMode(bool brake) {}
+
 void SwerveModule::ResetTurning() noexcept
 {
     int position = GetAbsolutePosition();

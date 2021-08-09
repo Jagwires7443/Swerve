@@ -112,6 +112,10 @@ public:
   // robot is at rest).
   void ResetDrive() noexcept;
 
+  // Is swerve module healthy and motor controller configuration current?
+  // Note that the latter condition is only checked in test mode.
+  bool GetStatus();
+
   // Sense.  Return the current absolute heading for the swerve module.
   units::angle::degree_t GetTurningPosition() noexcept;
 
@@ -120,6 +124,9 @@ public:
 
   // Drive is normally oriented around velocity, but distance enables odometry,
   // simple dead reckoning, etc.  Possibly useful for autonomous driving.
+
+  // Control brake/coast; the initial setting is brake mode off (coast mode).
+  void SetDriveBrakeMode(bool brake);
 
   // Sense.  Return the cumulative drive distance since the last reset.
   units::length::meter_t GetDriveDistance() noexcept;

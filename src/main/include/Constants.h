@@ -29,12 +29,12 @@ namespace physical
     constexpr units::meter_t kWheelBase = 0.5_m;
 
     // SPARK MAX counts/revolution: 42;
-    // SDS Mk3 Standard Gearing: 8.16:1;
-    // SDS Mk3 Fast Gearing: 6.86:1;
-    // Nominal Wheel Diameter: 4" (0.1016m);
-    // => 42 / 8.16 * pi * 0.1016 ~= 1.6429.
+    // SDS Mk3 Standard (or Fast) Gear Ratio: 8.16:1 (or 6.86:1);
+    // Nominal Wheel Diameter (4"): =0.1016m;
+    // Nominal Wheel Circumference (pi * Diameter): ~0.3192m;
+    // 42 * 8.16 / 0.3192 => ~1074.
     // This should be empirically determined!
-    constexpr double kDriveCountsPerMeter = 1.6429;
+    constexpr double kDriveCountsPerMeter = 1074.0;
 
     // CAN ID and Digital I/O Port assignments.
     constexpr int kFrontLeftDriveMotorCanID = 7;

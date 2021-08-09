@@ -9,13 +9,12 @@
 #include "Constants.h"
 
 #include "AHRS.h"
-#include <frc/controller/PIDController.h>
 #include <frc/geometry/Pose2d.h>
 #include <frc/geometry/Rotation2d.h>
+#include <frc/geometry/Translation2d.h>
 #include <frc/kinematics/SwerveDriveKinematics.h>
 #include <frc/kinematics/SwerveDriveOdometry.h>
 #include <frc/kinematics/SwerveModuleState.h>
-#include <frc/geometry/Translation2d.h>
 #include <frc/shuffleboard/ComplexWidget.h>
 #include <frc/shuffleboard/SimpleWidget.h>
 #include <frc/smartdashboard/Sendable.h>
@@ -111,6 +110,78 @@ public:
       frc::Translation2d(-physical::kWheelBase / 2, physical::kTrackWidth / 2),
       frc::Translation2d(-physical::kWheelBase / 2, -physical::kTrackWidth / 2)};
 
+  // Need to derive from abstract Sendable class in order to be able to use the
+  // PIDController UI element in Shuffleboard; note that this class doesn't
+  // derive from frc::PIDController -- it's all down to inheritance and
+  // properties.
+  class TuningPID : public frc::Sendable, public frc::SendableHelper<TuningPID>
+  {
+  public:
+    TuningPID(double p, double i, double d, double f) noexcept : m_p(p), m_i(i), m_d(d), m_f(f) {}
+
+    TuningPID(const TuningPID &) = delete;
+    TuningPID &operator=(const TuningPID &) = delete;
+
+    void InitSendable(frc::SendableBuilder &builder)
+    {
+      builder.SetSmartDashboardType("PIDController");
+      builder.AddDoubleProperty(
+          "p", [&]() -> double { return m_p; }, [&](double value) -> void { m_p = value; });
+      builder.AddDoubleProperty(
+          "i", [&]() -> double { return m_i; }, [&](double value) -> void { m_i = value; });
+      builder.AddDoubleProperty(
+          "d", [&]() -> double { return m_d; }, [&](double value) -> void { m_d = value; });
+      builder.AddDoubleProperty(
+          "f", [&]() -> double { return m_f; }, [&](double value) -> void { m_f = value; });
+      builder.AddDoubleProperty(
+          "setpoint", [&]() -> double { return m_s; }, [&](double value) -> void { m_s = value; });
+      builder.AddBooleanProperty(
+          "enabled", [&]() -> bool { return m_e; }, [&](bool value) -> void { m_e = value; });
+    }
+
+    double GetP() { return m_p; }
+    double GetI() { return m_i; }
+    double GetD() { return m_d; }
+    double GetF() { return m_f; }
+    double GetS() { return m_s; }
+    bool GetE() { return m_e; }
+
+    void SetS(const double &value) { m_s = value; }
+    void SetE(const bool value) { m_e = value; }
+
+  private:
+    double m_p{0.0};
+    double m_i{0.0};
+    double m_d{0.0};
+    double m_f{0.0};
+    double m_s{0.0};
+    bool m_e{false};
+  };
+
+  // Need to derive from abstract Sendable class in order to be able to use the
+  // Gyro UI element in Shuffleboard; note that this class does not derive from
+  // frc::Gyro or frc::GyroBase -- it's all down to inheritance and properties.
+  class HeadingGyro : public frc::Sendable, public frc::SendableHelper<HeadingGyro>
+  {
+  public:
+    HeadingGyro() noexcept {}
+
+    HeadingGyro(const HeadingGyro &) = delete;
+    HeadingGyro &operator=(const HeadingGyro &) = delete;
+
+    void InitSendable(frc::SendableBuilder &builder)
+    {
+      builder.SetSmartDashboardType("Gyro");
+      builder.AddDoubleProperty(
+          "Value", [&]() -> double { return m_value; }, nullptr);
+    }
+
+    void Set(const double &value) { m_value = value; }
+
+  private:
+    double m_value = 0.0;
+  };
+
 private:
   // The gyro sensor
   std::unique_ptr<AHRS> m_ahrs;
@@ -126,10 +197,16 @@ private:
   // 4 defines the number of modules
   std::unique_ptr<frc::SwerveDriveOdometry<4>> m_odometry;
 
-  // Test Mode (only) instances of PIDController, needed for Shuffleboard UI.
-  std::unique_ptr<frc2::PIDController> m_turningPositionPIDController;
-  std::unique_ptr<frc2::PIDController> m_drivePositionPIDController;
-  std::unique_ptr<frc2::PIDController> m_driveVelocityPIDController;
+  // Test Mode (only) instance of a "Gyro", needed for Shuffleboard UI.
+  HeadingGyro m_frontLeftGyro;
+  HeadingGyro m_frontRightGyro;
+  HeadingGyro m_rearLeftGyro;
+  HeadingGyro m_rearRightGyro;
+
+  // Test Mode (only) instances of TuningPID, needed for Shuffleboard UI.
+  std::unique_ptr<TuningPID> m_turningPositionPIDController;
+  std::unique_ptr<TuningPID> m_drivePositionPIDController;
+  std::unique_ptr<TuningPID> m_driveVelocityPIDController;
 
   // Test Mode (only) instances of network table directories for each PID
   // controller.  These provide direct access to some entries which are not
@@ -139,7 +216,17 @@ private:
   std::shared_ptr<nt::NetworkTable> m_driveVelocityPIDTable;
 
   // Test Mode (only) data, obtained but not owned.
+  frc::ComplexWidget *m_frontLeftTurning = nullptr;
+  frc::ComplexWidget *m_frontRightTurning = nullptr;
+  frc::ComplexWidget *m_rearLeftTurning = nullptr;
+  frc::ComplexWidget *m_rearRightTurning = nullptr;
+
   frc::ComplexWidget *m_turningPositionPID = nullptr;
   frc::ComplexWidget *m_drivePositionPID = nullptr;
   frc::ComplexWidget *m_driveVelocityPID = nullptr;
+
+  frc::SimpleWidget *m_frontLeftDrive = nullptr;
+  frc::SimpleWidget *m_frontRightDrive = nullptr;
+  frc::SimpleWidget *m_rearLeftDrive = nullptr;
+  frc::SimpleWidget *m_rearRightDrive = nullptr;
 };
