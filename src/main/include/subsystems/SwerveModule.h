@@ -123,7 +123,7 @@ public:
   SwerveModule(const SwerveModule &) = delete;
   SwerveModule &operator=(const SwerveModule &) = delete;
 
-  void Periodic() noexcept;
+  void Periodic(const bool setMotors) noexcept;
 
   // Is swerve module healthy and motor controller configuration current?
   // Note that the latter condition is only checked in test mode.
@@ -168,7 +168,7 @@ public:
 
   // Fancy test mode!
   void TestInit() noexcept;
-  void TestPeriodic() noexcept;
+  void TestPeriodic(const bool setMotors) noexcept;
 
   // Provide PID settings used for all motion control (besides from test mode).
   void TurningPositionPID(double P, double I, double IZ, double IM, double D, double DF, double F) noexcept;
@@ -236,6 +236,7 @@ private:
   // Until REV bug for continuous rotation is fixed, must do turning PID on the
   // roboRIO.  Setting m_rio false allows testing turning PID on the SPARK MAX.
   const bool m_rio = true;
+  double m_rioPIDF = pidf::kTurningPositionF;
   std::unique_ptr<frc2::PIDController> m_rioPIDController;
 
   // Turning position PID

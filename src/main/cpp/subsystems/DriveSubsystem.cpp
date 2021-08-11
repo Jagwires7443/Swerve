@@ -92,10 +92,10 @@ DriveSubsystem::DriveSubsystem() noexcept
 
 void DriveSubsystem::Periodic() noexcept
 {
-  m_frontLeftSwerveModule->Periodic();
-  m_frontRightSwerveModule->Periodic();
-  m_rearLeftSwerveModule->Periodic();
-  m_rearRightSwerveModule->Periodic();
+  m_frontLeftSwerveModule->Periodic(m_run);
+  m_frontRightSwerveModule->Periodic(m_run);
+  m_rearLeftSwerveModule->Periodic(m_run);
+  m_rearRightSwerveModule->Periodic(m_run);
 
 #if 0
   // Implementation of subsystem periodic method goes here.
@@ -245,10 +245,13 @@ void DriveSubsystem::TestInit() noexcept
 
 void DriveSubsystem::TestPeriodic() noexcept
 {
-  m_frontLeftSwerveModule->TestPeriodic();
-  m_frontRightSwerveModule->TestPeriodic();
-  m_rearLeftSwerveModule->TestPeriodic();
-  m_rearRightSwerveModule->TestPeriodic();
+  m_run = m_swerveEnable->GetEntry().GetBoolean(false);
+  m_limit = m_driveLimit->GetEntry().GetDouble(0.0);
+
+  m_frontLeftSwerveModule->TestPeriodic(!m_run);
+  m_frontRightSwerveModule->TestPeriodic(!m_run);
+  m_rearLeftSwerveModule->TestPeriodic(!m_run);
+  m_rearRightSwerveModule->TestPeriodic(!m_run);
 
   if (m_displayMode->GetEntry().GetBoolean(true))
   {
@@ -273,9 +276,6 @@ void DriveSubsystem::TestPeriodic() noexcept
   m_swerveRotation->GetEntry().SetDouble(m_rotation);
   m_swerveX->GetEntry().SetDouble(m_x);
   m_swerveY->GetEntry().SetDouble(m_y);
-
-  m_limit = m_driveLimit->GetEntry().GetDouble(0.0);
-  m_run = m_swerveEnable->GetEntry().GetBoolean(false);
 
   if (m_turningPositionPIDController->GetE())
   {

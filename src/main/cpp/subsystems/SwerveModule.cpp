@@ -86,6 +86,7 @@
 #include <networktables/NetworkTableValue.h>
 #include <rev/CANError.h>
 #include <rev/ControlType.h>
+#include <units/voltage.h>
 #include <wpi/StringMap.h>
 
 #include <bitset>
@@ -557,18 +558,34 @@ units::angle::degree_t SwerveModule::GetTurningPosition() noexcept
     return (static_cast<double>(position) / 4096.0) * 360_deg;
 }
 
-void SwerveModule::Periodic() noexcept
+void SwerveModule::Periodic(const bool setMotors) noexcept
 {
     if (!m_rio)
     {
         return;
     }
 
-    // pid.Calculate(encoder.GetDistance())
+    double calculated = m_rioPIDController->Calculate(GetTurningPosition() / 1_deg);
+
+    // Feedforward is a form of open-loop control, not much to do for turning
+    if (calculated > 0)
+    {
+        calculated += m_rioPIDF;
+    }
+    else if (calculated < 0)
+    {
+        calculated -= m_rioPIDF;
+    }
+
+    if (!setMotors)
+    {
+        return;
+    }
+
     DoSafeDriveMotor("Periodic()", [&]() -> void {
         if (m_turningMotor)
         {
-            m_turningMotor->Set(m_rioPIDController->Calculate(GetTurningPosition() / 1_deg));
+            m_turningMotor->SetVoltage(calculated * 12_V);
         }
     });
 }
@@ -819,7 +836,7 @@ void SwerveModule::TestInit() noexcept
     std::printf(" OK.\n");
 }
 
-void SwerveModule::TestPeriodic() noexcept
+void SwerveModule::TestPeriodic(const bool setMotors) noexcept
 {
     // Read controls information from Shuffleboard and manage interactive UI.
     bool zeroTurning = m_turningMotorReset->GetEntry().GetBoolean(false);
@@ -939,7 +956,10 @@ void SwerveModule::TestPeriodic() noexcept
                     throw std::runtime_error("ClearFaults()");
                 }
             }
-            m_turningMotor->Set(setTurning);
+            if (setMotors)
+            {
+                m_turningMotor->Set(setTurning);
+            }
         }
     });
 
@@ -1035,7 +1055,10 @@ void SwerveModule::TestPeriodic() noexcept
                     throw std::runtime_error("ClearFaults()");
                 }
             }
-            m_driveMotor->Set(setDrive);
+            if (setMotors)
+            {
+                m_driveMotor->Set(setDrive);
+            }
         }
     });
 
@@ -1065,6 +1088,7 @@ void SwerveModule::TestPeriodic() noexcept
 void SwerveModule::TurningPositionPID(double P, double I, double IZ, double IM, double D, double DF, double F) noexcept
 {
     m_rioPIDController->SetPID(P, I, D);
+    m_rioPIDF = F;
 
     m_turningPosition_P = P;
     m_turningPosition_I = I;
@@ -1320,7 +1344,7 @@ bool SwerveModule::VerifyDriveMotorControllerConfig() noexcept
         uint32_t firmwareVersion = m_driveMotor->GetFirmwareVersion();
         if (firmwareVersion != firmware::kSparkMaxFirmwareVersion)
         {
-            driveMotorControllerConfig += FirmwareInfo(firmwareVersion, m_turningMotor->GetFirmwareString());
+            driveMotorControllerConfig += FirmwareInfo(firmwareVersion, m_driveMotor->GetFirmwareString());
         }
         if (m_driveMotor->GetMotorType() != rev::CANSparkMaxLowLevel::MotorType::kBrushless)
         {
