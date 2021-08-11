@@ -720,7 +720,7 @@ void SwerveModule::SetDesiredState(const frc::SwerveModuleState &referenceState)
     if (position != -1 && false) // XXX don't do this when debugging (maybe never in test mode?)
     {
         state = frc::SwerveModuleState::Optimize(
-            referenceState, frc::Rotation2d((static_cast<double>(position - 2048) / 4096.0) * 360_deg);
+            referenceState, frc::Rotation2d((static_cast<double>(position - 2048) / 4096.0) * 360_deg));
     }
 
     SetTurningPosition(state.angle.Degrees());
@@ -789,10 +789,7 @@ void SwerveModule::TestInit() noexcept
                                      .WithPosition(1, 1);
     m_turningPositionHeading = &shuffleboardLayoutTurningPosition.Add("Heading", m_headingGyro)
                                     .WithPosition(1, 0)
-                                    .WithWidget(frc::BuiltInWidgets::kGyro)
-                                    .WithProperties(wpi::StringMap<std::shared_ptr<nt::Value>>{
-                                        std::make_pair("Show tick mark ring", nt::Value::MakeBoolean(false)),
-                                        std::make_pair("Starting angle", nt::Value::MakeDouble(180.0))});
+                                    .WithWidget(frc::BuiltInWidgets::kGyro);
 
     m_turningMotorStatus = &shuffleboardLayoutTurningMotor.Add("Status", false)
                                 .WithPosition(0, 1)
@@ -807,15 +804,15 @@ void SwerveModule::TestInit() noexcept
                                  .WithPosition(2, 0);
     m_turningMotorCurrent = &shuffleboardLayoutTurningMotor.Add("Current", 0.0)
                                  .WithPosition(2, 1);
-    m_turningMotorSpeed = &shuffleboardLayoutTurningMotor.Add("Speed", 0.0)
+    m_turningMotorSpeed = &shuffleboardLayoutTurningMotor.Add("Speed (Commanded)", 0.0)
                                .WithPosition(3, 0)
                                .WithWidget(frc::BuiltInWidgets::kNumberBar);
-    m_turningMotorPercent = &shuffleboardLayoutTurningMotor.Add("Percent", 0.0)
+    m_turningMotorPercent = &shuffleboardLayoutTurningMotor.Add("Percent (Actual)", 0.0)
                                  .WithPosition(3, 1)
                                  .WithWidget(frc::BuiltInWidgets::kNumberBar);
-    m_turningMotorDistance = &shuffleboardLayoutTurningMotor.Add("Distance", 0.0)
+    m_turningMotorDistance = &shuffleboardLayoutTurningMotor.Add("Distance (Rotations)", 0.0)
                                   .WithPosition(4, 0);
-    m_turningMotorVelocity = &shuffleboardLayoutTurningMotor.Add("Velocity", 0.0)
+    m_turningMotorVelocity = &shuffleboardLayoutTurningMotor.Add("Velocity (RPM)", 0.0)
                                   .WithPosition(4, 1);
     m_turningMotorControl = &shuffleboardLayoutTurningMotor.Add("Control", 0.0)
                                  .WithPosition(5, 0)
@@ -834,18 +831,18 @@ void SwerveModule::TestInit() noexcept
     m_driveMotorStickyFaults = &shuffleboardLayoutDriveMotor.Add("StickyFaults", "")
                                     .WithPosition(1, 1);
     m_driveMotorVoltage = &shuffleboardLayoutDriveMotor.Add("Voltage", 0.0)
-                               .WithPosition(3, 0);
+                               .WithPosition(2, 0);
     m_driveMotorCurrent = &shuffleboardLayoutDriveMotor.Add("Current", 0.0)
-                               .WithPosition(3, 1);
-    m_driveMotorSpeed = &shuffleboardLayoutDriveMotor.Add("Speed", 0.0)
-                             .WithPosition(2, 0)
+                               .WithPosition(2, 1);
+    m_driveMotorSpeed = &shuffleboardLayoutDriveMotor.Add("Speed (Commanded)", 0.0)
+                             .WithPosition(3, 0)
                              .WithWidget(frc::BuiltInWidgets::kNumberBar);
-    m_driveMotorPercent = &shuffleboardLayoutDriveMotor.Add("Percent", 0.0)
-                               .WithPosition(2, 1)
+    m_driveMotorPercent = &shuffleboardLayoutDriveMotor.Add("Percent (Actual)", 0.0)
+                               .WithPosition(3, 1)
                                .WithWidget(frc::BuiltInWidgets::kNumberBar);
-    m_driveMotorDistance = &shuffleboardLayoutDriveMotor.Add("Distance", 0.0)
+    m_driveMotorDistance = &shuffleboardLayoutDriveMotor.Add("Distance (Rotations)", 0.0)
                                 .WithPosition(4, 0);
-    m_driveMotorVelocity = &shuffleboardLayoutDriveMotor.Add("Velocity", 0.0)
+    m_driveMotorVelocity = &shuffleboardLayoutDriveMotor.Add("Velocity (RPM)", 0.0)
                                 .WithPosition(4, 1);
     m_driveMotorControl = &shuffleboardLayoutDriveMotor.Add("Control", 0.0)
                                .WithPosition(5, 0)

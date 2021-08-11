@@ -54,11 +54,11 @@ DriveSubsystem::DriveSubsystem() noexcept
   {
     m_ahrs = nullptr;
   }
+#endif
 
   // Initial position (third parameter) defaulted to "frc::Pose2d()"; initial
   // angle (second parameter) is automatically zeroed by navX initialization.
   m_odometry = std::make_unique<frc::SwerveDriveOdometry<4>>(kDriveKinematics, 0_deg);
-#endif
 
   // These are last, so there can be no movement from the swerve modules.
   m_frontLeftSwerveModule = std::make_unique<SwerveModule>(
@@ -248,16 +248,16 @@ void DriveSubsystem::TestPeriodic() noexcept
   m_run = m_swerveEnable->GetEntry().GetBoolean(false);
   m_limit = m_driveLimit->GetEntry().GetDouble(0.0);
 
+  m_frontLeftSwerveModule->TestPeriodic(!m_run);
+  m_frontRightSwerveModule->TestPeriodic(!m_run);
+  m_rearLeftSwerveModule->TestPeriodic(!m_run);
+  m_rearRightSwerveModule->TestPeriodic(!m_run);
+
   // XXX needed?  apparently so, although seems Periodic should be getting called in Test mode -- check again
   m_frontLeftSwerveModule->Periodic(m_run);
   m_frontRightSwerveModule->Periodic(m_run);
   m_rearLeftSwerveModule->Periodic(m_run);
   m_rearRightSwerveModule->Periodic(m_run);
-
-  m_frontLeftSwerveModule->TestPeriodic(!m_run);
-  m_frontRightSwerveModule->TestPeriodic(!m_run);
-  m_rearLeftSwerveModule->TestPeriodic(!m_run);
-  m_rearRightSwerveModule->TestPeriodic(!m_run);
 
   if (m_displayMode->GetEntry().GetBoolean(true))
   {
@@ -268,10 +268,10 @@ void DriveSubsystem::TestPeriodic() noexcept
     // Display actual information (as below)
   }
 
-  m_frontLeftGyro.Set(m_frontLeftSwerveModule->GetTurningPosition() / 1_deg);
-  m_frontRightGyro.Set(m_frontRightSwerveModule->GetTurningPosition() / 1_deg);
-  m_rearLeftGyro.Set(m_rearLeftSwerveModule->GetTurningPosition() / 1_deg);
-  m_rearRightGyro.Set(m_rearRightSwerveModule->GetTurningPosition() / 1_deg);
+  m_frontLeftGyro.Set((m_frontLeftSwerveModule->GetTurningPosition() + 180_deg) / 1_deg);
+  m_frontRightGyro.Set((m_frontRightSwerveModule->GetTurningPosition() + 180_deg) / 1_deg);
+  m_rearLeftGyro.Set((m_rearLeftSwerveModule->GetTurningPosition() + 180_deg) / 1_deg);
+  m_rearRightGyro.Set((m_rearRightSwerveModule->GetTurningPosition() + 180_deg) / 1_deg);
 
   m_frontLeftDrive->GetEntry().SetDouble(m_frontLeftSwerveModule->GetDriveVelocity() / physical::kMaxDriveSpeed);
   m_frontRightDrive->GetEntry().SetDouble(m_frontRightSwerveModule->GetDriveVelocity() / physical::kMaxDriveSpeed);
@@ -400,7 +400,7 @@ void DriveSubsystem::Drive(units::meters_per_second_t xSpeed,
 
   wpi::array<frc::SwerveModuleState, 4> states = kDriveKinematics.ToSwerveModuleStates(
       fieldRelative ? frc::ChassisSpeeds::FromFieldRelativeSpeeds(
-                          xSpeed, ySpeed, rot, m_ahrs->GetRotation2d())
+                          xSpeed, ySpeed, rot, m_ahrs->GetRotation2d()) // XXX Gyro might need negating
                     : frc::ChassisSpeeds{xSpeed, ySpeed, rot});
 
   kDriveKinematics.NormalizeWheelSpeeds(&states, physical::kMaxDriveSpeed);

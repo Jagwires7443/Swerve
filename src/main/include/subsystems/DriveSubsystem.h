@@ -122,10 +122,14 @@ public:
    */
   void ResetOdometry(frc::Pose2d pose) noexcept;
 
+  // Front: +x, Rear: -x; Left: +y, Right -y.  Zero heading is to the front
+  // and +rotation is counter-clockwise.  This is all standard, although it
+  // means the robot's front is along the x-axis, which is often pointed to
+  // the right, as things are commonly drawn.  Rotate the page by 90 degrees.
   const frc::SwerveDriveKinematics<4> kDriveKinematics{
-      frc::Translation2d(physical::kWheelBase / 2, physical::kTrackWidth / 2),
-      frc::Translation2d(physical::kWheelBase / 2, -physical::kTrackWidth / 2),
-      frc::Translation2d(-physical::kWheelBase / 2, physical::kTrackWidth / 2),
+      frc::Translation2d(+physical::kWheelBase / 2, +physical::kTrackWidth / 2),
+      frc::Translation2d(+physical::kWheelBase / 2, -physical::kTrackWidth / 2),
+      frc::Translation2d(-physical::kWheelBase / 2, +physical::kTrackWidth / 2),
       frc::Translation2d(-physical::kWheelBase / 2, -physical::kTrackWidth / 2)};
 
   // Need to derive from abstract Sendable class in order to be able to use the
