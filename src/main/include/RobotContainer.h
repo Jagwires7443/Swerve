@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <frc/XboxController.h>
 #include <frc2/command/Command.h>
 
 #include "commands/ExampleCommand.h"
@@ -30,6 +31,7 @@ private:
   // The robot's subsystems and commands are defined here...
   DriveSubsystem m_driveSubsystem;
   ExampleCommand m_autonomousCommand;
+  frc::XboxController m_xbox{0};
 
   void ConfigureButtonBindings() noexcept;
 };

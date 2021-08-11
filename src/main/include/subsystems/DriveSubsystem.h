@@ -23,7 +23,6 @@
 #include <frc/smartdashboard/SendableHelper.h>
 #include <frc2/command/Command.h>
 #include <frc2/command/SubsystemBase.h>
-#include <networktables/NetworkTable.h>
 #include <units/angle.h>
 #include <units/angular_velocity.h>
 #include <units/length.h>
@@ -50,6 +49,17 @@ public:
   // the associated DriveSubsystem().  This provides a way to inject Commands
   // into Test Mode, interactively.  If nullptr, TestInit() was never called.
   frc::SendableChooser<frc2::Command *> *TestModeChooser() noexcept { return m_chooser.get(); }
+
+  bool GetStatus() noexcept;
+
+  // Test or simple autonomous (no motion planning) oriented methods;
+  // note that these return false until the requested action has completed.
+  bool ZeroModules() noexcept;                                             // Face forward
+  bool SetTurnInPlace(bool) noexcept;                                      // Orient modules for spin in-place
+  bool SetTurningPosition(const units::angle::degree_t position) noexcept; // Orient modules same direction
+  bool SetDriveBrakeMode(bool brake) noexcept;                             // Brake or coast
+  bool SetTurnByAngle(units::degree_t angle) noexcept;                     // Drive once set to spin in-place
+  bool SetDriveDistance(units::length::meter_t distance) noexcept;         // Drive for specified distance
 
   /**
    * Drives the robot at given x, y and theta speeds. Speeds range from [-1, 1]
@@ -147,15 +157,15 @@ public:
           "enabled", [&]() -> bool { return m_e; }, [&](bool value) -> void { m_e = value; });
     }
 
-    double GetP() { return m_p; }
-    double GetI() { return m_i; }
-    double GetD() { return m_d; }
-    double GetF() { return m_f; }
-    double GetS() { return m_s; }
-    bool GetE() { return m_e; }
+    double GetP() noexcept { return m_p; }
+    double GetI() noexcept { return m_i; }
+    double GetD() noexcept { return m_d; }
+    double GetF() noexcept { return m_f; }
+    double GetS() noexcept { return m_s; }
+    bool GetE() noexcept { return m_e; }
 
-    void SetS(const double &value) { m_s = value; }
-    void SetE(const bool value) { m_e = value; }
+    void SetS(const double &value) noexcept { m_s = value; }
+    void SetE(const bool value) noexcept { m_e = value; }
 
   private:
     double m_p{0.0};
@@ -184,7 +194,7 @@ public:
           "Value", [&]() -> double { return m_value; }, nullptr);
     }
 
-    void Set(const double &value) { m_value = value; }
+    void Set(const double &value) noexcept { m_value = value; }
 
   private:
     double m_value = 0.0;
@@ -219,17 +229,12 @@ private:
   std::unique_ptr<frc::SendableChooser<frc2::Command *>> m_chooser;
 
   // Last commanded drive inputs, for Test Mode display.
-  double m_rotation;
-  double m_x;
-  double m_y;
+  double m_rotation{0.0};
+  double m_x{0.0};
+  double m_y{0.0};
 
-  // Test Mode (only) instances of network table directories for each PID
-  // controller.  These provide direct access to some entries which are not
-  // exposed via PIDController.
-  // XXX Going away...
-  std::shared_ptr<nt::NetworkTable> m_turningPositionPIDTable;
-  std::shared_ptr<nt::NetworkTable> m_drivePositionPIDTable;
-  std::shared_ptr<nt::NetworkTable> m_driveVelocityPIDTable;
+  double m_limit{1.0};
+  bool m_run{true};
 
   // Test Mode (only) data, obtained but not owned.
   frc::ComplexWidget *m_frontLeftTurning = nullptr;
@@ -251,7 +256,7 @@ private:
   frc::SimpleWidget *m_swerveY = nullptr;
   frc::SimpleWidget *m_swerveStatus = nullptr;
   frc::SimpleWidget *m_driveLimit = nullptr;
-  frc::SimpleWidget *m_driveMode = nullptr;
   frc::SimpleWidget *m_swerveEnable = nullptr;
+  frc::SimpleWidget *m_displayMode = nullptr;
   frc::ComplexWidget *m_commandChooser = nullptr;
 };

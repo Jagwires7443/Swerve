@@ -1,7 +1,18 @@
+#if 0
+#include <networktables/NetworkTable.h>
+
+  // XXX
+  // Test Mode (only) instance of network table entry ...
+  std::shared_ptr<nt::NetworkTable> m_turningPositionPIDTable;
+#endif
+
 #pragma once
+
+#include "Constants.h"
 
 #include <frc/DigitalInput.h>
 #include <frc/DutyCycle.h>
+#include <frc/controller/PIDController.h>
 #include <frc/kinematics/SwerveModuleState.h>
 #include <frc/shuffleboard/ComplexWidget.h>
 #include <frc/shuffleboard/SimpleWidget.h>
@@ -70,7 +81,7 @@
 // to update and save the motor controller configuration.  Saving the
 // configuration for each motor controller is the third step in commissioning a
 // robot.  Note that this will also need to be done after any PID setting are
-// changed.
+// changed, so changing a PID setting is a way to force a configuration update.
 
 // Now, the alignment values can be measured and adjusted in the code; there is
 // no saving these in the motor controllers, only in the constants used in this
@@ -84,6 +95,14 @@
 // alignment offset for each swerve module.  This is the fourth step in
 // commissioning a robot; make these changes in the code and recheck the zero
 // position on each swerve module.
+
+// There are also some constants to be set depending on the geometry of the
+// robot, and on the empirically measured maximum drive speed.  To obtain the
+// latter, support the robot so the drive wheels are free to spin.  Then, use
+// "Control" to run each drive wheel at full speed in both directions, noting
+// "Velocity" each way.  This will yield eight values; use the one with the
+// smallest magnitude for this speed, dropping the sign if negative.  This is
+// reported in units of revolutions per second.
 
 // At this point, the focus shifts to using test mode of the drive subsystem to
 // tune PID parameters; once these are worked out, return to test mode of the
@@ -104,6 +123,12 @@ public:
   SwerveModule(const SwerveModule &) = delete;
   SwerveModule &operator=(const SwerveModule &) = delete;
 
+  void Periodic() noexcept;
+
+  // Is swerve module healthy and motor controller configuration current?
+  // Note that the latter condition is only checked in test mode.
+  bool GetStatus() noexcept;
+
   // Set motor controller turning position using absolute position sensor (best
   // done when robot is at rest).
   void ResetTurning() noexcept;
@@ -111,10 +136,6 @@ public:
   // Reset motor controller drive position/velocity to zero (best done when
   // robot is at rest).
   void ResetDrive() noexcept;
-
-  // Is swerve module healthy and motor controller configuration current?
-  // Note that the latter condition is only checked in test mode.
-  bool GetStatus();
 
   // Sense.  Return the current absolute heading for the swerve module.
   units::angle::degree_t GetTurningPosition() noexcept;
@@ -126,7 +147,7 @@ public:
   // simple dead reckoning, etc.  Possibly useful for autonomous driving.
 
   // Control brake/coast; the initial setting is brake mode off (coast mode).
-  void SetDriveBrakeMode(bool brake);
+  void SetDriveBrakeMode(bool brake) noexcept;
 
   // Sense.  Return the cumulative drive distance since the last reset.
   units::length::meter_t GetDriveDistance() noexcept;
@@ -172,7 +193,7 @@ public:
           "Value", [&]() -> double { return m_value; }, nullptr);
     }
 
-    void Set(const double &value) { m_value = value; }
+    void Set(const double &value) noexcept { m_value = value; }
 
   private:
     double m_value = 0.0;
@@ -208,36 +229,41 @@ private:
 
   // These are set based on the mechanical and electrical construction of the
   // robot, and are never expected to change.
-  const bool m_driveMotorInverted = false;
-  const bool m_turningMotorInverted = false;
-  const bool m_turningEncoderInverted = true;
+  const bool m_driveMotorInverted = physical::kDriveMotorInverted;
+  const bool m_turningMotorInverted = physical::kTurningMotorInverted;
+  const bool m_turningEncoderInverted = physical::kTurningEncoderInverted;
+
+  // Until REV bug for continuous rotation is fixed, must do turning PID on the
+  // roboRIO.  Setting m_rio false allows testing turning PID on the SPARK MAX.
+  const bool m_rio = true;
+  std::unique_ptr<frc2::PIDController> m_rioPIDController;
 
   // Turning position PID
-  double m_turningPosition_P = 0.0;
-  double m_turningPosition_I = 0.0;
-  double m_turningPosition_IZ = 0.0;
-  double m_turningPosition_IM = 0.0;
-  double m_turningPosition_D = 0.0;
-  double m_turningPosition_DF = 0.0;
-  double m_turningPosition_F = 0.0;
+  double m_turningPosition_P = pidf::kTurningPositionP;
+  double m_turningPosition_I = pidf::kTurningPositionI;
+  double m_turningPosition_IZ = pidf::kTurningPositionIZ;
+  double m_turningPosition_IM = pidf::kTurningPositionIM;
+  double m_turningPosition_D = pidf::kTurningPositionD;
+  double m_turningPosition_DF = pidf::kTurningPositionDF;
+  double m_turningPosition_F = pidf::kTurningPositionF;
 
   // Drive position PID
-  double m_drivePosition_P = 0.0;
-  double m_drivePosition_I = 0.0;
-  double m_drivePosition_IZ = 0.0;
-  double m_drivePosition_IM = 0.0;
-  double m_drivePosition_D = 0.0;
-  double m_drivePosition_DF = 0.0;
-  double m_drivePosition_F = 0.0;
+  double m_drivePosition_P = pidf::kDrivePositionP;
+  double m_drivePosition_I = pidf::kDrivePositionI;
+  double m_drivePosition_IZ = pidf::kDrivePositionIZ;
+  double m_drivePosition_IM = pidf::kDrivePositionIM;
+  double m_drivePosition_D = pidf::kDrivePositionD;
+  double m_drivePosition_DF = pidf::kDrivePositionDF;
+  double m_drivePosition_F = pidf::kDrivePositionF;
 
   // Drive velocity PID
-  double m_driveVelocity_P = 0.0;
-  double m_driveVelocity_I = 0.0;
-  double m_driveVelocity_IZ = 0.0;
-  double m_driveVelocity_IM = 0.0;
-  double m_driveVelocity_D = 0.0;
-  double m_driveVelocity_DF = 0.0;
-  double m_driveVelocity_F = 0.0;
+  double m_driveVelocity_P = pidf::kDriveVelocityP;
+  double m_driveVelocity_I = pidf::kDriveVelocityI;
+  double m_driveVelocity_IZ = pidf::kDriveVelocityIZ;
+  double m_driveVelocity_IM = pidf::kDriveVelocityIM;
+  double m_driveVelocity_D = pidf::kDriveVelocityD;
+  double m_driveVelocity_DF = pidf::kDriveVelocityDF;
+  double m_driveVelocity_F = pidf::kDriveVelocityF;
 
   std::unique_ptr<frc::DigitalInput> m_turningPositionSource;
   std::unique_ptr<frc::DutyCycle> m_turningPosition;
@@ -251,8 +277,8 @@ private:
   std::unique_ptr<rev::CANPIDController> m_drivePID;
 
   std::chrono::steady_clock::time_point m_verifyMotorControllersWhen;
-  bool m_turningMotorControllerValidated = false;
-  bool m_driveMotorControllerValidated = false;
+  bool m_turningMotorControllerValidated = true;
+  bool m_driveMotorControllerValidated = true;
   std::string m_turningMotorControllerConfig;
   std::string m_driveMotorControllerConfig;
 
@@ -268,26 +294,26 @@ private:
   frc::ComplexWidget *m_turningPositionHeading = nullptr;
 
   frc::SimpleWidget *m_turningMotorStatus = nullptr;
-  frc::SimpleWidget *m_turningMotorSpeed = nullptr;
-  frc::SimpleWidget *m_turningMotorPercent = nullptr;
-  frc::SimpleWidget *m_turningMotorVoltage = nullptr;
-  frc::SimpleWidget *m_turningMotorCurrent = nullptr;
   frc::SimpleWidget *m_turningMotorTemperature = nullptr;
   frc::SimpleWidget *m_turningMotorFaults = nullptr;
   frc::SimpleWidget *m_turningMotorStickyFaults = nullptr;
+  frc::SimpleWidget *m_turningMotorVoltage = nullptr;
+  frc::SimpleWidget *m_turningMotorCurrent = nullptr;
+  frc::SimpleWidget *m_turningMotorSpeed = nullptr;
+  frc::SimpleWidget *m_turningMotorPercent = nullptr;
   frc::SimpleWidget *m_turningMotorDistance = nullptr;
   frc::SimpleWidget *m_turningMotorVelocity = nullptr;
   frc::SimpleWidget *m_turningMotorControl = nullptr;
   frc::SimpleWidget *m_turningMotorReset = nullptr;
 
   frc::SimpleWidget *m_driveMotorStatus = nullptr;
-  frc::SimpleWidget *m_driveMotorSpeed = nullptr;
-  frc::SimpleWidget *m_driveMotorPercent = nullptr;
-  frc::SimpleWidget *m_driveMotorVoltage = nullptr;
-  frc::SimpleWidget *m_driveMotorCurrent = nullptr;
   frc::SimpleWidget *m_driveMotorTemperature = nullptr;
   frc::SimpleWidget *m_driveMotorFaults = nullptr;
   frc::SimpleWidget *m_driveMotorStickyFaults = nullptr;
+  frc::SimpleWidget *m_driveMotorVoltage = nullptr;
+  frc::SimpleWidget *m_driveMotorCurrent = nullptr;
+  frc::SimpleWidget *m_driveMotorSpeed = nullptr;
+  frc::SimpleWidget *m_driveMotorPercent = nullptr;
   frc::SimpleWidget *m_driveMotorDistance = nullptr;
   frc::SimpleWidget *m_driveMotorVelocity = nullptr;
   frc::SimpleWidget *m_driveMotorControl = nullptr;

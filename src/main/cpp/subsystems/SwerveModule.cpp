@@ -1,3 +1,41 @@
+#if 0
+  // XXX
+  m_turningPositionPIDTable = nt::NetworkTableInstance::GetDefault().GetTable(
+      "Shuffleboard/Swerve/PID Settings/Turning Position");
+  if (!m_turningPositionPIDTable)
+  {
+    std::printf(" Turning Position Table error...");
+  }
+
+  m_drivePositionPIDTable = nt::NetworkTableInstance::GetDefault().GetTable(
+      "Shuffleboard/Swerve/PID Settings/Drive Distance");
+  if (!m_drivePositionPIDTable)
+  {
+    std::printf(" Drive Distance Table error...");
+  }
+
+  m_driveVelocityPIDTable = nt::NetworkTableInstance::GetDefault().GetTable(
+      "Shuffleboard/Swerve/PID Settings/Drive Velocity");
+  if (!m_driveVelocityPIDTable)
+  {
+    std::printf(" Drive Velocity Table error...");
+  }
+
+  if (m_turningPositionPIDTable)
+  {
+    // XXX refactor so there's less work here (move to init)?
+    nt::NetworkTableEntry fEntry = m_turningPositionPIDTable->GetEntry("f");
+    nt::NetworkTableEntry enabledEntry = m_turningPositionPIDTable->GetEntry("enabled");
+    std::shared_ptr<nt::Value> fValue = fEntry.GetValue();
+    std::shared_ptr<nt::Value> enabledValue = enabledEntry.GetValue();
+
+    // if (enabledValue && enabledValue->IsBoolean() && enabledValue->GetBoolean()) {}
+
+    // if (fValue && fValue->IsDouble()) {}
+  }
+
+#endif
+
 // See https://github.com/wpilibsuite/allwpilib/blob/main/wpilibcExamples/src/main/cpp/examples/SwerveControllerCommand/cpp/subsystems/SwerveModule.cpp.
 // See https://docs.revrobotics.com/sparkmax/operating-modes/closed-loop-control.
 
@@ -96,7 +134,7 @@ namespace
     {
         const std::bitset<16> faultBits(faults);
 
-        // This works fine, but isn't super readable.
+        // This works fine, but isn't very readable on the display.
         // return faultBits.to_string('.', '*');
 
         // SPARK MAX Fault Codes with shorthand characters used here.
@@ -140,6 +178,13 @@ SwerveModule::SwerveModule(
                                           m_alignmentOffset{alignmentOffset}
 {
     std::printf("Swerve Module (%s) Initialization... ", m_name.c_str());
+
+    m_rioPIDController = std::make_unique<frc2::PIDController>(
+        pidf::kTurningPositionP,
+        pidf::kTurningPositionI,
+        pidf::kTurningPositionD);
+
+    m_rioPIDController->EnableContinuousInput(0.0, 360.0);
 
     // Construct turning absolute duty cycle encoder.  A `DigitalSource` is
     // required by the `DutyCycle` ctor.  Nothing here is expected to fail.
@@ -424,14 +469,22 @@ void SwerveModule::ConstructDriveMotor() noexcept
     });
 }
 
-// XXX
-bool SwerveModule::GetStatus() { return m_turningMotor != nullptr; }
+bool SwerveModule::GetStatus() noexcept
+{
+    int position = GetAbsolutePosition();
+
+    return (position != -1) &&
+           (m_turningMotor != nullptr) && m_turningMotorControllerValidated &&
+           (m_driveMotor != nullptr) && m_driveMotorControllerValidated;
+}
 
 // XXX
-void SwerveModule::SetDriveBrakeMode(bool brake) {}
+void SwerveModule::SetDriveBrakeMode(bool brake) noexcept {}
 
 void SwerveModule::ResetTurning() noexcept
 {
+    m_rioPIDController->Reset();
+
     int position = GetAbsolutePosition();
 
     if (position != -1)
@@ -485,7 +538,7 @@ units::angle::degree_t SwerveModule::GetTurningPosition() noexcept
         DoSafeTurningMotor("GetState()", [&]() -> void {
             if (m_turningEncoder)
             {
-                position = std::lround(m_turningEncoder->GetPosition()) % 4096;
+                position = std::lround(m_turningEncoder->GetPosition() * 4096.0) % 4096;
                 if (position < 0)
                 {
                     position += 4096;
@@ -501,18 +554,40 @@ units::angle::degree_t SwerveModule::GetTurningPosition() noexcept
         position = 0;
     }
 
-    return 360_deg * (static_cast<double>(position) / 4096.0);
+    return (static_cast<double>(position) / 4096.0) * 360_deg;
+}
+
+void SwerveModule::Periodic() noexcept
+{
+    if (!m_rio)
+    {
+        return;
+    }
+
+    // pid.Calculate(encoder.GetDistance())
+    DoSafeDriveMotor("Periodic()", [&]() -> void {
+        if (m_turningMotor)
+        {
+            m_turningMotor->Set(m_rioPIDController->Calculate(GetTurningPosition() / 1_deg));
+        }
+    });
 }
 
 void SwerveModule::SetTurningPosition(const units::angle::degree_t position) noexcept
 {
     // XXX Here, need to arrange to be able to run PID on roboRIO and choose via conditional compilation...
     // XXX Just use turning position PID constants that would otherwise be used by motor controller
+    m_rioPIDController->SetSetpoint(position / 1_deg);
+
+    if (m_rio)
+    {
+        return;
+    }
 
     DoSafeDriveMotor("SetTurningPosition()", [&]() -> void {
         if (m_turningPID)
         {
-            if (m_turningPID->SetReference(position.to<double>() * (4096.0 / 360.0), rev::kPosition) != rev::CANError::kOk)
+            if (m_turningPID->SetReference((position / 360_deg) * 4096.0, rev::kPosition) != rev::CANError::kOk)
             {
                 throw std::runtime_error("SetReference()"); // XXX warn
             }
@@ -520,14 +595,16 @@ void SwerveModule::SetTurningPosition(const units::angle::degree_t position) noe
     });
 }
 
-// Drive position and velocity are in counts and counts/second, respectively.
+// Drive position and velocity are in rotations and rotations/second,
+// respectively.
+
 // It would be possible to use SetPositionConversionFactor() so that distance
 // is in dimensionless units matching meters, and SetVelocityConversionFactor()
 // so that velocity is in dimensionless units matching meters per second, but
 // this is handled here instead.  These conversions factor in gear/belt ratios,
 // plus the circumference of the wheel (diameter * pi).  This yields units of
 // meters and meters/second.  The conversion factor is determined empirically
-// and represents counts per meter.
+// and represents rotations per meter.
 
 units::length::meter_t SwerveModule::GetDriveDistance() noexcept
 {
@@ -536,7 +613,7 @@ units::length::meter_t SwerveModule::GetDriveDistance() noexcept
     DoSafeDriveMotor("GetDriveDistance()", [&]() -> void {
         if (m_driveEncoder)
         {
-            result = units::length::meter_t{m_driveEncoder->GetPosition() / physical::kDriveCountsPerMeter};
+            result = m_driveEncoder->GetPosition() * physical::kDriveMetersPerRotation;
         }
     });
 
@@ -549,7 +626,7 @@ void SwerveModule::SetDriveDistance(units::length::meter_t distance) noexcept
         // XXX flip into brake mode if not there
         if (m_drivePID)
         {
-            if (m_drivePID->SetReference(distance.to<double>() * physical::kDriveCountsPerMeter, rev::kPosition) != rev::CANError::kOk)
+            if (m_drivePID->SetReference(distance / physical::kDriveMetersPerRotation, rev::kPosition) != rev::CANError::kOk)
             {
                 throw std::runtime_error("SetReference()"); // XXX warn
             }
@@ -564,7 +641,7 @@ units::velocity::meters_per_second_t SwerveModule::GetDriveVelocity() noexcept
     DoSafeDriveMotor("GetDriveVelocity()", [&]() -> void {
         if (m_driveEncoder)
         {
-            result = units::velocity::meters_per_second_t{m_driveEncoder->GetVelocity() / physical::kDriveCountsPerMeter};
+            result = (m_driveEncoder->GetVelocity() * physical::kDriveMetersPerRotation) / 1_s;
         }
     });
 
@@ -577,7 +654,7 @@ void SwerveModule::SetDriveVelocity(units::velocity::meters_per_second_t velocit
         // XXX flip into coast mode if not there
         if (m_drivePID)
         {
-            if (m_drivePID->SetReference(velocity.to<double>() * physical::kDriveCountsPerMeter, rev::kVelocity, 1) != rev::CANError::kOk)
+            if (m_drivePID->SetReference((velocity * 1_s) / physical::kDriveMetersPerRotation, rev::kVelocity, 1) != rev::CANError::kOk)
             {
                 throw std::runtime_error("SetReference()"); // XXX warn
             }
@@ -631,7 +708,7 @@ void SwerveModule::TestInit() noexcept
     // "hgap": 0.0
     // "vgap": 0.0
     // As it is, best results will be obtained when the defaults for new tabs
-    // are set in this way.
+    // are set in this way, except that the defaults do not seem to be applied.
     frc::ShuffleboardTab &shuffleboardTab = frc::Shuffleboard::GetTab(m_name);
 
     frc::ShuffleboardLayout &shuffleboardLayoutTurningPosition =
@@ -682,22 +759,22 @@ void SwerveModule::TestInit() noexcept
     m_turningMotorStatus = &shuffleboardLayoutTurningMotor.Add("Status", false)
                                 .WithPosition(0, 1)
                                 .WithWidget(frc::BuiltInWidgets::kBooleanBox);
-    m_turningMotorSpeed = &shuffleboardLayoutTurningMotor.Add("Speed", 0.0)
-                               .WithPosition(2, 0)
-                               .WithWidget(frc::BuiltInWidgets::kNumberBar);
-    m_turningMotorPercent = &shuffleboardLayoutTurningMotor.Add("Percent", 0.0)
-                                 .WithPosition(2, 1)
-                                 .WithWidget(frc::BuiltInWidgets::kNumberBar);
-    m_turningMotorVoltage = &shuffleboardLayoutTurningMotor.Add("Voltage", 0.0)
-                                 .WithPosition(3, 0);
-    m_turningMotorCurrent = &shuffleboardLayoutTurningMotor.Add("Current", 0.0)
-                                 .WithPosition(3, 1);
     m_turningMotorTemperature = &shuffleboardLayoutTurningMotor.Add("Temperature", 0.0)
                                      .WithPosition(0, 0);
     m_turningMotorFaults = &shuffleboardLayoutTurningMotor.Add("Faults", "")
                                 .WithPosition(1, 0);
     m_turningMotorStickyFaults = &shuffleboardLayoutTurningMotor.Add("StickyFaults", "")
                                       .WithPosition(1, 1);
+    m_turningMotorVoltage = &shuffleboardLayoutTurningMotor.Add("Voltage", 0.0)
+                                 .WithPosition(2, 0);
+    m_turningMotorCurrent = &shuffleboardLayoutTurningMotor.Add("Current", 0.0)
+                                 .WithPosition(2, 1);
+    m_turningMotorSpeed = &shuffleboardLayoutTurningMotor.Add("Speed", 0.0)
+                               .WithPosition(3, 0)
+                               .WithWidget(frc::BuiltInWidgets::kNumberBar);
+    m_turningMotorPercent = &shuffleboardLayoutTurningMotor.Add("Percent", 0.0)
+                                 .WithPosition(3, 1)
+                                 .WithWidget(frc::BuiltInWidgets::kNumberBar);
     m_turningMotorDistance = &shuffleboardLayoutTurningMotor.Add("Distance", 0.0)
                                   .WithPosition(4, 0);
     m_turningMotorVelocity = &shuffleboardLayoutTurningMotor.Add("Velocity", 0.0)
@@ -712,22 +789,22 @@ void SwerveModule::TestInit() noexcept
     m_driveMotorStatus = &shuffleboardLayoutDriveMotor.Add("Status", false)
                               .WithPosition(0, 1)
                               .WithWidget(frc::BuiltInWidgets::kBooleanBox);
-    m_driveMotorSpeed = &shuffleboardLayoutDriveMotor.Add("Speed", 0.0)
-                             .WithPosition(2, 0)
-                             .WithWidget(frc::BuiltInWidgets::kNumberBar);
-    m_driveMotorPercent = &shuffleboardLayoutDriveMotor.Add("Percent", 0.0)
-                               .WithPosition(2, 1)
-                               .WithWidget(frc::BuiltInWidgets::kNumberBar);
-    m_driveMotorVoltage = &shuffleboardLayoutDriveMotor.Add("Voltage", 0.0)
-                               .WithPosition(3, 0);
-    m_driveMotorCurrent = &shuffleboardLayoutDriveMotor.Add("Current", 0.0)
-                               .WithPosition(3, 1);
     m_driveMotorTemperature = &shuffleboardLayoutDriveMotor.Add("Temperature", 0.0)
                                    .WithPosition(0, 0);
     m_driveMotorFaults = &shuffleboardLayoutDriveMotor.Add("Faults", "")
                               .WithPosition(1, 0);
     m_driveMotorStickyFaults = &shuffleboardLayoutDriveMotor.Add("StickyFaults", "")
                                     .WithPosition(1, 1);
+    m_driveMotorVoltage = &shuffleboardLayoutDriveMotor.Add("Voltage", 0.0)
+                               .WithPosition(3, 0);
+    m_driveMotorCurrent = &shuffleboardLayoutDriveMotor.Add("Current", 0.0)
+                               .WithPosition(3, 1);
+    m_driveMotorSpeed = &shuffleboardLayoutDriveMotor.Add("Speed", 0.0)
+                             .WithPosition(2, 0)
+                             .WithWidget(frc::BuiltInWidgets::kNumberBar);
+    m_driveMotorPercent = &shuffleboardLayoutDriveMotor.Add("Percent", 0.0)
+                               .WithPosition(2, 1)
+                               .WithWidget(frc::BuiltInWidgets::kNumberBar);
     m_driveMotorDistance = &shuffleboardLayoutDriveMotor.Add("Distance", 0.0)
                                 .WithPosition(4, 0);
     m_driveMotorVelocity = &shuffleboardLayoutDriveMotor.Add("Velocity", 0.0)
@@ -802,43 +879,43 @@ void SwerveModule::TestPeriodic() noexcept
     }
 
     // Temporarily store raw data from one of the SPARK MAX motor controllers.
-    double speed;
-    double voltage;
-    double percent;
-    double current;
     double temperature;
     uint16_t faults;
     uint16_t stickyFaults;
+    double voltage;
+    double current;
+    double speed;
+    double percent;
     double distance;
     double velocity;
 
     // Obtain raw data from turning CANSparkMax and set the output.
-    speed = 0.0;
-    voltage = 0.0;
-    percent = 0.0;
-    current = 0.0;
     temperature = 0.0;
     faults = 0;
     stickyFaults = 0;
+    voltage = 0.0;
+    current = 0.0;
+    speed = 0.0;
+    percent = 0.0;
     distance = 0.0;
     velocity = 0.0;
 
     DoSafeTurningMotor("TestPeriodic()", [&]() -> void {
         if (m_turningMotor)
         {
-            speed = m_turningMotor->Get();
-            percent = m_turningMotor->GetAppliedOutput();
-            voltage = m_turningMotor->GetBusVoltage();
-            current = m_turningMotor->GetOutputCurrent();
             temperature = m_turningMotor->GetMotorTemperature();
             faults = m_turningMotor->GetFaults();
             stickyFaults = m_turningMotor->GetStickyFaults();
+            voltage = m_turningMotor->GetBusVoltage();
+            current = m_turningMotor->GetOutputCurrent();
+            speed = m_turningMotor->Get();                // Commanded setting [-1, 1]
+            percent = m_turningMotor->GetAppliedOutput(); // Actual setting [-1, 1]
         }
 
         if (m_turningEncoder)
         {
-            distance = m_turningEncoder->GetPosition();
-            velocity = m_turningEncoder->GetVelocity();
+            distance = m_turningEncoder->GetPosition(); // Rotations
+            velocity = m_turningEncoder->GetVelocity(); // Rotations per minute
 
             if (zeroTurning)
             {
@@ -879,7 +956,7 @@ void SwerveModule::TestPeriodic() noexcept
 
     if (position != -1)
     {
-        discrepancy = std::lround(distance) % 4096;
+        discrepancy = std::lround(distance * 4096.0) % 4096;
         if (discrepancy < 0)
         {
             discrepancy += 4096;
@@ -902,43 +979,43 @@ void SwerveModule::TestPeriodic() noexcept
 
     // Update shuffleboard data for turning CANSparkMax.
     m_turningMotorStatus->GetEntry().SetBoolean(m_turningMotor != nullptr && m_turningMotorControllerValidated);
-    m_turningMotorSpeed->GetEntry().SetDouble(speed);
-    m_turningMotorPercent->GetEntry().SetDouble(percent);
-    m_turningMotorVoltage->GetEntry().SetDouble(voltage);
-    m_turningMotorCurrent->GetEntry().SetDouble(current);
     m_turningMotorTemperature->GetEntry().SetDouble(temperature);
     m_turningMotorFaults->GetEntry().SetString(FaultInfo(faults));
     m_turningMotorStickyFaults->GetEntry().SetString(FaultInfo(stickyFaults));
+    m_turningMotorVoltage->GetEntry().SetDouble(voltage);
+    m_turningMotorCurrent->GetEntry().SetDouble(current);
+    m_turningMotorSpeed->GetEntry().SetDouble(speed);
+    m_turningMotorPercent->GetEntry().SetDouble(percent);
     m_turningMotorDistance->GetEntry().SetDouble(distance);
     m_turningMotorVelocity->GetEntry().SetDouble(velocity);
 
     // Obtain raw data from drive CANSparkMax and set the output.
-    speed = 0.0;
-    voltage = 0.0;
-    percent = 0.0;
-    current = 0.0;
     temperature = 0.0;
     faults = 0;
     stickyFaults = 0;
+    voltage = 0.0;
+    current = 0.0;
+    speed = 0.0;
+    percent = 0.0;
     distance = 0.0;
     velocity = 0.0;
 
     DoSafeDriveMotor("TestPeriodic()", [&]() -> void {
         if (m_driveMotor)
         {
-            speed = m_driveMotor->Get();
-            percent = m_driveMotor->GetAppliedOutput();
-            voltage = m_driveMotor->GetBusVoltage();
-            current = m_driveMotor->GetOutputCurrent();
             temperature = m_driveMotor->GetMotorTemperature();
             faults = m_driveMotor->GetFaults();
             stickyFaults = m_driveMotor->GetStickyFaults();
+            voltage = m_driveMotor->GetBusVoltage();
+            current = m_driveMotor->GetOutputCurrent();
+            speed = m_driveMotor->Get();                // Commanded setting [-1, 1]
+            percent = m_driveMotor->GetAppliedOutput(); // Actual setting [-1, 1]
         }
 
         if (m_driveEncoder)
         {
-            distance = m_driveEncoder->GetPosition();
-            velocity = m_driveEncoder->GetVelocity();
+            distance = m_driveEncoder->GetPosition(); // Rotations
+            velocity = m_driveEncoder->GetVelocity(); // Rotations per minute
 
             if (zeroDrive)
             {
@@ -964,13 +1041,13 @@ void SwerveModule::TestPeriodic() noexcept
 
     // Update shuffleboard data for drive CANSparkMax.
     m_driveMotorStatus->GetEntry().SetBoolean(m_driveMotor != nullptr && m_driveMotorControllerValidated);
-    m_driveMotorSpeed->GetEntry().SetDouble(speed);
-    m_driveMotorPercent->GetEntry().SetDouble(percent);
-    m_driveMotorVoltage->GetEntry().SetDouble(voltage);
-    m_driveMotorCurrent->GetEntry().SetDouble(current);
     m_driveMotorTemperature->GetEntry().SetDouble(temperature);
     m_driveMotorFaults->GetEntry().SetString(FaultInfo(faults));
     m_driveMotorStickyFaults->GetEntry().SetString(FaultInfo(stickyFaults));
+    m_driveMotorVoltage->GetEntry().SetDouble(voltage);
+    m_driveMotorCurrent->GetEntry().SetDouble(current);
+    m_driveMotorSpeed->GetEntry().SetDouble(speed);
+    m_driveMotorPercent->GetEntry().SetDouble(percent);
     m_driveMotorDistance->GetEntry().SetDouble(distance);
     m_driveMotorVelocity->GetEntry().SetDouble(velocity);
 
@@ -987,6 +1064,8 @@ void SwerveModule::TestPeriodic() noexcept
 
 void SwerveModule::TurningPositionPID(double P, double I, double IZ, double IM, double D, double DF, double F) noexcept
 {
+    m_rioPIDController->SetPID(P, I, D);
+
     m_turningPosition_P = P;
     m_turningPosition_I = I;
     m_turningPosition_IZ = IZ;
