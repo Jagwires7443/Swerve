@@ -248,6 +248,12 @@ void DriveSubsystem::TestPeriodic() noexcept
   m_run = m_swerveEnable->GetEntry().GetBoolean(false);
   m_limit = m_driveLimit->GetEntry().GetDouble(0.0);
 
+  // XXX needed?  apparently so, although seems Periodic should be getting called in Test mode -- check again
+  m_frontLeftSwerveModule->Periodic(m_run);
+  m_frontRightSwerveModule->Periodic(m_run);
+  m_rearLeftSwerveModule->Periodic(m_run);
+  m_rearRightSwerveModule->Periodic(m_run);
+
   m_frontLeftSwerveModule->TestPeriodic(!m_run);
   m_frontRightSwerveModule->TestPeriodic(!m_run);
   m_rearLeftSwerveModule->TestPeriodic(!m_run);

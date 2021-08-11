@@ -472,9 +472,7 @@ void SwerveModule::ConstructDriveMotor() noexcept
 
 bool SwerveModule::GetStatus() noexcept
 {
-    int position = GetAbsolutePosition();
-
-    return (position != -1) &&
+    return (GetAbsolutePosition() != -1) &&
            (m_turningMotor != nullptr) && m_turningMotorControllerValidated &&
            (m_driveMotor != nullptr) && m_driveMotorControllerValidated;
 }
@@ -539,23 +537,33 @@ units::angle::degree_t SwerveModule::GetTurningPosition() noexcept
         DoSafeTurningMotor("GetState()", [&]() -> void {
             if (m_turningEncoder)
             {
-                position = std::lround(m_turningEncoder->GetPosition() * 4096.0) % 4096;
-                if (position < 0)
+                position = std::lround(m_turningEncoder->GetPosition());
+                while (position < 0)
                 {
                     position += 4096;
+                }
+                while (position >= 4096)
+                {
+                    position -= 4096;
                 }
             }
         });
     }
 
     // Yikes!  Return something reasonable; this swerve module is a mess, but
-    // contain the carnage.
+    // contain the carnage (both GetAbsolutePosition() and GetPosition() have
+    // failed).
     if (position < 0 || position > 4095)
     {
         position = 0;
     }
 
-    return (static_cast<double>(position) / 4096.0) * 360_deg;
+    double adjustedPosition = static_cast<double>(position) / 4096.0 * 360.0;
+
+    // Return [-180, +180), rather than [0, 360).
+    adjustedPosition -= 180.0;
+
+    return adjustedPosition * 1_deg;
 }
 
 void SwerveModule::Periodic(const bool setMotors) noexcept
@@ -565,7 +573,8 @@ void SwerveModule::Periodic(const bool setMotors) noexcept
         return;
     }
 
-    double calculated = m_rioPIDController->Calculate(GetTurningPosition() / 1_deg);
+    double calculated = m_rioPIDController->Calculate((GetTurningPosition() + 180_deg) / 1_deg);
+    // XXX double setpoint = m_rioPIDController->GetSetpoint();
 
     // Feedforward is a form of open-loop control, not much to do for turning
     if (calculated > 0)
@@ -592,9 +601,21 @@ void SwerveModule::Periodic(const bool setMotors) noexcept
 
 void SwerveModule::SetTurningPosition(const units::angle::degree_t position) noexcept
 {
-    // XXX Here, need to arrange to be able to run PID on roboRIO and choose via conditional compilation...
-    // XXX Just use turning position PID constants that would otherwise be used by motor controller
-    m_rioPIDController->SetSetpoint(position / 1_deg);
+    // Expect [-180, +180), rather than [0, 360).
+    double adjustedPosition = position.to<double>() + 180.0;
+
+    // Defensive coding; could use std::fmod(adjustedPosition, 360.0) here, but
+    // this should never run and is more readable in this context.
+    while (adjustedPosition < 0.0)
+    {
+        adjustedPosition += 360.0;
+    }
+    while (adjustedPosition >= 0.0)
+    {
+        adjustedPosition -= 360.0;
+    }
+
+    m_rioPIDController->SetSetpoint(adjustedPosition);
 
     if (m_rio)
     {
@@ -604,7 +625,7 @@ void SwerveModule::SetTurningPosition(const units::angle::degree_t position) noe
     DoSafeDriveMotor("SetTurningPosition()", [&]() -> void {
         if (m_turningPID)
         {
-            if (m_turningPID->SetReference((position / 360_deg) * 4096.0, rev::kPosition) != rev::CANError::kOk)
+            if (m_turningPID->SetReference(adjustedPosition / 360.0 * 4096.0, rev::kPosition) != rev::CANError::kOk)
             {
                 throw std::runtime_error("SetReference()"); // XXX warn
             }
@@ -696,10 +717,10 @@ void SwerveModule::SetDesiredState(const frc::SwerveModuleState &referenceState)
 
     int position = GetAbsolutePosition();
 
-    if (position != -1)
+    if (position != -1 && false) // XXX don't do this when debugging (maybe never in test mode?)
     {
         state = frc::SwerveModuleState::Optimize(
-            referenceState, frc::Rotation2d(360_deg * static_cast<double>(position) / 4096.0));
+            referenceState, frc::Rotation2d((static_cast<double>(position - 2048) / 4096.0) * 360_deg);
     }
 
     SetTurningPosition(state.angle.Degrees());

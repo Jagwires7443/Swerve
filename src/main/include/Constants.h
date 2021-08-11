@@ -94,7 +94,7 @@ namespace firmware
 
 namespace pidf
 {
-    constexpr double kTurningPositionP = 0.0;
+    constexpr double kTurningPositionP = 0.001;
     constexpr double kTurningPositionI = 0.0;
     constexpr double kTurningPositionIZ = 0.0;
     constexpr double kTurningPositionIM = 0.0;
