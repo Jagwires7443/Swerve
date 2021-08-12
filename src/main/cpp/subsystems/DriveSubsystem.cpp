@@ -253,19 +253,17 @@ void DriveSubsystem::TestPeriodic() noexcept
   m_rearLeftSwerveModule->TestPeriodic(!m_run);
   m_rearRightSwerveModule->TestPeriodic(!m_run);
 
-  // XXX needed?  apparently so, although seems Periodic should be getting called in Test mode -- check again
-  m_frontLeftSwerveModule->Periodic(m_run);
-  m_frontRightSwerveModule->Periodic(m_run);
-  m_rearLeftSwerveModule->Periodic(m_run);
-  m_rearRightSwerveModule->Periodic(m_run);
+  // TestPeriodic() is not hooked into the scheduler, so normal Periodic() is
+  // not called.  Do this here.
+  Periodic();
 
   if (m_displayMode->GetEntry().GetBoolean(true))
   {
-    // Display commanded information
+    // XXX Display commanded information
   }
   else
   {
-    // Display actual information (as below)
+    // XXX Display actual information (as below)
   }
 
   m_frontLeftGyro.Set((m_frontLeftSwerveModule->GetTurningPosition() + 180_deg) / 1_deg);
@@ -419,7 +417,8 @@ void DriveSubsystem::ResetEncoders() noexcept
 void DriveSubsystem::SetModuleStates(wpi::array<frc::SwerveModuleState, 4> &desiredStates) noexcept
 {
   // m_run and m_limit are only used in Test Mode, by default they do not
-  // modify anything here
+  // modify anything here.  In Test Mode, they switch between control via the
+  // Swerve tab or via the individual Swerve Module tabs.
   if (m_run)
   {
     auto [frontLeft, frontRight, rearLeft, rearRight] = desiredStates;

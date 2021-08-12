@@ -196,7 +196,7 @@ public:
     void Set(const double &value) noexcept { m_value = value; }
 
   private:
-    double m_value = 0.0;
+    double m_value{0.0};
   };
 
 private:
@@ -224,47 +224,47 @@ private:
   const std::string m_name;
   const int m_driveMotorCanID;
   const int m_turningMotorCanID;
-  int m_alignmentOffset = 0;
-  bool m_driveMotorBrake = false;
+  int m_alignmentOffset{0};
+  bool m_driveMotorBrake{false};
 
   // These are set based on the mechanical and electrical construction of the
   // robot, and are never expected to change.
-  const bool m_driveMotorInverted = physical::kDriveMotorInverted;
-  const bool m_turningMotorInverted = physical::kTurningMotorInverted;
-  const bool m_turningEncoderInverted = physical::kTurningEncoderInverted;
+  const bool m_driveMotorInverted{physical::kDriveMotorInverted};
+  const bool m_turningMotorInverted{physical::kTurningMotorInverted};
+  const bool m_turningEncoderInverted{physical::kTurningEncoderInverted};
 
   // Until REV bug for continuous rotation is fixed, must do turning PID on the
   // roboRIO.  Setting m_rio false allows testing turning PID on the SPARK MAX.
-  const bool m_rio = true;
-  double m_rioPIDF = pidf::kTurningPositionF;
+  const bool m_rio{true};
+  double m_rioPIDF{pidf::kTurningPositionF};
   std::unique_ptr<frc2::PIDController> m_rioPIDController;
 
   // Turning position PID
-  double m_turningPosition_P = pidf::kTurningPositionP;
-  double m_turningPosition_I = pidf::kTurningPositionI;
-  double m_turningPosition_IZ = pidf::kTurningPositionIZ;
-  double m_turningPosition_IM = pidf::kTurningPositionIM;
-  double m_turningPosition_D = pidf::kTurningPositionD;
-  double m_turningPosition_DF = pidf::kTurningPositionDF;
-  double m_turningPosition_F = pidf::kTurningPositionF;
+  double m_turningPosition_P{pidf::kTurningPositionP};
+  double m_turningPosition_I{pidf::kTurningPositionI};
+  double m_turningPosition_IZ{pidf::kTurningPositionIZ};
+  double m_turningPosition_IM{pidf::kTurningPositionIM};
+  double m_turningPosition_D{pidf::kTurningPositionD};
+  double m_turningPosition_DF{pidf::kTurningPositionDF};
+  double m_turningPosition_F{pidf::kTurningPositionF};
 
   // Drive position PID
-  double m_drivePosition_P = pidf::kDrivePositionP;
-  double m_drivePosition_I = pidf::kDrivePositionI;
-  double m_drivePosition_IZ = pidf::kDrivePositionIZ;
-  double m_drivePosition_IM = pidf::kDrivePositionIM;
-  double m_drivePosition_D = pidf::kDrivePositionD;
-  double m_drivePosition_DF = pidf::kDrivePositionDF;
-  double m_drivePosition_F = pidf::kDrivePositionF;
+  double m_drivePosition_P{pidf::kDrivePositionP};
+  double m_drivePosition_I{pidf::kDrivePositionI};
+  double m_drivePosition_IZ{pidf::kDrivePositionIZ};
+  double m_drivePosition_IM{pidf::kDrivePositionIM};
+  double m_drivePosition_D{pidf::kDrivePositionD};
+  double m_drivePosition_DF{pidf::kDrivePositionDF};
+  double m_drivePosition_F{pidf::kDrivePositionF};
 
   // Drive velocity PID
-  double m_driveVelocity_P = pidf::kDriveVelocityP;
-  double m_driveVelocity_I = pidf::kDriveVelocityI;
-  double m_driveVelocity_IZ = pidf::kDriveVelocityIZ;
-  double m_driveVelocity_IM = pidf::kDriveVelocityIM;
-  double m_driveVelocity_D = pidf::kDriveVelocityD;
-  double m_driveVelocity_DF = pidf::kDriveVelocityDF;
-  double m_driveVelocity_F = pidf::kDriveVelocityF;
+  double m_driveVelocity_P{pidf::kDriveVelocityP};
+  double m_driveVelocity_I{pidf::kDriveVelocityI};
+  double m_driveVelocity_IZ{pidf::kDriveVelocityIZ};
+  double m_driveVelocity_IM{pidf::kDriveVelocityIM};
+  double m_driveVelocity_D{pidf::kDriveVelocityD};
+  double m_driveVelocity_DF{pidf::kDriveVelocityDF};
+  double m_driveVelocity_F{pidf::kDriveVelocityF};
 
   std::unique_ptr<frc::DigitalInput> m_turningPositionSource;
   std::unique_ptr<frc::DutyCycle> m_turningPosition;
@@ -278,8 +278,8 @@ private:
   std::unique_ptr<rev::CANPIDController> m_drivePID;
 
   std::chrono::steady_clock::time_point m_verifyMotorControllersWhen;
-  bool m_turningMotorControllerValidated = true;
-  bool m_driveMotorControllerValidated = true;
+  bool m_turningMotorControllerValidated{true};
+  bool m_driveMotorControllerValidated{true};
   std::string m_turningMotorControllerConfig;
   std::string m_driveMotorControllerConfig;
 
@@ -287,36 +287,36 @@ private:
   HeadingGyro m_headingGyro;
 
   // Test Mode (only) data, obtained but not owned.
-  frc::SimpleWidget *m_turningPositionStatus = nullptr;
-  frc::SimpleWidget *m_turningPositionFrequency = nullptr;
-  frc::SimpleWidget *m_turningPositionOutput = nullptr;
-  frc::SimpleWidget *m_turningPositionAlignment = nullptr;
-  frc::SimpleWidget *m_turningPositionPosition = nullptr;
-  frc::ComplexWidget *m_turningPositionHeading = nullptr;
+  frc::SimpleWidget *m_turningPositionStatus{nullptr};
+  frc::SimpleWidget *m_turningPositionFrequency{nullptr};
+  frc::SimpleWidget *m_turningPositionOutput{nullptr};
+  frc::SimpleWidget *m_turningPositionAlignment{nullptr};
+  frc::SimpleWidget *m_turningPositionPosition{nullptr};
+  frc::ComplexWidget *m_turningPositionHeading{nullptr};
 
-  frc::SimpleWidget *m_turningMotorStatus = nullptr;
-  frc::SimpleWidget *m_turningMotorTemperature = nullptr;
-  frc::SimpleWidget *m_turningMotorFaults = nullptr;
-  frc::SimpleWidget *m_turningMotorStickyFaults = nullptr;
-  frc::SimpleWidget *m_turningMotorVoltage = nullptr;
-  frc::SimpleWidget *m_turningMotorCurrent = nullptr;
-  frc::SimpleWidget *m_turningMotorSpeed = nullptr;
-  frc::SimpleWidget *m_turningMotorPercent = nullptr;
-  frc::SimpleWidget *m_turningMotorDistance = nullptr;
-  frc::SimpleWidget *m_turningMotorVelocity = nullptr;
-  frc::SimpleWidget *m_turningMotorControl = nullptr;
-  frc::SimpleWidget *m_turningMotorReset = nullptr;
+  frc::SimpleWidget *m_turningMotorStatus{nullptr};
+  frc::SimpleWidget *m_turningMotorTemperature{nullptr};
+  frc::SimpleWidget *m_turningMotorFaults{nullptr};
+  frc::SimpleWidget *m_turningMotorStickyFaults{nullptr};
+  frc::SimpleWidget *m_turningMotorVoltage{nullptr};
+  frc::SimpleWidget *m_turningMotorCurrent{nullptr};
+  frc::SimpleWidget *m_turningMotorSpeed{nullptr};
+  frc::SimpleWidget *m_turningMotorPercent{nullptr};
+  frc::SimpleWidget *m_turningMotorDistance{nullptr};
+  frc::SimpleWidget *m_turningMotorVelocity{nullptr};
+  frc::SimpleWidget *m_turningMotorControl{nullptr};
+  frc::SimpleWidget *m_turningMotorReset{nullptr};
 
-  frc::SimpleWidget *m_driveMotorStatus = nullptr;
-  frc::SimpleWidget *m_driveMotorTemperature = nullptr;
-  frc::SimpleWidget *m_driveMotorFaults = nullptr;
-  frc::SimpleWidget *m_driveMotorStickyFaults = nullptr;
-  frc::SimpleWidget *m_driveMotorVoltage = nullptr;
-  frc::SimpleWidget *m_driveMotorCurrent = nullptr;
-  frc::SimpleWidget *m_driveMotorSpeed = nullptr;
-  frc::SimpleWidget *m_driveMotorPercent = nullptr;
-  frc::SimpleWidget *m_driveMotorDistance = nullptr;
-  frc::SimpleWidget *m_driveMotorVelocity = nullptr;
-  frc::SimpleWidget *m_driveMotorControl = nullptr;
-  frc::SimpleWidget *m_driveMotorReset = nullptr;
+  frc::SimpleWidget *m_driveMotorStatus{nullptr};
+  frc::SimpleWidget *m_driveMotorTemperature{nullptr};
+  frc::SimpleWidget *m_driveMotorFaults{nullptr};
+  frc::SimpleWidget *m_driveMotorStickyFaults{nullptr};
+  frc::SimpleWidget *m_driveMotorVoltage{nullptr};
+  frc::SimpleWidget *m_driveMotorCurrent{nullptr};
+  frc::SimpleWidget *m_driveMotorSpeed{nullptr};
+  frc::SimpleWidget *m_driveMotorPercent{nullptr};
+  frc::SimpleWidget *m_driveMotorDistance{nullptr};
+  frc::SimpleWidget *m_driveMotorVelocity{nullptr};
+  frc::SimpleWidget *m_driveMotorControl{nullptr};
+  frc::SimpleWidget *m_driveMotorReset{nullptr};
 };

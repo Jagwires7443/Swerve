@@ -201,7 +201,7 @@ public:
     void Set(const double &value) noexcept { m_value = value; }
 
   private:
-    double m_value = 0.0;
+    double m_value{0.0};
   };
 
 private:
@@ -241,26 +241,26 @@ private:
   bool m_run{true};
 
   // Test Mode (only) data, obtained but not owned.
-  frc::ComplexWidget *m_frontLeftTurning = nullptr;
-  frc::ComplexWidget *m_frontRightTurning = nullptr;
-  frc::ComplexWidget *m_rearLeftTurning = nullptr;
-  frc::ComplexWidget *m_rearRightTurning = nullptr;
+  frc::ComplexWidget *m_frontLeftTurning{nullptr};
+  frc::ComplexWidget *m_frontRightTurning{nullptr};
+  frc::ComplexWidget *m_rearLeftTurning{nullptr};
+  frc::ComplexWidget *m_rearRightTurning{nullptr};
 
-  frc::ComplexWidget *m_turningPositionPID = nullptr;
-  frc::ComplexWidget *m_drivePositionPID = nullptr;
-  frc::ComplexWidget *m_driveVelocityPID = nullptr;
+  frc::ComplexWidget *m_turningPositionPID{nullptr};
+  frc::ComplexWidget *m_drivePositionPID{nullptr};
+  frc::ComplexWidget *m_driveVelocityPID{nullptr};
 
-  frc::SimpleWidget *m_frontLeftDrive = nullptr;
-  frc::SimpleWidget *m_frontRightDrive = nullptr;
-  frc::SimpleWidget *m_rearLeftDrive = nullptr;
-  frc::SimpleWidget *m_rearRightDrive = nullptr;
+  frc::SimpleWidget *m_frontLeftDrive{nullptr};
+  frc::SimpleWidget *m_frontRightDrive{nullptr};
+  frc::SimpleWidget *m_rearLeftDrive{nullptr};
+  frc::SimpleWidget *m_rearRightDrive{nullptr};
 
-  frc::SimpleWidget *m_swerveRotation = nullptr;
-  frc::SimpleWidget *m_swerveX = nullptr;
-  frc::SimpleWidget *m_swerveY = nullptr;
-  frc::SimpleWidget *m_swerveStatus = nullptr;
-  frc::SimpleWidget *m_driveLimit = nullptr;
-  frc::SimpleWidget *m_swerveEnable = nullptr;
-  frc::SimpleWidget *m_displayMode = nullptr;
-  frc::ComplexWidget *m_commandChooser = nullptr;
+  frc::SimpleWidget *m_swerveRotation{nullptr};
+  frc::SimpleWidget *m_swerveX{nullptr};
+  frc::SimpleWidget *m_swerveY{nullptr};
+  frc::SimpleWidget *m_swerveStatus{nullptr};
+  frc::SimpleWidget *m_driveLimit{nullptr};
+  frc::SimpleWidget *m_swerveEnable{nullptr};
+  frc::SimpleWidget *m_displayMode{nullptr};
+  frc::ComplexWidget *m_commandChooser{nullptr};
 };
