@@ -1,11 +1,3 @@
-#if 0
-#include <networktables/NetworkTable.h>
-
-  // XXX
-  // Test Mode (only) instance of network table entry ...
-  std::shared_ptr<nt::NetworkTable> m_turningPositionPIDTable;
-#endif
-
 #pragma once
 
 #include "Constants.h"
@@ -29,6 +21,7 @@
 #include <chrono>
 #include <functional>
 #include <memory>
+#include <optional>
 #include <string>
 
 // Some SPARK MAX settings must be set (and saved) in advance, via "REV
@@ -200,8 +193,8 @@ public:
   };
 
 private:
-  int GetAbsolutePosition(const int frequency, const double output) noexcept;
-  int GetAbsolutePosition() noexcept;
+  std::optional<int> GetAbsolutePosition(const int frequency, const double output, const bool applyOffset) noexcept;
+  std::optional<units::angle::degree_t> GetAbsolutePosition() noexcept;
 
   void DoSafeTurningMotor(const char *const what, std::function<void()> work) noexcept;
   bool DidSafeTurningMotor(const char *const what, std::function<bool()> work) noexcept;
@@ -236,7 +229,7 @@ private:
   // Until REV bug for continuous rotation is fixed, must do turning PID on the
   // roboRIO.  Setting m_rio false allows testing turning PID on the SPARK MAX.
   const bool m_rio{true};
-  double m_rioPIDF{pidf::kTurningPositionF};
+  double m_rioPID_F{pidf::kTurningPositionF};
   std::unique_ptr<frc2::PIDController> m_rioPIDController;
 
   // Turning position PID
@@ -283,6 +276,9 @@ private:
   std::string m_turningMotorControllerConfig;
   std::string m_driveMotorControllerConfig;
 
+  // Last commanded turn heading.
+  units::angle::degree_t m_commandedHeading{0};
+
   // Test Mode (only) instance of a "Gyro", needed for Shuffleboard UI.
   HeadingGyro m_headingGyro;
 
@@ -290,6 +286,9 @@ private:
   frc::SimpleWidget *m_turningPositionStatus{nullptr};
   frc::SimpleWidget *m_turningPositionFrequency{nullptr};
   frc::SimpleWidget *m_turningPositionOutput{nullptr};
+  frc::SimpleWidget *m_turningPositionCommanded{nullptr};
+  frc::SimpleWidget *m_turningPositionCommandDiscrepancy{nullptr};
+  frc::SimpleWidget *m_turningPositionEncoderDiscrepancy{nullptr};
   frc::SimpleWidget *m_turningPositionAlignment{nullptr};
   frc::SimpleWidget *m_turningPositionPosition{nullptr};
   frc::ComplexWidget *m_turningPositionHeading{nullptr};

@@ -178,16 +178,24 @@ void DriveSubsystem::TestInit() noexcept
 
   m_frontLeftTurning = &shuffleboardLayoutSwerveTurning.Add("Front Left", m_frontLeftGyro)
                             .WithPosition(0, 0)
-                            .WithWidget(frc::BuiltInWidgets::kGyro);
+                            .WithWidget(frc::BuiltInWidgets::kGyro)
+                            .WithProperties(wpi::StringMap<std::shared_ptr<nt::Value>>{
+                                std::make_pair("Counter clockwise", nt::Value::MakeBoolean(true))});
   m_frontRightTurning = &shuffleboardLayoutSwerveTurning.Add("Front Right", m_frontRightGyro)
                              .WithPosition(0, 1)
-                             .WithWidget(frc::BuiltInWidgets::kGyro);
+                             .WithWidget(frc::BuiltInWidgets::kGyro)
+                             .WithProperties(wpi::StringMap<std::shared_ptr<nt::Value>>{
+                                 std::make_pair("Counter clockwise", nt::Value::MakeBoolean(true))});
   m_rearLeftTurning = &shuffleboardLayoutSwerveTurning.Add("Rear Left", m_rearLeftGyro)
                            .WithPosition(0, 1)
-                           .WithWidget(frc::BuiltInWidgets::kGyro);
+                           .WithWidget(frc::BuiltInWidgets::kGyro)
+                           .WithProperties(wpi::StringMap<std::shared_ptr<nt::Value>>{
+                               std::make_pair("Counter clockwise", nt::Value::MakeBoolean(true))});
   m_rearRightTurning = &shuffleboardLayoutSwerveTurning.Add("Rear Right", m_rearRightGyro)
                             .WithPosition(1, 1)
-                            .WithWidget(frc::BuiltInWidgets::kGyro);
+                            .WithWidget(frc::BuiltInWidgets::kGyro)
+                            .WithProperties(wpi::StringMap<std::shared_ptr<nt::Value>>{
+                                std::make_pair("Counter clockwise", nt::Value::MakeBoolean(true))});
 
   m_turningPositionPID = &shuffleboardLayoutPIDSettings.Add("Turning Position", *m_turningPositionPIDController)
                               .WithPosition(0, 0)
@@ -212,13 +220,13 @@ void DriveSubsystem::TestInit() noexcept
                           .WithPosition(1, 1)
                           .WithWidget(frc::BuiltInWidgets::kNumberBar);
 
-  m_swerveRotation = &shuffleboardLayoutControls.Add("Rotation", 0.0)
+  m_swerveRotation = &shuffleboardLayoutControls.Add("Rot +CCW", 0.0)
                           .WithPosition(0, 0)
                           .WithWidget(frc::BuiltInWidgets::kNumberBar);
-  m_swerveX = &shuffleboardLayoutControls.Add("X", 0.0)
+  m_swerveX = &shuffleboardLayoutControls.Add("X +Forward", 0.0)
                    .WithPosition(1, 0)
                    .WithWidget(frc::BuiltInWidgets::kNumberBar);
-  m_swerveY = &shuffleboardLayoutControls.Add("Y", 0.0)
+  m_swerveY = &shuffleboardLayoutControls.Add("Y +Leftward", 0.0)
                    .WithPosition(1, 1)
                    .WithWidget(frc::BuiltInWidgets::kNumberBar);
   m_swerveStatus = &shuffleboardLayoutControls.Add("Status", false)
@@ -459,7 +467,7 @@ double DriveSubsystem::GetTurnRate() noexcept
   double rate = 0.0;
   if (m_ahrs)
   {
-    rate = m_ahrs->GetRate(); // In degrees/second.
+    rate = -m_ahrs->GetRate(); // In degrees/second.
   }
 
   return rate;

@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <units/angle.h>
 #include <units/angular_velocity.h>
 #include <units/length.h>
 #include <units/velocity.h>
@@ -21,10 +22,10 @@ namespace physical
 {
     // Alignment constants, for each swerve module.  Specified on [0, 4095]
     // "count" scale, in (dimensionless) angular units.
-    constexpr int kFrontLeftAlignmentOffset = 981;
-    constexpr int kFrontRightAlignmentOffset = 3060;
-    constexpr int kRearLeftAlignmentOffset = 814;
-    constexpr int kRearRightAlignmentOffset = 1467;
+    constexpr int kFrontLeftAlignmentOffset = 3029;  // 981
+    constexpr int kFrontRightAlignmentOffset = 1012; // 3060
+    constexpr int kRearLeftAlignmentOffset = 2862;   // 814
+    constexpr int kRearRightAlignmentOffset = 3515;  // 1467
 
     // XXX explain these -- what they do, effects of too high or too low, empirically set
 

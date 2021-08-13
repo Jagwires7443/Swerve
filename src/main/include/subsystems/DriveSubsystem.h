@@ -58,7 +58,7 @@ public:
   bool SetTurnInPlace(bool) noexcept;                                      // Orient modules for spin in-place
   bool SetTurningPosition(const units::angle::degree_t position) noexcept; // Orient modules same direction
   bool SetDriveBrakeMode(bool brake) noexcept;                             // Brake or coast
-  bool SetTurnByAngle(units::degree_t angle) noexcept;                     // Drive once set to spin in-place
+  bool SetTurnByAngle(units::degree_t angle) noexcept;                     // Spin, once set to spin in-place
   bool SetDriveDistance(units::length::meter_t distance) noexcept;         // Drive for specified distance
 
   /**
