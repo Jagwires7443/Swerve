@@ -225,6 +225,10 @@ std::optional<int> SwerveModule::GetAbsolutePosition(const int frequency, const 
     {
         position -= 4096;
     }
+    if (position < -2048)
+    {
+        position += 4096;
+    }
 
     return position;
 }
@@ -551,7 +555,6 @@ void SwerveModule::Periodic(const bool setMotors) noexcept
     }
 
     double calculated = m_rioPIDController->Calculate(GetTurningPosition().to<double>());
-    // XXX double setpoint = m_rioPIDController->GetSetpoint();
 
     // Feedforward is a form of open-loop control.  For turning, there is not
     // much to do, but add in a constant value based only on the direction of
@@ -625,7 +628,7 @@ void SwerveModule::SetTurningPosition(const units::angle::degree_t position) noe
 // this is handled here instead.  These conversions factor in gear/belt ratios,
 // plus the circumference of the wheel (diameter * pi).  This yields units of
 // meters and meters/second.  The conversion factor is determined empirically
-// and represents rotations per meter.
+// and represents rotations per meter or, (fractional) meters per rotation.
 
 units::length::meter_t SwerveModule::GetDriveDistance() noexcept
 {
@@ -663,7 +666,7 @@ units::velocity::meters_per_second_t SwerveModule::GetDriveVelocity() noexcept
         if (m_driveEncoder)
         {
             // GetVelocity() returns revolutions per minute, need meters per second
-            result = ((m_driveEncoder->GetVelocity() / 60.0) * physical::kDriveMetersPerRotation) / 1_s;
+            result = m_driveEncoder->GetVelocity() * physical::kDriveMetersPerRotation / 60_s;
         }
     });
 
@@ -676,7 +679,7 @@ void SwerveModule::SetDriveVelocity(units::velocity::meters_per_second_t velocit
         if (m_drivePID)
         {
             if (m_drivePID->SetReference(
-                    (velocity * 1_s / physical::kDriveMetersPerRotation).to<double>(), rev::kVelocity, 1) != rev::CANError::kOk)
+                    (velocity * 60_s / physical::kDriveMetersPerRotation).to<double>(), rev::kVelocity, 1) != rev::CANError::kOk)
             {
                 throw std::runtime_error("SetReference()"); // XXX warn
             }
@@ -853,6 +856,7 @@ void SwerveModule::TestPeriodic(const bool setMotors) noexcept
     double setTurning = m_turningMotorControl->GetEntry().GetDouble(0.0);
     bool zeroDrive = m_driveMotorReset->GetEntry().GetBoolean(false);
     double setDrive = m_driveMotorControl->GetEntry().GetDouble(0.0);
+
     if (zeroTurning)
     {
         m_rioPIDController->Reset();
@@ -861,6 +865,7 @@ void SwerveModule::TestPeriodic(const bool setMotors) noexcept
         m_turningMotorControl->GetEntry().SetDouble(0.0);
         setTurning = 0.0;
     }
+
     if (zeroDrive)
     {
         m_driveMotorReset->GetEntry().SetBoolean(false);
@@ -887,17 +892,30 @@ void SwerveModule::TestPeriodic(const bool setMotors) noexcept
     auto position = GetAbsolutePosition(frequency, output, false);
 
     // This provides a rough means of zeroing the turning position.
-    if (zeroTurning && position.has_value())
+    if (position.has_value())
     {
-        // Work out new alignment so position becomes zero.
-        if (position.value() == 0)
+        if (zeroTurning)
         {
-            m_alignmentOffset = 0;
+            // Work out new alignment so position becomes zero.
+            m_alignmentOffset = -position.value();
+            if (m_alignmentOffset == 2048)
+            {
+                m_alignmentOffset = -2048;
+            }
+
+            position = 0;
         }
         else
         {
-            m_alignmentOffset = 4096 - position.value();
-            position = 0;
+            position = position.value() + m_alignmentOffset;
+            if (position > 2047)
+            {
+                position = position.value() - 4096;
+            }
+            if (position < -2048)
+            {
+                position = position.value() + 4096;
+            }
         }
     }
 
@@ -960,6 +978,7 @@ void SwerveModule::TestPeriodic(const bool setMotors) noexcept
                     throw std::runtime_error("ClearFaults()");
                 }
             }
+
             if (setMotors)
             {
                 m_turningMotor->Set(setTurning);
@@ -970,19 +989,32 @@ void SwerveModule::TestPeriodic(const bool setMotors) noexcept
     // Compute the discrepancy between the absolute encoder and the incremental
     // encoder (as seen by the motor controller).  This should be very small if
     // the module is not turning as the data is being collected.  However, if
-    // the module is turning, some discrepany is expected.  This data is sent
-    // for possible/optional use via manual editing of smart dashboard, or by
-    // simply browsing the raw network tables data.  For example, it may be
-    // useful to graph position over time, as the module is rotated at constant
-    // angular velocity.  This would make it easy to find the min/max or to
-    // spot any discontinuities, for example.
-    int discrepancy = 0;
+    // the module is turning, some discrepany is expected.  For some of these
+    // parameters, it may be useful to graph values over time, as the module is
+    // rotated at constant angular velocity.  This would make it easy to find
+    // the min/max or to spot any discontinuities, for example.
+    double commandedHeading = m_commandedHeading.to<double>();
+    double actualHeading{0.0};
+    double error{0.0};
+    int discrepancy{0};
 
     if (position.has_value())
     {
-        units::angle::degree_t encoderPosition = units::angle::turn_t{distance};
+        actualHeading = static_cast<double>(position.value()) * 360.0 / 4096.0;
+        error = actualHeading - commandedHeading;
 
-        while (encoderPosition < 180_deg)
+        if (error < -180.0)
+        {
+            error += 360.0;
+        }
+        else if (error >= 180.0)
+        {
+            error -= 360.0;
+        }
+
+        units::angle::turn_t encoderPosition{distance};
+
+        while (encoderPosition < -180_deg)
         {
             encoderPosition += 360_deg;
         }
@@ -991,8 +1023,16 @@ void SwerveModule::TestPeriodic(const bool setMotors) noexcept
             encoderPosition -= 360_deg;
         }
 
-        discrepancy = position.value() - std::lround(
-                                             units::angle::turn_t(encoderPosition).to<double>() * 4096.0);
+        discrepancy = position.value() - std::lround(encoderPosition.to<double>() * 4096.0);
+
+        if (discrepancy < -2048)
+        {
+            discrepancy += 4096;
+        }
+        else if (discrepancy > 2047)
+        {
+            discrepancy -= 4096;
+        }
     }
 
     // Update shuffleboard data for DutyCycle object.
@@ -1004,16 +1044,13 @@ void SwerveModule::TestPeriodic(const bool setMotors) noexcept
         position = 0;
     }
 
-    double actualHeading = static_cast<double>(position.value()) * 360.0 / 4096.0;
-    double commandedHeading = m_commandedHeading.to<double>();
-
     m_turningPositionFrequency->GetEntry().SetDouble(static_cast<double>(frequency));
     m_turningPositionOutput->GetEntry().SetDouble(output);
     m_turningPositionAlignment->GetEntry().SetDouble(static_cast<double>(m_alignmentOffset));
     m_turningPositionPosition->GetEntry().SetDouble(static_cast<double>(position.value()));
     m_headingGyro.Set(actualHeading);
     m_turningPositionCommanded->GetEntry().SetDouble(commandedHeading);
-    m_turningPositionCommandDiscrepancy->GetEntry().SetDouble(commandedHeading - actualHeading);
+    m_turningPositionCommandDiscrepancy->GetEntry().SetDouble(error);
     m_turningPositionEncoderDiscrepancy->GetEntry().SetDouble(static_cast<double>(discrepancy));
 
     // Update shuffleboard data for turning CANSparkMax.
@@ -1074,6 +1111,7 @@ void SwerveModule::TestPeriodic(const bool setMotors) noexcept
                     throw std::runtime_error("ClearFaults()");
                 }
             }
+
             if (setMotors)
             {
                 m_driveMotor->Set(setDrive);

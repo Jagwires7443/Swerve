@@ -20,12 +20,12 @@
  */
 namespace physical
 {
-    // Alignment constants, for each swerve module.  Specified on [0, 4095]
+    // Alignment constants, for each swerve module.  Specified on [-2048, 2048)
     // "count" scale, in (dimensionless) angular units.
-    constexpr int kFrontLeftAlignmentOffset = 3029;  // 981
-    constexpr int kFrontRightAlignmentOffset = 1012; // 3060
-    constexpr int kRearLeftAlignmentOffset = 2862;   // 814
-    constexpr int kRearRightAlignmentOffset = 3515;  // 1467
+    constexpr int kFrontLeftAlignmentOffset = -1067;
+    constexpr int kFrontRightAlignmentOffset = +1012;
+    constexpr int kRearLeftAlignmentOffset = -1234;
+    constexpr int kRearRightAlignmentOffset = -581;
 
     // XXX explain these -- what they do, effects of too high or too low, empirically set
 
@@ -90,7 +90,7 @@ namespace physical
 
 namespace firmware
 {
-    constexpr int kSparkMaxFirmwareVersion = 0x1050002;
+    constexpr int kSparkMaxFirmwareVersion = 0x1050002; // Version 1.5.2.
 }
 
 namespace pidf

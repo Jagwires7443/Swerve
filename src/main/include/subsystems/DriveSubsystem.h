@@ -219,6 +219,12 @@ private:
   // 4 defines the number of modules
   std::unique_ptr<frc::SwerveDriveOdometry<4>> m_odometry;
 
+  // Test Mode (only) last commanded states (for optional display).
+  frc::SwerveModuleState m_commandedStateFrontLeft{};
+  frc::SwerveModuleState m_commandedStateFrontRight{};
+  frc::SwerveModuleState m_commandedStateRearLeft{};
+  frc::SwerveModuleState m_commandedStateRearRight{};
+
   // Test Mode (only) instance of a "Gyro", needed for Shuffleboard UI.
   HeadingGyro m_frontLeftGyro;
   HeadingGyro m_frontRightGyro;

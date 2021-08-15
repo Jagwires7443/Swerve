@@ -1,3 +1,7 @@
+// XXX optimize in normal, run stop stops module panel control (add m_run to module and set it)
+
+// XXX do gyro for field relative
+
 // Copyright (c) FIRST and other WPILib contributors.
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
@@ -267,22 +271,30 @@ void DriveSubsystem::TestPeriodic() noexcept
 
   if (m_displayMode->GetEntry().GetBoolean(true))
   {
-    // XXX Display commanded information
+    // Display commanded information
+    m_frontLeftGyro.Set(m_commandedStateFrontLeft.angle.Degrees() / 1_deg);
+    m_frontRightGyro.Set(m_commandedStateFrontRight.angle.Degrees() / 1_deg);
+    m_rearLeftGyro.Set(m_commandedStateRearLeft.angle.Degrees() / 1_deg);
+    m_rearRightGyro.Set(m_commandedStateRearRight.angle.Degrees() / 1_deg);
+
+    m_frontLeftDrive->GetEntry().SetDouble(m_commandedStateFrontLeft.speed / physical::kMaxDriveSpeed);
+    m_frontRightDrive->GetEntry().SetDouble(m_commandedStateFrontRight.speed / physical::kMaxDriveSpeed);
+    m_rearLeftDrive->GetEntry().SetDouble(m_commandedStateRearLeft.speed / physical::kMaxDriveSpeed);
+    m_rearRightDrive->GetEntry().SetDouble(m_commandedStateRearRight.speed / physical::kMaxDriveSpeed);
   }
   else
   {
-    // XXX Display actual information (as below)
+    // Display actual information (as read by sensors).
+    m_frontLeftGyro.Set(m_frontLeftSwerveModule->GetTurningPosition() / 1_deg);
+    m_frontRightGyro.Set(m_frontRightSwerveModule->GetTurningPosition() / 1_deg);
+    m_rearLeftGyro.Set(m_rearLeftSwerveModule->GetTurningPosition() / 1_deg);
+    m_rearRightGyro.Set(m_rearRightSwerveModule->GetTurningPosition() / 1_deg);
+
+    m_frontLeftDrive->GetEntry().SetDouble(m_frontLeftSwerveModule->GetDriveVelocity() / physical::kMaxDriveSpeed);
+    m_frontRightDrive->GetEntry().SetDouble(m_frontRightSwerveModule->GetDriveVelocity() / physical::kMaxDriveSpeed);
+    m_rearLeftDrive->GetEntry().SetDouble(m_rearLeftSwerveModule->GetDriveVelocity() / physical::kMaxDriveSpeed);
+    m_rearRightDrive->GetEntry().SetDouble(m_rearRightSwerveModule->GetDriveVelocity() / physical::kMaxDriveSpeed);
   }
-
-  m_frontLeftGyro.Set((m_frontLeftSwerveModule->GetTurningPosition() + 180_deg) / 1_deg);
-  m_frontRightGyro.Set((m_frontRightSwerveModule->GetTurningPosition() + 180_deg) / 1_deg);
-  m_rearLeftGyro.Set((m_rearLeftSwerveModule->GetTurningPosition() + 180_deg) / 1_deg);
-  m_rearRightGyro.Set((m_rearRightSwerveModule->GetTurningPosition() + 180_deg) / 1_deg);
-
-  m_frontLeftDrive->GetEntry().SetDouble(m_frontLeftSwerveModule->GetDriveVelocity() / physical::kMaxDriveSpeed);
-  m_frontRightDrive->GetEntry().SetDouble(m_frontRightSwerveModule->GetDriveVelocity() / physical::kMaxDriveSpeed);
-  m_rearLeftDrive->GetEntry().SetDouble(m_rearLeftSwerveModule->GetDriveVelocity() / physical::kMaxDriveSpeed);
-  m_rearRightDrive->GetEntry().SetDouble(m_rearRightSwerveModule->GetDriveVelocity() / physical::kMaxDriveSpeed);
 
   m_swerveStatus->GetEntry().SetBoolean(GetStatus());
   m_swerveRotation->GetEntry().SetDouble(m_rotation);
@@ -424,12 +436,18 @@ void DriveSubsystem::ResetEncoders() noexcept
 
 void DriveSubsystem::SetModuleStates(wpi::array<frc::SwerveModuleState, 4> &desiredStates) noexcept
 {
+  auto [frontLeft, frontRight, rearLeft, rearRight] = desiredStates;
+
+  m_commandedStateFrontLeft = frontLeft;
+  m_commandedStateFrontRight = frontRight;
+  m_commandedStateRearLeft = rearLeft;
+  m_commandedStateRearRight = rearRight;
+
   // m_run and m_limit are only used in Test Mode, by default they do not
   // modify anything here.  In Test Mode, they switch between control via the
   // Swerve tab or via the individual Swerve Module tabs.
   if (m_run)
   {
-    auto [frontLeft, frontRight, rearLeft, rearRight] = desiredStates;
 
     frontLeft.speed *= m_limit;
     frontRight.speed *= m_limit;
@@ -445,7 +463,7 @@ void DriveSubsystem::SetModuleStates(wpi::array<frc::SwerveModuleState, 4> &desi
 
 units::degree_t DriveSubsystem::GetHeading() const noexcept
 {
-  double heading = 0.0;
+  double heading{0.0};
   if (m_ahrs)
   {
     heading = m_ahrs->GetAngle(); // In degrees.
@@ -464,7 +482,7 @@ void DriveSubsystem::ZeroHeading() noexcept
 
 double DriveSubsystem::GetTurnRate() noexcept
 {
-  double rate = 0.0;
+  double rate{0.0};
   if (m_ahrs)
   {
     rate = -m_ahrs->GetRate(); // In degrees/second.
