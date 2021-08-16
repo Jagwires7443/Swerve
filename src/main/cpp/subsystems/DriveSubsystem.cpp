@@ -258,7 +258,7 @@ void DriveSubsystem::TestInit() noexcept
 void DriveSubsystem::TestPeriodic() noexcept
 {
   m_run = m_swerveEnable->GetEntry().GetBoolean(false);
-  m_limit = m_driveLimit->GetEntry().GetDouble(0.0);
+  m_limit = m_driveLimit->GetEntry().GetDouble(0.1);
 
   m_frontLeftSwerveModule->TestPeriodic(!m_run);
   m_frontRightSwerveModule->TestPeriodic(!m_run);
@@ -412,6 +412,20 @@ void DriveSubsystem::Drive(units::meters_per_second_t xSpeed,
                            units::meters_per_second_t ySpeed, units::radians_per_second_t rot,
                            bool fieldRelative) noexcept
 {
+  // XXX Do deadband -- should be elsewhere
+  if (rot / physical::kMaxTurnRate > -0.05 && rot / physical::kMaxTurnRate < 0.05)
+  {
+    rot = 0_rpm;
+  }
+  if (xSpeed / physical::kMaxDriveSpeed > -0.05 && xSpeed / physical::kMaxDriveSpeed < 0.05)
+  {
+    xSpeed = 0_mps;
+  }
+  if (ySpeed / physical::kMaxDriveSpeed > -0.05 && ySpeed / physical::kMaxDriveSpeed < 0.05)
+  {
+    ySpeed = 0_mps;
+  }
+
   m_rotation = rot / physical::kMaxTurnRate;
   m_x = xSpeed / physical::kMaxDriveSpeed;
   m_y = ySpeed / physical::kMaxDriveSpeed;

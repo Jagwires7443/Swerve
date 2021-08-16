@@ -22,10 +22,10 @@ namespace physical
 {
     // Alignment constants, for each swerve module.  Specified on [-2048, 2048)
     // "count" scale, in (dimensionless) angular units.
-    constexpr int kFrontLeftAlignmentOffset = -1067;
-    constexpr int kFrontRightAlignmentOffset = +1012;
-    constexpr int kRearLeftAlignmentOffset = -1234;
-    constexpr int kRearRightAlignmentOffset = -581;
+    constexpr int kFrontLeftAlignmentOffset = +1467;
+    constexpr int kFrontRightAlignmentOffset = +814;
+    constexpr int kRearLeftAlignmentOffset = -1036;
+    constexpr int kRearRightAlignmentOffset = +981;
 
     // XXX explain these -- what they do, effects of too high or too low, empirically set
 
@@ -69,18 +69,18 @@ namespace physical
     constexpr units::meter_t kWheelBase = 22.5_in;
 
     // CAN ID and Digital I/O Port assignments.
-    constexpr int kFrontLeftDriveMotorCanID = 7;
-    constexpr int kFrontLeftTurningMotorCanID = 8;
-    constexpr int kFrontLeftTurningEncoderPort = 0;
-    constexpr int kFrontRightDriveMotorCanID = 1;
-    constexpr int kFrontRightTurningMotorCanID = 2;
-    constexpr int kFrontRightTurningEncoderPort = 1;
-    constexpr int kRearLeftDriveMotorCanID = 5;
-    constexpr int kRearLeftTurningMotorCanID = 6;
-    constexpr int kRearLeftTurningEncoderPort = 2;
-    constexpr int kRearRightDriveMotorCanID = 3;
-    constexpr int kRearRightTurningMotorCanID = 4;
-    constexpr int kRearRightTurningEncoderPort = 3;
+    constexpr int kFrontLeftDriveMotorCanID = 3;
+    constexpr int kFrontLeftTurningMotorCanID = 4;
+    constexpr int kFrontLeftTurningEncoderPort = 3;
+    constexpr int kFrontRightDriveMotorCanID = 5;
+    constexpr int kFrontRightTurningMotorCanID = 6;
+    constexpr int kFrontRightTurningEncoderPort = 2;
+    constexpr int kRearLeftDriveMotorCanID = 1;
+    constexpr int kRearLeftTurningMotorCanID = 2;
+    constexpr int kRearLeftTurningEncoderPort = 1;
+    constexpr int kRearRightDriveMotorCanID = 7;
+    constexpr int kRearRightTurningMotorCanID = 8;
+    constexpr int kRearRightTurningEncoderPort = 0;
 
     // These can flip because of gearing or wiring.
     constexpr bool kDriveMotorInverted = false;
@@ -95,13 +95,13 @@ namespace firmware
 
 namespace pidf
 {
-    constexpr double kTurningPositionP = 0.001;
+    constexpr double kTurningPositionP = 0.003;
     constexpr double kTurningPositionI = 0.0;
     constexpr double kTurningPositionIZ = 0.0;
     constexpr double kTurningPositionIM = 0.0;
     constexpr double kTurningPositionD = 0.0;
     constexpr double kTurningPositionDF = 0.0;
-    constexpr double kTurningPositionF = 0.0;
+    constexpr double kTurningPositionF = 0.004;
 
     constexpr double kDrivePositionP = 0.0;
     constexpr double kDrivePositionI = 0.0;

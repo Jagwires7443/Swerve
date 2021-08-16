@@ -678,11 +678,14 @@ void SwerveModule::SetDriveVelocity(units::velocity::meters_per_second_t velocit
     DoSafeDriveMotor("SetDriveVelocity()", [&]() -> void {
         if (m_drivePID)
         {
+#if 0
             if (m_drivePID->SetReference(
                     (velocity * 60_s / physical::kDriveMetersPerRotation).to<double>(), rev::kVelocity, 1) != rev::CANError::kOk)
             {
                 throw std::runtime_error("SetReference()"); // XXX warn
             }
+#endif
+            m_driveMotor->SetVoltage(velocity * 1_s / physical::kDriveMetersPerRotation * 3_V);
         }
     });
 }
@@ -704,7 +707,7 @@ void SwerveModule::SetDesiredState(const frc::SwerveModuleState &referenceState)
 
     auto position = GetAbsolutePosition();
 
-    if (position.has_value() && false) // XXX don't do this when debugging (maybe never in test mode?)
+    if (position.has_value()) // XXX don't do this when debugging (maybe never in test mode?)
     {
         state = frc::SwerveModuleState::Optimize(
             referenceState, frc::Rotation2d(position.value()));
