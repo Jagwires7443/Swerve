@@ -36,6 +36,9 @@ class DriveSubsystem : public frc2::SubsystemBase
 public:
   DriveSubsystem() noexcept;
 
+  DriveSubsystem(const DriveSubsystem &) = delete;
+  DriveSubsystem &operator=(const DriveSubsystem &) = delete;
+
   /**
    * Will be called periodically whenever the CommandScheduler runs.
    */
@@ -94,7 +97,7 @@ public:
    *
    * @return the robot's heading in degrees, from -180 to 180
    */
-  units::degree_t GetHeading() const noexcept;
+  units::degree_t GetHeading() noexcept;
 
   /**
    * Zeroes the heading of the robot.
@@ -205,6 +208,8 @@ public:
   };
 
 private:
+  void DoSafeIMU(const char *const what, std::function<void()> work) noexcept;
+
   // The gyro sensor
   std::unique_ptr<AHRS> m_ahrs;
 

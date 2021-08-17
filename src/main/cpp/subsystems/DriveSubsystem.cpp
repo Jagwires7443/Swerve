@@ -1,4 +1,6 @@
 // XXX optimize in normal, run stop stops module panel control (add m_run to module and set it)
+// XXX feild-oriented
+// XXX feeder/shooter
 
 // XXX do gyro for field relative
 
@@ -34,11 +36,13 @@ DriveSubsystem::DriveSubsystem() noexcept
   // Allow up to 20 seconds for callibration; it is supposed to be much faster,
   // when the IMU is kept still.  Consider using lights or other feedback so it
   // is very clear when this is occurring.
-#if 0
-// XXX create "safe" wrapper for IMU and use here
-  try
-  {
+  DoSafeIMU("ctor", [&]() -> void {
     m_ahrs = std::make_unique<AHRS>(frc::SPI::Port::kMXP);
+
+    if (!m_ahrs)
+    {
+      throw std::runtime_error("m_ahrs");
+    }
 
     using namespace std::chrono_literals;
 
@@ -53,12 +57,7 @@ DriveSubsystem::DriveSubsystem() noexcept
         break;
       }
     }
-  }
-  catch (...)
-  {
-    m_ahrs = nullptr;
-  }
-#endif
+  });
 
   // Initial position (third parameter) defaulted to "frc::Pose2d()"; initial
   // angle (second parameter) is automatically zeroed by navX initialization.
@@ -94,6 +93,26 @@ DriveSubsystem::DriveSubsystem() noexcept
       physical::kRearRightAlignmentOffset);
 }
 
+void DriveSubsystem::DoSafeIMU(const char *const what, std::function<void()> work) noexcept
+{
+  try
+  {
+    work();
+  }
+  catch (const std::exception &e)
+  {
+    m_ahrs = nullptr;
+
+    std::printf("navX IMU %s exception: %s.\n", what, e.what());
+  }
+  catch (...)
+  {
+    m_ahrs = nullptr;
+
+    std::printf("navX IMU %s unknown exception.\n", what);
+  }
+}
+
 void DriveSubsystem::Periodic() noexcept
 {
   m_frontLeftSwerveModule->Periodic(m_run);
@@ -101,19 +120,29 @@ void DriveSubsystem::Periodic() noexcept
   m_rearLeftSwerveModule->Periodic(m_run);
   m_rearRightSwerveModule->Periodic(m_run);
 
-#if 0
+  frc::Rotation2d botRot;
+
+  DoSafeIMU("GetRotation2d()", [&]() -> void {
+    botRot = m_ahrs->GetRotation2d();
+  });
+
   // Implementation of subsystem periodic method goes here.
-  m_odometry->Update(m_ahrs->GetRotation2d(), m_frontLeftSwerveModule->GetState(),
+  m_odometry->Update(botRot, m_frontLeftSwerveModule->GetState(),
                      m_frontRightSwerveModule->GetState(), m_rearLeftSwerveModule->GetState(),
                      m_rearRightSwerveModule->GetState());
-#endif
 }
 
 frc::Pose2d DriveSubsystem::GetPose() noexcept { return m_odometry->GetPose(); }
 
 void DriveSubsystem::ResetOdometry(frc::Pose2d pose) noexcept
 {
-  m_odometry->ResetPosition(pose, m_ahrs->GetRotation2d());
+  frc::Rotation2d botRot;
+
+  DoSafeIMU("GetRotation2d()", [&]() -> void {
+    botRot = m_ahrs->GetRotation2d();
+  });
+
+  m_odometry->ResetPosition(pose, botRot);
 }
 
 void DriveSubsystem::TestInit() noexcept
@@ -430,9 +459,15 @@ void DriveSubsystem::Drive(units::meters_per_second_t xSpeed,
   m_x = xSpeed / physical::kMaxDriveSpeed;
   m_y = ySpeed / physical::kMaxDriveSpeed;
 
+  frc::Rotation2d botRot;
+
+  DoSafeIMU("GetRotation2d()", [&]() -> void {
+    botRot = m_ahrs->GetRotation2d();
+  });
+
   wpi::array<frc::SwerveModuleState, 4> states = kDriveKinematics.ToSwerveModuleStates(
       fieldRelative ? frc::ChassisSpeeds::FromFieldRelativeSpeeds(
-                          xSpeed, ySpeed, rot, m_ahrs->GetRotation2d()) // XXX Gyro might need negating
+                          xSpeed, ySpeed, rot, botRot) // XXX Gyro might need negating
                     : frc::ChassisSpeeds{xSpeed, ySpeed, rot});
 
   kDriveKinematics.NormalizeWheelSpeeds(&states, physical::kMaxDriveSpeed);
@@ -475,32 +510,31 @@ void DriveSubsystem::SetModuleStates(wpi::array<frc::SwerveModuleState, 4> &desi
   }
 }
 
-units::degree_t DriveSubsystem::GetHeading() const noexcept
+units::degree_t DriveSubsystem::GetHeading() noexcept
 {
-  double heading{0.0};
-  if (m_ahrs)
-  {
-    heading = m_ahrs->GetAngle(); // In degrees.
-  }
+  units::degree_t heading{0};
 
-  return units::degree_t{heading};
+  DoSafeIMU("GetAngle()", [&]() -> void {
+    heading = units::degree_t{m_ahrs->GetAngle()}; // In degrees already.
+  });
+
+  return heading;
 }
 
 void DriveSubsystem::ZeroHeading() noexcept
 {
-  if (m_ahrs)
-  {
+  DoSafeIMU("ZeroYaw()", [&]() -> void {
     m_ahrs->ZeroYaw();
-  }
+  });
 }
 
 double DriveSubsystem::GetTurnRate() noexcept
 {
   double rate{0.0};
-  if (m_ahrs)
-  {
-    rate = -m_ahrs->GetRate(); // In degrees/second.
-  }
+
+  DoSafeIMU("GetRate()", [&]() -> void {
+    rate = -m_ahrs->GetRate(); // In degrees/second (units not used in WPILib).
+  });
 
   return rate;
 }
