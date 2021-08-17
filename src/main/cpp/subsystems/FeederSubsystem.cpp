@@ -2,6 +2,8 @@
 
 #include "Constants.h"
 
+#include <units/voltage.h>
+
 FeederSubsystem::FeederSubsystem() noexcept
 {
     DoSafeFeederMotors("ctor", [&]() -> void {
@@ -40,4 +42,15 @@ void FeederSubsystem::DoSafeFeederMotors(const char *const what, std::function<v
     }
 }
 
-void FeederSubsystem::Set(double percent) noexcept {}
+void FeederSubsystem::Set(double percent) noexcept
+{
+    DoSafeFeederMotors("Set()", [&]() -> void {
+        if (!m_feederOneMotor || !m_feederTwoMotor)
+        {
+            return;
+        }
+
+        m_feederOneMotor->SetVoltage(percent * 12_V);
+        m_feederTwoMotor->SetVoltage(percent * 12_V);
+    });
+}

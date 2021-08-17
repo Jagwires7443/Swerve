@@ -2,6 +2,8 @@
 
 #include "Constants.h"
 
+#include <units/voltage.h>
+
 ShooterSubsystem::ShooterSubsystem() noexcept
 {
     DoSafeShooterMotors("ctor", [&]() -> void {
@@ -54,4 +56,15 @@ void ShooterSubsystem::DoSafeShooterMotors(const char *const what, std::function
     }
 }
 
-void ShooterSubsystem::Set(double percent) noexcept {}
+void ShooterSubsystem::Set(double percent) noexcept
+{
+    DoSafeShooterMotors("Set()", [&]() -> void {
+        if (!m_shooterOneMotor || !m_shooterTwoMotor)
+        {
+            return;
+        }
+
+        m_shooterOneMotor->SetVoltage(percent * 12_V);
+        m_shooterTwoMotor->SetVoltage(percent * 12_V);
+    });
+}

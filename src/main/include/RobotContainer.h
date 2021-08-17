@@ -9,6 +9,8 @@
 
 #include "commands/ExampleCommand.h"
 #include "subsystems/DriveSubsystem.h"
+#include "subsystems/FeederSubsystem.h"
+#include "subsystems/ShooterSubsystem.h"
 
 /**
  * This class is where the bulk of the robot should be declared.  Since
@@ -30,6 +32,8 @@ public:
 private:
   // The robot's subsystems and commands are defined here...
   DriveSubsystem m_driveSubsystem;
+  FeederSubsystem m_feederSubsystem;
+  ShooterSubsystem m_shooterSubsystem;
   ExampleCommand m_autonomousCommand;
   frc::XboxController m_xbox{0};
 

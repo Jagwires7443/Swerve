@@ -5,6 +5,7 @@
 #include "Constants.h"
 #include "RobotContainer.h"
 
+#include <frc2/command/button/JoystickButton.h>
 #include <frc2/command/Command.h>
 #include <frc2/command/RunCommand.h>
 
@@ -29,19 +30,25 @@ RobotContainer::RobotContainer() noexcept : m_autonomousCommand(&m_driveSubsyste
   // Finally, the other controller joystick is used for commanding rotation and
   // things work out so that this is also an inverted X axis.
   m_driveSubsystem.SetDefaultCommand(frc2::RunCommand(
-      [this]() {
+      [&]() -> void {
         m_driveSubsystem.Drive(
             -m_xbox.GetY(frc::GenericHID::JoystickHand::kLeftHand) * physical::kMaxDriveSpeed,
             -m_xbox.GetX(frc::GenericHID::JoystickHand::kLeftHand) * physical::kMaxDriveSpeed,
             -m_xbox.GetX(frc::GenericHID::JoystickHand::kRightHand) * physical::kMaxTurnRate,
-            false);
+            true);
       },
       {&m_driveSubsystem}));
 }
 
 void RobotContainer::ConfigureButtonBindings() noexcept
 {
-  // Configure your button bindings here
+  frc2::JoystickButton(&m_xbox, static_cast<int>(frc::XboxController::Button::kBumperLeft))
+      .WhenPressed(frc2::RunCommand([&]() -> void { m_feederSubsystem.Set(0.8); }, {&m_feederSubsystem}))
+      .WhenReleased(frc2::RunCommand([&]() -> void { m_feederSubsystem.Set(0.0); }, {&m_feederSubsystem}));
+
+  frc2::JoystickButton(&m_xbox, static_cast<int>(frc::XboxController::Button::kBumperRight))
+      .WhenPressed(frc2::RunCommand([&]() -> void { m_shooterSubsystem.Set(1.0); }, {&m_shooterSubsystem}))
+      .WhenReleased(frc2::RunCommand([&]() -> void { m_shooterSubsystem.Set(0.0); }, {&m_shooterSubsystem}));
 }
 
 frc2::Command *RobotContainer::GetAutonomousCommand() noexcept

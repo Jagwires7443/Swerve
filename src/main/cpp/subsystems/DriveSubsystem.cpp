@@ -1,8 +1,4 @@
 // XXX optimize in normal, run stop stops module panel control (add m_run to module and set it)
-// XXX feild-oriented
-// XXX feeder/shooter
-
-// XXX do gyro for field relative
 
 // Copyright (c) FIRST and other WPILib contributors.
 // Open Source Software; you can modify and/or share it under the terms of
