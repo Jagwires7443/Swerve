@@ -78,5 +78,5 @@ void RobotContainer::TestPeriodic() noexcept
       -m_xbox.GetY(frc::GenericHID::JoystickHand::kLeftHand) * physical::kMaxDriveSpeed,
       -m_xbox.GetX(frc::GenericHID::JoystickHand::kLeftHand) * physical::kMaxDriveSpeed,
       -m_xbox.GetX(frc::GenericHID::JoystickHand::kRightHand) * physical::kMaxTurnRate,
-      false);
+      true);
 }

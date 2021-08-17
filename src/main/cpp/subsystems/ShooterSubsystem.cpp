@@ -19,8 +19,8 @@ ShooterSubsystem::ShooterSubsystem() noexcept
             throw std::runtime_error("m_feederMotor");
         }
 
-        m_shooterOneMotor->SetInverted(true);
-        m_shooterTwoMotor->SetInverted(false);
+        m_shooterOneMotor->SetInverted(false);
+        m_shooterTwoMotor->SetInverted(true);
     });
 }
 

@@ -119,7 +119,10 @@ void DriveSubsystem::Periodic() noexcept
   frc::Rotation2d botRot;
 
   DoSafeIMU("GetRotation2d()", [&]() -> void {
-    botRot = m_ahrs->GetRotation2d();
+    if (m_ahrs)
+    {
+      botRot = m_ahrs->GetRotation2d();
+    }
   });
 
   // Implementation of subsystem periodic method goes here.
@@ -135,7 +138,10 @@ void DriveSubsystem::ResetOdometry(frc::Pose2d pose) noexcept
   frc::Rotation2d botRot;
 
   DoSafeIMU("GetRotation2d()", [&]() -> void {
-    botRot = m_ahrs->GetRotation2d();
+    if (m_ahrs)
+    {
+      botRot = m_ahrs->GetRotation2d();
+    }
   });
 
   m_odometry->ResetPosition(pose, botRot);
@@ -458,12 +464,15 @@ void DriveSubsystem::Drive(units::meters_per_second_t xSpeed,
   frc::Rotation2d botRot;
 
   DoSafeIMU("GetRotation2d()", [&]() -> void {
-    botRot = m_ahrs->GetRotation2d();
+    if (m_ahrs)
+    {
+      botRot = m_ahrs->GetRotation2d();
+    }
   });
 
   wpi::array<frc::SwerveModuleState, 4> states = kDriveKinematics.ToSwerveModuleStates(
       fieldRelative ? frc::ChassisSpeeds::FromFieldRelativeSpeeds(
-                          xSpeed, ySpeed, rot, botRot) // XXX Gyro might need negating
+                          xSpeed, ySpeed, rot, botRot)
                     : frc::ChassisSpeeds{xSpeed, ySpeed, rot});
 
   kDriveKinematics.NormalizeWheelSpeeds(&states, physical::kMaxDriveSpeed);
@@ -491,8 +500,9 @@ void DriveSubsystem::SetModuleStates(wpi::array<frc::SwerveModuleState, 4> &desi
   // m_run and m_limit are only used in Test Mode, by default they do not
   // modify anything here.  In Test Mode, they switch between control via the
   // Swerve tab or via the individual Swerve Module tabs.
-  if (m_run)
+  if (true) // m_run
   {
+    m_limit = 0.05; // XXX
 
     frontLeft.speed *= m_limit;
     frontRight.speed *= m_limit;
@@ -511,7 +521,10 @@ units::degree_t DriveSubsystem::GetHeading() noexcept
   units::degree_t heading{0};
 
   DoSafeIMU("GetAngle()", [&]() -> void {
-    heading = units::degree_t{m_ahrs->GetAngle()}; // In degrees already.
+    if (m_ahrs)
+    {
+      heading = units::degree_t{m_ahrs->GetAngle()}; // In degrees already.
+    }
   });
 
   return heading;
@@ -520,7 +533,10 @@ units::degree_t DriveSubsystem::GetHeading() noexcept
 void DriveSubsystem::ZeroHeading() noexcept
 {
   DoSafeIMU("ZeroYaw()", [&]() -> void {
-    m_ahrs->ZeroYaw();
+    if (m_ahrs)
+    {
+      m_ahrs->ZeroYaw();
+    }
   });
 }
 
@@ -529,7 +545,10 @@ double DriveSubsystem::GetTurnRate() noexcept
   double rate{0.0};
 
   DoSafeIMU("GetRate()", [&]() -> void {
-    rate = -m_ahrs->GetRate(); // In degrees/second (units not used in WPILib).
+    if (m_ahrs)
+    {
+      rate = -m_ahrs->GetRate(); // In degrees/second (units not used in WPILib).
+    }
   });
 
   return rate;
