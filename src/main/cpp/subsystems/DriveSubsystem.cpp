@@ -55,6 +55,8 @@ DriveSubsystem::DriveSubsystem() noexcept
     }
   });
 
+  // XXX ZeroHeading();
+
   // Initial position (third parameter) defaulted to "frc::Pose2d()"; initial
   // angle (second parameter) is automatically zeroed by navX initialization.
   m_odometry = std::make_unique<frc::SwerveDriveOdometry<4>>(kDriveKinematics, 0_deg);
@@ -500,7 +502,7 @@ void DriveSubsystem::SetModuleStates(wpi::array<frc::SwerveModuleState, 4> &desi
   // m_run and m_limit are only used in Test Mode, by default they do not
   // modify anything here.  In Test Mode, they switch between control via the
   // Swerve tab or via the individual Swerve Module tabs.
-  if (true) // m_run
+  if (m_run)
   {
     m_limit = 0.05; // XXX
 

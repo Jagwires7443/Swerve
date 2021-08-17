@@ -470,8 +470,6 @@ void SwerveModule::SetDriveBrakeMode(bool brake) noexcept {}
 
 void SwerveModule::ResetTurning() noexcept
 {
-    m_rioPIDController->Reset();
-
     auto position = GetAbsolutePosition();
 
     if (position.has_value())
@@ -862,8 +860,6 @@ void SwerveModule::TestPeriodic(const bool setMotors) noexcept
 
     if (zeroTurning)
     {
-        m_rioPIDController->Reset();
-
         m_turningMotorReset->GetEntry().SetBoolean(false);
         m_turningMotorControl->GetEntry().SetDouble(0.0);
         setTurning = 0.0;
