@@ -116,6 +116,11 @@ public:
   SwerveModule(const SwerveModule &) = delete;
   SwerveModule &operator=(const SwerveModule &) = delete;
 
+  // This method is needed in order to calculate and apply PID settings for
+  // turning, when this control is being handled in this code (rather than on
+  // the motor controller, which doesn't work at present due to a REV issue).
+  // This also provides a means to alter the drive motor control based on the
+  // commanded and actual turning position.
   void Periodic(const bool setMotors) noexcept;
 
   // Is swerve module healthy and motor controller configuration current?
@@ -136,11 +141,19 @@ public:
   // Act.  Command the swerve module to take on the specified absolute heading.
   void SetTurningPosition(const units::angle::degree_t position) noexcept;
 
+  // Determine if commanded turning position has been achieved, to within
+  // specified tolerance.
+  bool CheckTurningPosition(const units::angle::degree_t tolerance = 2_deg) noexcept;
+
   // Drive is normally oriented around velocity, but distance enables odometry,
   // simple dead reckoning, etc.  Possibly useful for autonomous driving.
 
   // Control brake/coast; the initial setting is brake mode off (coast mode).
-  void SetDriveBrakeMode(bool brake) noexcept;
+  // Breaking is only applied when this mode has been enabled, when the
+  // commanded distance has been reached (or the commanded velocity is zero),
+  // and when the turning position has been reached, within the default
+  // tolerance of CheckTurningPosition().
+  void SetDriveBrakeMode(bool brake) noexcept { m_commandedBrake = brake; }
 
   // Sense.  Return the cumulative drive distance since the last reset.
   units::length::meter_t GetDriveDistance() noexcept;
@@ -218,7 +231,6 @@ private:
   const int m_driveMotorCanID;
   const int m_turningMotorCanID;
   int m_alignmentOffset{0};
-  bool m_driveMotorBrake{false};
 
   // These are set based on the mechanical and electrical construction of the
   // robot, and are never expected to change.
@@ -229,6 +241,7 @@ private:
   // Until REV bug for continuous rotation is fixed, must do turning PID on the
   // roboRIO.  Setting m_rio false allows testing turning PID on the SPARK MAX.
   const bool m_rio{true};
+  bool m_brakeApplied{false};
   double m_rioPID_F{pidf::kTurningPositionF};
   std::unique_ptr<frc2::PIDController> m_rioPIDController;
 
@@ -270,14 +283,19 @@ private:
   std::unique_ptr<rev::CANEncoder> m_driveEncoder;
   std::unique_ptr<rev::CANPIDController> m_drivePID;
 
+  // XXX perform check one time in ctor?
   std::chrono::steady_clock::time_point m_verifyMotorControllersWhen;
   bool m_turningMotorControllerValidated{true};
   bool m_driveMotorControllerValidated{true};
   std::string m_turningMotorControllerConfig;
   std::string m_driveMotorControllerConfig;
 
-  // Last commanded turn heading.
+  // Last commanded turn heading and drive distance/speed.
   units::angle::degree_t m_commandedHeading{0};
+  bool m_commandedBrake{false};
+  bool m_distanceVelocityNot{false};
+  units::length::meter_t m_commandedDistance{0};
+  units::velocity::meters_per_second_t m_commandedVelocity{0};
 
   // Test Mode (only) instance of a "Gyro", needed for Shuffleboard UI.
   HeadingGyro m_headingGyro;

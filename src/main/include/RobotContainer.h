@@ -12,6 +12,8 @@
 #include "subsystems/FeederSubsystem.h"
 #include "subsystems/ShooterSubsystem.h"
 
+#include <tuple>
+
 /**
  * This class is where the bulk of the robot should be declared.  Since
  * Command-based is a "declarative" paradigm, very little robot logic should
@@ -30,6 +32,8 @@ public:
   void TestPeriodic() noexcept;
 
 private:
+  std::tuple<double, double, double> GetDriveTeleopControls() noexcept;
+
   // The robot's subsystems and commands are defined here...
   DriveSubsystem m_driveSubsystem;
   FeederSubsystem m_feederSubsystem;

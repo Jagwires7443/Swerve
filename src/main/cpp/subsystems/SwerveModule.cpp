@@ -1,30 +1,15 @@
 // See https://github.com/wpilibsuite/allwpilib/blob/main/wpilibcExamples/src/main/cpp/examples/SwerveControllerCommand/cpp/subsystems/SwerveModule.cpp.
 // See https://docs.revrobotics.com/sparkmax/operating-modes/closed-loop-control.
 
-// XXX
-// XXX file/update REV bug on wrapping issues; add code to do PID in code here, in case bug is there
-// XXX
-// XXX index pin forces wrap (in H/W); other than this quadrature encoders act as though they are on a number line
-// XXX but, number lines in computers wrap (at some point, depends on number of bits and format)
-// XXX this is analogous to drining around the world and wrapping, even though you think of just driving on
-// XXX can do brief discussion on discrete rates/derivatives, but this is it for the H/W
-// XXX signed/unsigned ints, mention float/double and cover int bit patterns
-// XXX
-// XXX swerve module has two common use cases for encoder data:
-// XXX continuous/periodic; 1st is drive wheel, the number line scenario -- 2nd is steering, the periodic/wrapping scenario
-// XXX linear -- do not want to wrap (ever), watch out for numeric overflow because it can happen
-// XXX circular -- want to wrap at user-defined point (may not match encoder index/counts)
-// XXX distance (since reference, e.g. zero or last check?) vs. position
-// XXX velocity is always based on distance (but watch out for H/W wrap!), acceleration (used internally) is always based on velocity
-// XXX but, if wrapping is done properly, distance and velocity will be the same either way
-// XXX mention measurement of counts/time -- two ways, record time at count, or records counts at fixed in time sample points
-// XXX
-// XXX position reporting can always use distance (since can be fixed on roboRIO), position control must be circular though!
-// XXX choice between unsigned/signed can be handled on roboRIO, or specify a range
-// XXX (it would make sense to report wrapped position when in the given mode though)
-// XXX circular position control based on error term -- need to compute two distances (on in each direction) and use smallest magnitude
-// XXX in reality, want to *always* compute two distances and use the shorter -- just use H/W over/underflow wrap as default
-// XXX
+// A REV Robotics issue prevents running closed-loop control on the turning
+// motor controller: https://trello.com/c/bvnPPcZD/108-add-continuous-pid-capability.
+// The `m_rio` flag controls where this control is done, but the code is here
+// to implement this either on the roboRIO or on the SPARK MAX.
+
+// XXX robot drives very poorly when battery is low, need an idiot light for this condition
+// XXX stay in coast, unless in brake mode, module is aligned, and commanded speed is zero
+
+// XXX Auto-/Tele-Init need to ZeroHeading() and restore various test mode settings -- Test-Init() also
 
 // XXX add using
 
@@ -274,7 +259,7 @@ void SwerveModule::DoSafeTurningMotor(const char *const what, std::function<void
 
 bool SwerveModule::DidSafeTurningMotor(const char *const what, std::function<bool()> work) noexcept
 {
-    bool result = false;
+    bool result{false};
 
     try
     {
@@ -330,7 +315,7 @@ void SwerveModule::DoSafeDriveMotor(const char *const what, std::function<void()
 
 bool SwerveModule::DidSafeDriveMotor(const char *const what, std::function<bool()> work) noexcept
 {
-    bool result = false;
+    bool result{false};
 
     try
     {
@@ -465,35 +450,71 @@ bool SwerveModule::GetStatus() noexcept
            m_driveMotor && m_driveMotorControllerValidated;
 }
 
-// XXX
-void SwerveModule::SetDriveBrakeMode(bool brake) noexcept {}
+void SwerveModule::Periodic(const bool setMotors) noexcept
+{
+    // XXX do brake application/release here?
+
+    if (!m_rio)
+    {
+        return;
+    }
+
+    double calculated = m_rioPIDController->Calculate(GetTurningPosition().to<double>());
+
+    // Feedforward is a form of open-loop control.  For turning, there is not
+    // much to do, but add in a constant value based only on the direction of
+    // any error.  This is essentially how much output is needed to get going
+    // and can help to compensate for friction.
+    if (calculated > 0)
+    {
+        calculated += m_rioPID_F;
+    }
+    else if (calculated < 0)
+    {
+        calculated -= m_rioPID_F;
+    }
+
+    if (!setMotors)
+    {
+        return;
+    }
+
+    DoSafeTurningMotor("Periodic()", [&]() -> void {
+        if (m_turningMotor)
+        {
+            m_turningMotor->SetVoltage(calculated * 12_V);
+        }
+    });
+}
 
 void SwerveModule::ResetTurning() noexcept
 {
     auto position = GetAbsolutePosition();
-
-    if (position.has_value())
-    {
-        DoSafeTurningMotor("ResetTurning()", [&]() -> void {
-            if (m_turningEncoder)
-            {
-                // Turning position is in rotations.  Any under/overflow should
-                // be wrapped but, in any case, a reset will place things
-                // within [-0.5, +0.5).
-                if (m_turningEncoder->SetPosition(
-                        units::angle::turn_t(position.value()).to<double>()) != rev::CANError::kOk)
-                {
-                    throw std::runtime_error("SetPosition()"); // XXX warn
-                }
-            }
-        });
-    }
 
     // If absolute position isn't available, there's no basis for resetting and
     // it's better to just let any old data stand.  This is when manual
     // pointing of the modules before a match could ensure a reasonable zero.
     // Of course, if anything is reset, etc. all bets are off -- still, leaving
     // things alone is the best that can be done under these circumstances.
+
+    if (!position.has_value())
+    {
+        return;
+    }
+
+    DoSafeTurningMotor("ResetTurning()", [&]() -> void {
+        if (m_turningEncoder)
+        {
+            // Turning position is in rotations.  Any under/overflow should
+            // be wrapped but, in any case, a reset will place things
+            // within [-0.5, +0.5).
+            if (m_turningEncoder->SetPosition(
+                    units::angle::turn_t(position.value()).to<double>()) != rev::CANError::kOk)
+            {
+                throw std::runtime_error("SetPosition()"); // XXX warn
+            }
+        }
+    });
 }
 
 void SwerveModule::ResetDrive() noexcept
@@ -545,41 +566,6 @@ units::angle::degree_t SwerveModule::GetTurningPosition() noexcept
     return encoderPosition;
 }
 
-void SwerveModule::Periodic(const bool setMotors) noexcept
-{
-    if (!m_rio)
-    {
-        return;
-    }
-
-    double calculated = m_rioPIDController->Calculate(GetTurningPosition().to<double>());
-
-    // Feedforward is a form of open-loop control.  For turning, there is not
-    // much to do, but add in a constant value based only on the direction of
-    // any error.  This is essentially how much output is needed to get going
-    // and can help to compensate for friction.
-    if (calculated > 0)
-    {
-        calculated += m_rioPID_F;
-    }
-    else if (calculated < 0)
-    {
-        calculated -= m_rioPID_F;
-    }
-
-    if (!setMotors)
-    {
-        return;
-    }
-
-    DoSafeDriveMotor("Periodic()", [&]() -> void {
-        if (m_turningMotor)
-        {
-            m_turningMotor->SetVoltage(calculated * 12_V);
-        }
-    });
-}
-
 void SwerveModule::SetTurningPosition(const units::angle::degree_t position) noexcept
 {
     units::angle::degree_t adjustedPosition = position;
@@ -605,7 +591,7 @@ void SwerveModule::SetTurningPosition(const units::angle::degree_t position) noe
         return;
     }
 
-    DoSafeDriveMotor("SetTurningPosition()", [&]() -> void {
+    DoSafeTurningMotor("SetTurningPosition()", [&]() -> void {
         if (m_turningPID)
         {
             if (m_turningPID->SetReference(
@@ -615,6 +601,22 @@ void SwerveModule::SetTurningPosition(const units::angle::degree_t position) noe
             }
         }
     });
+}
+
+bool SwerveModule::CheckTurningPosition(const units::angle::degree_t tolerance) noexcept
+{
+    units::angle::degree_t error = GetTurningPosition() - m_commandedHeading;
+
+    if (error < -180_deg)
+    {
+        error += 360_deg;
+    }
+    else if (error >= 180_deg)
+    {
+        error -= 360_deg;
+    }
+
+    return error >= -tolerance && error < tolerance;
 }
 
 // Drive position and velocity are in rotations and rotations/second,
@@ -644,16 +646,30 @@ units::length::meter_t SwerveModule::GetDriveDistance() noexcept
 
 void SwerveModule::SetDriveDistance(units::length::meter_t distance) noexcept
 {
+    m_distanceVelocityNot = true;
+    m_commandedDistance = distance;
+
+    const bool turningAligned = CheckTurningPosition();
+
     DoSafeDriveMotor("SetDriveDistance()", [&]() -> void {
         if (m_drivePID)
         {
-            if (m_drivePID->SetReference(
-                    (distance / physical::kDriveMetersPerRotation).to<double>(), rev::kPosition) != rev::CANError::kOk)
+            if (turningAligned)
             {
-                throw std::runtime_error("SetReference()"); // XXX warn
+                if (m_drivePID->SetReference(
+                        (distance / physical::kDriveMetersPerRotation).to<double>(), rev::kPosition) != rev::CANError::kOk)
+                {
+                    throw std::runtime_error("SetReference()"); // XXX warn
+                }
+            }
+            else
+            {
+                m_driveMotor->StopMotor();
             }
         }
     });
+
+    // XXX do brake application/release
 }
 
 units::velocity::meters_per_second_t SwerveModule::GetDriveVelocity() noexcept
@@ -673,19 +689,34 @@ units::velocity::meters_per_second_t SwerveModule::GetDriveVelocity() noexcept
 
 void SwerveModule::SetDriveVelocity(units::velocity::meters_per_second_t velocity) noexcept
 {
+    m_distanceVelocityNot = false;
+    m_commandedVelocity = velocity;
+
+    const bool turningAligned = CheckTurningPosition();
+
     DoSafeDriveMotor("SetDriveVelocity()", [&]() -> void {
-        if (m_drivePID)
+        if (m_driveMotor && m_drivePID)
         {
-#if 0
-            if (m_drivePID->SetReference(
-                    (velocity * 60_s / physical::kDriveMetersPerRotation).to<double>(), rev::kVelocity, 1) != rev::CANError::kOk)
+            if (turningAligned)
             {
-                throw std::runtime_error("SetReference()"); // XXX warn
-            }
+#if 0
+                if (m_drivePID->SetReference(
+                        (velocity * 60_s / physical::kDriveMetersPerRotation).to<double>(), rev::kVelocity, 1) != rev::CANError::kOk)
+                {
+                    throw std::runtime_error("SetReference()"); // XXX warn
+                }
+#else
+                m_driveMotor->SetVoltage(velocity * 1_s / physical::kDriveMetersPerRotation * 3_V);
 #endif
-            m_driveMotor->SetVoltage(velocity * 1_s / physical::kDriveMetersPerRotation * 3_V);
+            }
+            else
+            {
+                m_driveMotor->StopMotor();
+            }
         }
     });
+
+    // XXX do brake application/release
 }
 
 const frc::SwerveModuleState SwerveModule::GetState() noexcept
@@ -707,8 +738,7 @@ void SwerveModule::SetDesiredState(const frc::SwerveModuleState &referenceState)
 
     if (position.has_value()) // XXX don't do this when debugging (maybe never in test mode?)
     {
-        state = frc::SwerveModuleState::Optimize(
-            referenceState, frc::Rotation2d(position.value()));
+        state = frc::SwerveModuleState::Optimize(referenceState, frc::Rotation2d(position.value()));
     }
 
     SetTurningPosition(state.angle.Degrees());
@@ -1411,7 +1441,7 @@ bool SwerveModule::VerifyDriveMotorControllerConfig() noexcept
         // even if the current setting is not the same as that saved on the
         // motor controller.
         // XXX Make sure this all hangs together...
-        if (m_driveMotor->GetIdleMode() != (m_driveMotorBrake ? rev::CANSparkMax::IdleMode::kBrake : rev::CANSparkMax::IdleMode::kCoast))
+        if (m_driveMotor->GetIdleMode() != (m_brakeApplied ? rev::CANSparkMax::IdleMode::kBrake : rev::CANSparkMax::IdleMode::kCoast))
         {
             driveMotorControllerConfig += " IM";
         }

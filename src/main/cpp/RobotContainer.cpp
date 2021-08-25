@@ -18,23 +18,14 @@ RobotContainer::RobotContainer() noexcept : m_autonomousCommand(&m_driveSubsyste
 
   // Set up default drive command
 
-  // The robot's frame of reference is the standard unit circle, from
-  // trigonometry.  However, the front of the robot is facing along the positve
-  // X axis.  This means the poitive Y axis extends outward from the left (or
-  // port) side of the robot.  Poitive rotation is counter-clockwise.  On the
-  // other hand, as the controller is held, the Y axis is aligned with forward.
-  // And, specifically, it is the negative Y axis which extends forward.  So,
-  // the robot's X is the controolers inverted Y.  On the controller, the X
-  // axis lines up with the robot's Y axis.  And, the controller's positive X
-  // extends to the right.  So, the robot's Y is the controller's inverted X.
-  // Finally, the other controller joystick is used for commanding rotation and
-  // things work out so that this is also an inverted X axis.
   m_driveSubsystem.SetDefaultCommand(frc2::RunCommand(
       [&]() -> void {
+        const auto controls = GetDriveTeleopControls();
+
         m_driveSubsystem.Drive(
-            -m_xbox.GetY(frc::GenericHID::JoystickHand::kLeftHand) * physical::kMaxDriveSpeed,
-            -m_xbox.GetX(frc::GenericHID::JoystickHand::kLeftHand) * physical::kMaxDriveSpeed,
-            -m_xbox.GetX(frc::GenericHID::JoystickHand::kRightHand) * physical::kMaxTurnRate,
+            std::get<0>(controls) * physical::kMaxDriveSpeed,
+            std::get<1>(controls) * physical::kMaxDriveSpeed,
+            std::get<2>(controls) * physical::kMaxTurnRate,
             true);
       },
       {&m_driveSubsystem}));
@@ -57,6 +48,52 @@ frc2::Command *RobotContainer::GetAutonomousCommand() noexcept
   return &m_autonomousCommand;
 }
 
+std::tuple<double, double, double> RobotContainer::GetDriveTeleopControls() noexcept
+{
+  // The robot's frame of reference is the standard unit circle, from
+  // trigonometry.  However, the front of the robot is facing along the positve
+  // X axis.  This means the poitive Y axis extends outward from the left (or
+  // port) side of the robot.  Poitive rotation is counter-clockwise.  On the
+  // other hand, as the controller is held, the Y axis is aligned with forward.
+  // And, specifically, it is the negative Y axis which extends forward.  So,
+  // the robot's X is the controolers inverted Y.  On the controller, the X
+  // axis lines up with the robot's Y axis.  And, the controller's positive X
+  // extends to the right.  So, the robot's Y is the controller's inverted X.
+  // Finally, the other controller joystick is used for commanding rotation and
+  // things work out so that this is also an inverted X axis.
+  double x = -m_xbox.GetY(frc::GenericHID::JoystickHand::kLeftHand);
+  double y = -m_xbox.GetX(frc::GenericHID::JoystickHand::kLeftHand);
+  double z = -m_xbox.GetX(frc::GenericHID::JoystickHand::kRightHand);
+
+  // Add some deadzone, so the robot doesn't drive when the joysticks are
+  // released and return to "zero".  These implement a continuous deadband, one
+  // in which the full range of outputs may be generated, once joysticks move
+  // outside the deadband.
+  auto deadband = [](double raw) -> double {
+    constexpr double range = 0.05;
+    constexpr double slope = 1.0 / (1.0 - range);
+
+    if (raw > -range && raw < +range)
+    {
+      raw = 0.0;
+    }
+    else if (raw <= -range)
+    {
+      raw += range;
+      raw *= slope;
+    }
+    else if (raw >= +range)
+    {
+      raw -= range;
+      raw *= slope;
+    }
+
+    return raw;
+  };
+
+  return std::make_tuple(deadband(x), deadband(y), deadband(z));
+}
+
 void RobotContainer::TestInit() noexcept
 {
   m_driveSubsystem.TestInit();
@@ -64,6 +101,7 @@ void RobotContainer::TestInit() noexcept
   frc::SendableChooser<frc2::Command *> *chooser = m_driveSubsystem.TestModeChooser();
   chooser->SetDefaultOption("Zero", nullptr);
   chooser->AddOption("Xs and Os", nullptr);
+  chooser->AddOption("Point", nullptr);
   chooser->AddOption("Orbit", nullptr);
   chooser->AddOption("Spirograph", nullptr);
   chooser->AddOption("Drive", nullptr);
@@ -73,10 +111,12 @@ void RobotContainer::TestPeriodic() noexcept
 {
   m_driveSubsystem.TestPeriodic();
 
-  // XXX temp hack
+  // XXX temp hack, until TestInit() sets up commands
+  const auto controls = GetDriveTeleopControls();
+
   m_driveSubsystem.Drive(
-      -m_xbox.GetY(frc::GenericHID::JoystickHand::kLeftHand) * physical::kMaxDriveSpeed,
-      -m_xbox.GetX(frc::GenericHID::JoystickHand::kLeftHand) * physical::kMaxDriveSpeed,
-      -m_xbox.GetX(frc::GenericHID::JoystickHand::kRightHand) * physical::kMaxTurnRate,
+      std::get<0>(controls) * physical::kMaxDriveSpeed,
+      std::get<1>(controls) * physical::kMaxDriveSpeed,
+      std::get<2>(controls) * physical::kMaxTurnRate,
       true);
 }

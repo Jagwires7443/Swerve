@@ -101,7 +101,7 @@ namespace pidf
     constexpr double kTurningPositionIM = 0.0;
     constexpr double kTurningPositionD = 0.0;
     constexpr double kTurningPositionDF = 0.0;
-    constexpr double kTurningPositionF = 0.004;
+    constexpr double kTurningPositionF = 0.003;
 
     constexpr double kDrivePositionP = 0.0;
     constexpr double kDrivePositionI = 0.0;
