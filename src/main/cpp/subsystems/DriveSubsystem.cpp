@@ -43,6 +43,7 @@ DriveSubsystem::DriveSubsystem() noexcept
     using namespace std::chrono_literals;
 
     const std::chrono::steady_clock::time_point wait_until = std::chrono::steady_clock::now() + 20s;
+
     while (!m_ahrs->IsConnected() || m_ahrs->IsCalibrating())
     {
       std::this_thread::sleep_for(100ms);
@@ -113,10 +114,13 @@ void DriveSubsystem::DoSafeIMU(const char *const what, std::function<void()> wor
 
 void DriveSubsystem::Periodic() noexcept
 {
-  m_frontLeftSwerveModule->Periodic(m_run);
-  m_frontRightSwerveModule->Periodic(m_run);
-  m_rearLeftSwerveModule->Periodic(m_run);
-  m_rearRightSwerveModule->Periodic(m_run);
+  if (m_run)
+  {
+    m_frontLeftSwerveModule->Periodic();
+    m_frontRightSwerveModule->Periodic();
+    m_rearLeftSwerveModule->Periodic();
+    m_rearRightSwerveModule->Periodic();
+  }
 
   frc::Rotation2d botRot;
 
@@ -127,7 +131,6 @@ void DriveSubsystem::Periodic() noexcept
     }
   });
 
-  // Implementation of subsystem periodic method goes here.
   m_odometry->Update(botRot, m_frontLeftSwerveModule->GetState(),
                      m_frontRightSwerveModule->GetState(), m_rearLeftSwerveModule->GetState(),
                      m_rearRightSwerveModule->GetState());
@@ -305,14 +308,14 @@ void DriveSubsystem::TestPeriodic() noexcept
   m_run = m_swerveEnable->GetEntry().GetBoolean(false);
   m_limit = m_driveLimit->GetEntry().GetDouble(0.1);
 
+  // Test mode is not handled by the scheduler, so normal Periodic() is not
+  // called in test mode; do this here.
+  Periodic();
+
   m_frontLeftSwerveModule->TestPeriodic(!m_run);
   m_frontRightSwerveModule->TestPeriodic(!m_run);
   m_rearLeftSwerveModule->TestPeriodic(!m_run);
   m_rearRightSwerveModule->TestPeriodic(!m_run);
-
-  // TestPeriodic() is not hooked into the scheduler, so normal Periodic() is
-  // not called.  Do this here.
-  Periodic();
 
   if (m_displayMode->GetEntry().GetBoolean(true))
   {
@@ -341,45 +344,22 @@ void DriveSubsystem::TestPeriodic() noexcept
     double rearRightSpeed = m_rearRightSwerveModule->GetDriveVelocity() / physical::kMaxDriveSpeed;
 
     // If velocity is negative, flip both heading and velocity.
-    if (frontLeftSpeed < 0)
-    {
-      frontLeftSpeed *= -1.0;
-      frontLeftTurn += 180.0;
-      if (frontLeftTurn >= 180.0)
+    auto normalize = [](double &speed, double &turn) -> void {
+      if (speed < 0)
       {
-        frontLeftTurn -= 360.0;
+        speed *= -1.0;
+        turn += 180.0;
+        if (turn >= 180.0)
+        {
+          turn -= 360.0;
+        }
       }
-    }
+    };
 
-    if (frontRightSpeed < 0)
-    {
-      frontRightSpeed *= -1.0;
-      frontRightTurn += 180.0;
-      if (frontRightTurn >= 180.0)
-      {
-        frontRightTurn -= 360.0;
-      }
-    }
-
-    if (rearLeftSpeed < 0)
-    {
-      rearLeftSpeed *= -1.0;
-      rearLeftTurn += 180.0;
-      if (rearLeftTurn >= 180.0)
-      {
-        rearLeftTurn -= 360.0;
-      }
-    }
-
-    if (rearRightSpeed < 0)
-    {
-      rearRightSpeed *= -1.0;
-      rearRightTurn += 180.0;
-      if (rearRightTurn >= 180.0)
-      {
-        rearRightTurn -= 360.0;
-      }
-    }
+    normalize(frontLeftSpeed, frontLeftTurn);
+    normalize(frontRightSpeed, frontRightTurn);
+    normalize(rearLeftSpeed, rearLeftTurn);
+    normalize(rearRightSpeed, rearRightTurn);
 
     m_frontLeftGyro.Set(frontLeftTurn);
     m_frontRightGyro.Set(frontRightTurn);
@@ -469,7 +449,8 @@ void DriveSubsystem::TestPeriodic() noexcept
 
 bool DriveSubsystem::GetStatus() noexcept
 {
-  return m_frontLeftSwerveModule->GetStatus() &&
+  return m_ahrs &&
+         m_frontLeftSwerveModule->GetStatus() &&
          m_frontRightSwerveModule->GetStatus() &&
          m_rearLeftSwerveModule->GetStatus() &&
          m_rearRightSwerveModule->GetStatus();
@@ -520,6 +501,11 @@ void DriveSubsystem::Drive(units::meters_per_second_t xSpeed,
       botRot = m_ahrs->GetRotation2d();
     }
   });
+
+  if (!m_ahrs)
+  {
+    fieldRelative = false;
+  }
 
   wpi::array<frc::SwerveModuleState, 4> states = kDriveKinematics.ToSwerveModuleStates(
       fieldRelative ? frc::ChassisSpeeds::FromFieldRelativeSpeeds(

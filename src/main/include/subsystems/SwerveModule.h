@@ -46,7 +46,8 @@
 // It's also a good idea to ensure all modules are properly aligned before
 // any attempt to drive (including to work out PID settings).  Test mode is
 // used to do everything after manually setting the minimal configuration
-// (above) and taking care of inversions.
+// (above) and taking care of inversions.  Specifically, the per-module
+// Shuffleboard tabs (one for each corner) support this part of bring-up.
 
 // When things are properly specified, positive values for "Control" in the
 // test mode dashboard will cause "Position" to advance and "Percent" and
@@ -87,7 +88,7 @@
 // of the specified angles.  Now, use this information to fine-tune the
 // alignment offset for each swerve module.  This is the fourth step in
 // commissioning a robot; make these changes in the code and recheck the zero
-// position on each swerve module.
+// position on each swerve module.  ("Reset" clears any sticky errors as well.)
 
 // There are also some constants to be set depending on the geometry of the
 // robot, and on the empirically measured maximum drive speed.  To obtain the
@@ -113,15 +114,19 @@ public:
       const int turningEncoderPort,
       const int alignmentOffset) noexcept;
 
+  // No copy/assign.
   SwerveModule(const SwerveModule &) = delete;
   SwerveModule &operator=(const SwerveModule &) = delete;
 
-  // This method is needed in order to calculate and apply PID settings for
+  // This method is needed in order to calculate and apply PID output for
   // turning, when this control is being handled in this code (rather than on
   // the motor controller, which doesn't work at present due to a REV issue).
   // This also provides a means to alter the drive motor control based on the
-  // commanded and actual turning position.
-  void Periodic(const bool setMotors) noexcept;
+  // commanded and actual turning position.  It provides a guaranteed chance to
+  // read sensors, ahead of the next cycle of possible commands.  It should not
+  // be called when the motors are being directly controlled via SwerveModule()
+  // Test Mode (open-loop, manual control from per-module tab).
+  void Periodic() noexcept;
 
   // Is swerve module healthy and motor controller configuration current?
   // Note that the latter condition is only checked in test mode.
@@ -141,18 +146,15 @@ public:
   // Act.  Command the swerve module to take on the specified absolute heading.
   void SetTurningPosition(const units::angle::degree_t position) noexcept;
 
-  // Determine if commanded turning position has been achieved, to within
-  // specified tolerance.
-  bool CheckTurningPosition(const units::angle::degree_t tolerance = 2_deg) noexcept;
-
   // Drive is normally oriented around velocity, but distance enables odometry,
   // simple dead reckoning, etc.  Possibly useful for autonomous driving.
 
   // Control brake/coast; the initial setting is brake mode off (coast mode).
-  // Breaking is only applied when this mode has been enabled, when the
-  // commanded distance has been reached (or the commanded velocity is zero),
-  // and when the turning position has been reached, within the default
-  // tolerance of CheckTurningPosition().
+  // Breaking is only applied when this mode has been enabled, when the turning
+  // position has been reached to within the default tolerance of
+  // CheckTurningPosition(), and when the commanded velocity is zero.  This is
+  // only for velocity control -- under distance control brake mode is always
+  // enabled.
   void SetDriveBrakeMode(bool brake) noexcept { m_commandedBrake = brake; }
 
   // Sense.  Return the cumulative drive distance since the last reset.
@@ -227,6 +229,10 @@ private:
   void CreateTurningMotorControllerConfig() noexcept;
   void CreateDriveMotorControllerConfig() noexcept;
 
+  // Determine if commanded turning position has been achieved, to within
+  // specified tolerance.  Called only from Periodic().
+  bool CheckTurningPosition(const units::angle::degree_t tolerance = 2_deg) noexcept;
+
   const std::string m_name;
   const int m_driveMotorCanID;
   const int m_turningMotorCanID;
@@ -273,7 +279,7 @@ private:
   double m_driveVelocity_F{pidf::kDriveVelocityF};
 
   std::unique_ptr<frc::DigitalInput> m_turningPositionSource;
-  std::unique_ptr<frc::DutyCycle> m_turningPosition;
+  std::unique_ptr<frc::DutyCycle> m_turningPositionPWM;
 
   std::unique_ptr<rev::CANSparkMax> m_turningMotor;
   std::unique_ptr<rev::CANEncoder> m_turningEncoder;
@@ -283,12 +289,20 @@ private:
   std::unique_ptr<rev::CANEncoder> m_driveEncoder;
   std::unique_ptr<rev::CANPIDController> m_drivePID;
 
-  // XXX perform check one time in ctor?
   std::chrono::steady_clock::time_point m_verifyMotorControllersWhen;
   bool m_turningMotorControllerValidated{true};
   bool m_driveMotorControllerValidated{true};
   std::string m_turningMotorControllerConfig;
   std::string m_driveMotorControllerConfig;
+
+  // Last sensed state, updated in Periodic().  These are quick to read, as
+  // they depend only on local sensor input (PWM absolute position), or on data
+  // which arrives over CAN, via periodic staus frames, from the SPARK MAXes.
+  // However, there's no point in repeatedly performing the same processing, so
+  // a local copy is kept for even quicker access.
+  bool m_absoluteSensorGood{false};
+  bool m_turningPositionAsCommanded{false};
+  units::angle::degree_t m_turningPosition{0};
 
   // Last commanded turn heading and drive distance/speed.
   units::angle::degree_t m_commandedHeading{0};
