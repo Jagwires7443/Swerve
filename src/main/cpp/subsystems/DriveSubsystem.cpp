@@ -1,5 +1,3 @@
-// XXX optimize in normal, run stop stops module panel control (add m_run to module and set it)
-
 // Copyright (c) FIRST and other WPILib contributors.
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
@@ -55,8 +53,6 @@ DriveSubsystem::DriveSubsystem() noexcept
       }
     }
   });
-
-  // XXX ZeroHeading();
 
   // Initial position (third parameter) defaulted to "frc::Pose2d()"; initial
   // angle (second parameter) is automatically zeroed by navX initialization.
@@ -114,13 +110,10 @@ void DriveSubsystem::DoSafeIMU(const char *const what, std::function<void()> wor
 
 void DriveSubsystem::Periodic() noexcept
 {
-  if (m_run)
-  {
-    m_frontLeftSwerveModule->Periodic();
-    m_frontRightSwerveModule->Periodic();
-    m_rearLeftSwerveModule->Periodic();
-    m_rearRightSwerveModule->Periodic();
-  }
+  m_frontLeftSwerveModule->Periodic();
+  m_frontRightSwerveModule->Periodic();
+  m_rearLeftSwerveModule->Periodic();
+  m_rearRightSwerveModule->Periodic();
 
   frc::Rotation2d botRot;
 
@@ -154,6 +147,9 @@ void DriveSubsystem::ResetOdometry(frc::Pose2d pose) noexcept
 
 void DriveSubsystem::TestInit() noexcept
 {
+  m_run = false;
+  m_limit = 0.1;
+
   m_frontLeftSwerveModule->TestInit();
   m_frontRightSwerveModule->TestInit();
   m_rearLeftSwerveModule->TestInit();
@@ -303,19 +299,40 @@ void DriveSubsystem::TestInit() noexcept
   std::printf("OK.\n");
 }
 
+void DriveSubsystem::TestExit() noexcept
+{
+  m_run = true;
+  m_limit = 1.0;
+
+  m_frontLeftSwerveModule->TestExit();
+  m_frontRightSwerveModule->TestExit();
+  m_rearLeftSwerveModule->TestExit();
+  m_rearRightSwerveModule->TestExit();
+}
+
 void DriveSubsystem::TestPeriodic() noexcept
 {
+  const bool run = m_run;
+
   m_run = m_swerveEnable->GetEntry().GetBoolean(false);
   m_limit = m_driveLimit->GetEntry().GetDouble(0.1);
+
+  if (m_run != run)
+  {
+    m_frontLeftSwerveModule->TestModeControl(!m_run);
+    m_frontRightSwerveModule->TestModeControl(!m_run);
+    m_rearLeftSwerveModule->TestModeControl(!m_run);
+    m_rearRightSwerveModule->TestModeControl(!m_run);
+  }
 
   // Test mode is not handled by the scheduler, so normal Periodic() is not
   // called in test mode; do this here.
   Periodic();
 
-  m_frontLeftSwerveModule->TestPeriodic(!m_run);
-  m_frontRightSwerveModule->TestPeriodic(!m_run);
-  m_rearLeftSwerveModule->TestPeriodic(!m_run);
-  m_rearRightSwerveModule->TestPeriodic(!m_run);
+  m_frontLeftSwerveModule->TestPeriodic();
+  m_frontRightSwerveModule->TestPeriodic();
+  m_rearLeftSwerveModule->TestPeriodic();
+  m_rearRightSwerveModule->TestPeriodic();
 
   if (m_displayMode->GetEntry().GetBoolean(true))
   {
@@ -447,7 +464,7 @@ void DriveSubsystem::TestPeriodic() noexcept
   // XXX when chosen, chosenCommand->Schedule();
 }
 
-bool DriveSubsystem::GetStatus() noexcept
+bool DriveSubsystem::GetStatus() const noexcept
 {
   return m_ahrs &&
          m_frontLeftSwerveModule->GetStatus() &&
@@ -456,34 +473,92 @@ bool DriveSubsystem::GetStatus() noexcept
          m_rearRightSwerveModule->GetStatus();
 }
 
-bool ZeroModules() noexcept { return true; }
+void DriveSubsystem::SetDriveBrakeMode(bool brake) noexcept
+{
+  m_frontLeftSwerveModule->SetDriveBrakeMode(brake);
+  m_frontRightSwerveModule->SetDriveBrakeMode(brake);
+  m_rearLeftSwerveModule->SetDriveBrakeMode(brake);
+  m_rearRightSwerveModule->SetDriveBrakeMode(brake);
+}
 
-bool SetTurnInPlace(bool) noexcept { return true; }
+bool DriveSubsystem::ZeroModules() noexcept { return SetTurningPosition(0_deg); }
 
-bool SetTurningPosition(const units::angle::degree_t position) noexcept { return true; }
+bool DriveSubsystem::SetTurnInPlace(bool) noexcept
+{
+  // Set all wheels tangent, at the given module.
+  const wpi::array<frc::SwerveModuleState, 4> states = kDriveKinematics.ToSwerveModuleStates(
+      frc::ChassisSpeeds{0_mps, 0_mps, physical::kMaxTurnRate});
 
-bool SetDriveBrakeMode(bool brake) noexcept { return true; }
+  auto [frontLeft, frontRight, rearLeft, rearRight] = states;
 
-bool SetTurnByAngle(units::degree_t angle) noexcept { return true; }
+  frontLeft.speed = 0_mps;
+  frontRight.speed = 0_mps;
+  rearLeft.speed = 0_mps;
+  rearRight.speed = 0_mps;
 
-bool SetDriveDistance(units::length::meter_t distance) noexcept { return true; }
+  m_commandedStateFrontLeft = frontLeft;
+  m_commandedStateFrontRight = frontRight;
+  m_commandedStateRearLeft = rearLeft;
+  m_commandedStateRearRight = rearRight;
+
+  m_frontLeftSwerveModule->SetTurningPosition(frontLeft.angle.Degrees());
+  m_frontRightSwerveModule->SetTurningPosition(frontRight.angle.Degrees());
+  m_rearLeftSwerveModule->SetTurningPosition(rearLeft.angle.Degrees());
+  m_rearRightSwerveModule->SetTurningPosition(rearRight.angle.Degrees());
+
+  const bool fl = m_frontLeftSwerveModule->CheckTurningPosition();
+  const bool fr = m_frontRightSwerveModule->CheckTurningPosition();
+  const bool rl = m_rearLeftSwerveModule->CheckTurningPosition();
+  const bool rr = m_rearRightSwerveModule->CheckTurningPosition();
+
+  return fl && fr && rl && rr;
+}
+
+bool DriveSubsystem::SetTurningPosition(const units::angle::degree_t position) noexcept
+{
+  m_commandedStateFrontLeft.speed = 0_mps;
+  m_commandedStateFrontRight.speed = 0_mps;
+  m_commandedStateRearLeft.speed = 0_mps;
+  m_commandedStateRearRight.speed = 0_mps;
+
+  m_commandedStateFrontLeft.angle = frc::Rotation2d(position);
+  m_commandedStateFrontRight.angle = frc::Rotation2d(position);
+  m_commandedStateRearLeft.angle = frc::Rotation2d(position);
+  m_commandedStateRearRight.angle = frc::Rotation2d(position);
+
+  m_frontLeftSwerveModule->SetTurningPosition(position);
+  m_frontRightSwerveModule->SetTurningPosition(position);
+  m_rearLeftSwerveModule->SetTurningPosition(position);
+  m_rearRightSwerveModule->SetTurningPosition(position);
+
+  const bool fl = m_frontLeftSwerveModule->CheckTurningPosition();
+  const bool fr = m_frontRightSwerveModule->CheckTurningPosition();
+  const bool rl = m_rearLeftSwerveModule->CheckTurningPosition();
+  const bool rr = m_rearRightSwerveModule->CheckTurningPosition();
+
+  return fl && fr && rl && rr;
+}
+
+bool DriveSubsystem::SetTurnByAngle(units::degree_t angle) noexcept
+{
+  return SetDriveDistance(angle / 360_deg * physical::kDriveMetersPerTurningCircle);
+}
+
+// XXX
+bool DriveSubsystem::SetDriveDistance(units::length::meter_t distance) noexcept { return false; }
 
 // The most general form of movement for a swerve is specified by thee vectors,
 // at each wheel: X and Y velocity, and rotational velocity, about an arbitrary
-// point in the XY plane.  Here, rotational velocity is about the center of the
-// robot.  Of course, each of these velocities may be continually varied.  By
-// adding a center of rotation (shared by all wheels), this could be made fully
-// general.  This would likely come in through `kDriveKinematics` not being a
-// preset constant.  XXX Actually, look at `ToSwerveModuleStates` -- bug here
+// point in the XY plane.  By default, this point is the center of the robot.
+// Of course, each of these velocities may be continually varied.  By
+// specifying a center of rotation (shared by all wheels), this could be made
+// fully general.
 
 // Another means of specifying movement is to point each swerve module from
 // rest, then to specify a distance to translate.  In this mode, any rotation
-// would normally be done distinct from translation.  However, it is also
-// possible to specify a velocity for each drive motor, to use with unequal
-// distances or to limit these velocities.  This provides an intuitive means of
-// dead reckoning.  However, this may be approxomated simply by setting some of
-// the parameters to zero then waiting for the sense outputs to settle near the
-// desired values.
+// would normally be done distinct from translation, providing a simple means
+// of dead reckoning.  This involves periodically sending the same turning or
+// drive command untile the commanded motion has been achieved.
 
 void DriveSubsystem::Drive(units::meters_per_second_t xSpeed,
                            units::meters_per_second_t ySpeed, units::radians_per_second_t rot,
@@ -507,6 +582,8 @@ void DriveSubsystem::Drive(units::meters_per_second_t xSpeed,
     fieldRelative = false;
   }
 
+  // Center of rotation argument is defaulted here, meaning rotation is about
+  // the center point of the robot.
   wpi::array<frc::SwerveModuleState, 4> states = kDriveKinematics.ToSwerveModuleStates(
       fieldRelative ? frc::ChassisSpeeds::FromFieldRelativeSpeeds(
                           xSpeed, ySpeed, rot, botRot)
@@ -534,23 +611,17 @@ void DriveSubsystem::SetModuleStates(wpi::array<frc::SwerveModuleState, 4> &desi
   m_commandedStateRearLeft = rearLeft;
   m_commandedStateRearRight = rearRight;
 
-  // m_run and m_limit are only used in Test Mode, by default they do not
-  // modify anything here.  In Test Mode, they switch between control via the
-  // Swerve tab or via the individual Swerve Module tabs.
-  if (m_run)
-  {
-    m_limit = 0.05; // XXX
+  // m_limit is always unity, except in Test Mode.  So, by default, it does not
+  // modify anything here.  In Test Mode, it can be used to slow things down.
+  frontLeft.speed *= m_limit;
+  frontRight.speed *= m_limit;
+  rearLeft.speed *= m_limit;
+  rearRight.speed *= m_limit;
 
-    frontLeft.speed *= m_limit;
-    frontRight.speed *= m_limit;
-    rearLeft.speed *= m_limit;
-    rearRight.speed *= m_limit;
-
-    m_frontLeftSwerveModule->SetDesiredState(frontLeft);
-    m_frontRightSwerveModule->SetDesiredState(frontRight);
-    m_rearLeftSwerveModule->SetDesiredState(rearLeft);
-    m_rearRightSwerveModule->SetDesiredState(rearRight);
-  }
+  m_frontLeftSwerveModule->SetDesiredState(frontLeft);
+  m_frontRightSwerveModule->SetDesiredState(frontRight);
+  m_rearLeftSwerveModule->SetDesiredState(rearLeft);
+  m_rearRightSwerveModule->SetDesiredState(rearRight);
 }
 
 units::degree_t DriveSubsystem::GetHeading() noexcept

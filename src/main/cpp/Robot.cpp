@@ -29,7 +29,7 @@ void Robot::RobotPeriodic() noexcept
  * can use it to reset any subsystem information you want to clear when the
  * robot is disabled.
  */
-void Robot::DisabledInit() noexcept {}
+void Robot::DisabledInit() noexcept { m_container.TestExit(); }
 
 void Robot::DisabledPeriodic() noexcept {}
 
@@ -39,6 +39,8 @@ void Robot::DisabledPeriodic() noexcept {}
  */
 void Robot::AutonomousInit() noexcept
 {
+  m_container.TestExit();
+
   m_autonomousCommand = m_container.GetAutonomousCommand();
 
   if (m_autonomousCommand != nullptr)
@@ -51,6 +53,8 @@ void Robot::AutonomousPeriodic() noexcept {}
 
 void Robot::TeleopInit() noexcept
 {
+  m_container.TestExit();
+
   // This makes sure that the autonomous stops running when
   // teleop starts running. If you want the autonomous to
   // continue until interrupted by another command, remove

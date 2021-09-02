@@ -45,6 +45,16 @@ namespace physical
     // (since something in the ballpark is needed here in order to to drive).
     constexpr units::meters_per_second_t kMaxDriveSpeed = 12.1_fps / 2;
 
+    // For a square drive base, with +/-11.25" x/y coordinates for each of four
+    // swerve modules, the radius of the circle going through all modules is:
+    // sqrt((11.25")^2 + (11.25")^2) ~= 15.91"; the circumference of such a
+    // circle is 2*pi*15.91" ~= 99.96".
+
+    // This is used for rotating the robot in place, about it's center.  This
+    // may need to be empirically adjusted, but check kDriveMetersPerRotation
+    // before making any adjustment here.
+    constexpr units::meter_t kDriveMetersPerTurningCircle = 99.96_in;
+
     // This is the maximum rotational speed -- not of a swerve module, but of
     // the entire robot.  This is a function of the maximum drive speed and the
     // geometry of the robot.  This will occur when the robot spins in place,
@@ -55,13 +65,11 @@ namespace physical
     // kMaxDriveSpeed and the geometry and does not have to be directly
     // measured.  It is a good idea to check this value empirically though.
 
-    // For a square drive base, with +/-11.25" x/y coordinates for each of four
-    // swerve modules, the radius of the circle going through all modules is:
-    // sqrt((11.25")^2 + (11.25")^2) ~= 15.91"; the circumference of such a
-    // circle is 2*pi*15.91" ~= 99.96".
-    // So, the maximum rotational velocity is kMaxDriveSpeed / 99.96" * 360
-    // degrees.
-    constexpr units::degrees_per_second_t kMaxTurnRate = kMaxDriveSpeed / 99.96_in * 360_deg;
+    // So the maximum rotational velocity (spinning in place) is kMaxDriveSpeed
+    // / kDriveMetersPerTurningCircle * 360 degrees.  This should not need to
+    // be empirically adjusted.
+    constexpr units::degrees_per_second_t kMaxTurnRate =
+        kMaxDriveSpeed / kDriveMetersPerTurningCircle * 360_deg;
 
     // Drivebase geometry: distance between centers of right and left wheels on
     // robot; distance between centers of front and back wheels on robot.

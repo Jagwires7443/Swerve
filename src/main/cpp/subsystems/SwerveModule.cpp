@@ -6,15 +6,11 @@
 // The `m_rio` flag controls where this control is done, but the code is here
 // to implement this either on the roboRIO or on the SPARK MAX.
 
-// XXX Auto-/Tele-Init need to ZeroHeading() and restore various test mode settings -- Test-Init() also
-
 // XXX add using
-
-// XXX init the module to home, do not do in test mode (do in auto/teleop init, via SetDesiredState()?)
 
 // XXX explain error handling, consider CAN timeouts as non-fatal
 // XXX consider other possible failure points
-// XXX add comment on error handling strategy, update code to match
+// XXX add comment on error handling strategy observed behavior, restart code, update code to match
 
 // XXX can set PID parameter to force updating of controllers -- or add a switch for this in DriveSubsystsem or overall robot, move there?
 
@@ -125,6 +121,8 @@ SwerveModule::SwerveModule(
 {
     std::printf("Swerve Module (%s) Initialization... ", m_name.c_str());
 
+    // Construct turning position PID controller on the roboRIO; only used when
+    // turning position control is running on the roborRIO.
     m_rioPIDController = std::make_unique<frc2::PIDController>(
         pidf::kTurningPositionP,
         pidf::kTurningPositionI,
@@ -139,18 +137,12 @@ SwerveModule::SwerveModule(
     m_turningPositionSource = std::make_unique<frc::DigitalInput>(turningEncoderPort);
     m_turningPositionPWM = std::make_unique<frc::DutyCycle>(*m_turningPositionSource);
 
+    // Motor controller configurations are only checked (or saved) in test mode
+    // but a minimal amount is set up in these methods.
     ConstructTurningMotor();
-
     ConstructDriveMotor();
 
-    // XXX consider checking motor controller configurations one-time here
-    // XXX if a tree falls in a forest...
-
     ResetEncoders();
-
-    // Robot is likely not enabled at this stage, but go ahead and command turn
-    // to home position.
-    SetTurningPosition(0_deg);
 
     std::printf(" OK.\n");
 }
@@ -458,7 +450,7 @@ void SwerveModule::ConstructDriveMotor() noexcept
     });
 }
 
-bool SwerveModule::GetStatus() noexcept
+bool SwerveModule::GetStatus() const noexcept
 {
     return m_absoluteSensorGood &&
            m_turningMotor && m_turningMotorControllerValidated &&
@@ -481,12 +473,18 @@ bool SwerveModule::GetStatus() noexcept
 // available power to turn before the drive motors recieve power.
 void SwerveModule::Periodic() noexcept
 {
-    // CheckTurningPosition() updates all data members related to turning state
-    // as a side effect.  This check passes when the swerve module has either
-    // rotated into or out of the desired alignment.
     const bool priorTurningPositionAsCommanded = m_turningPositionAsCommanded;
 
-    if (priorTurningPositionAsCommanded != CheckTurningPosition())
+    // CheckTurningPosition() updates all data members related to turning state
+    // as a side effect.  This check passes when the swerve module has either
+    // rotated into or out of the desired alignment.  For SPARK MAX, position
+    // and velocity come in via periodic status frames and the APIs that return
+    // these simply report the most recently recieved values.  So, some of this
+    // data is sampled in this way.  The absolute position sensor has less of
+    // this and is more continuous.  Note that the Set*() methods do not do
+    // anything while in low-level test mode.
+    m_turningPositionAsCommanded = CheckTurningPosition();
+    if (priorTurningPositionAsCommanded != m_turningPositionAsCommanded)
     {
         // Turning now aligned as commanded, so power (or brake) drive motor.
         // Or turning no longer aligned as commanded, so coast drive motor.
@@ -501,9 +499,10 @@ void SwerveModule::Periodic() noexcept
         }
     }
 
-    // XXX how much to do here?  all sense?  how much of this is reading from periodic status?
-    // XXX [for SPARK MAX, position and velocity come in via periodic status frames]
-    if (!m_rio)
+    // If turning position PID is being done on the motor controller, there's
+    // no more to do.  Even if PID is being done on the RIO, don't do this if
+    // low-level test mode is controlling the motors.
+    if (!m_rio || m_testModeControl)
     {
         return;
     }
@@ -528,6 +527,7 @@ void SwerveModule::Periodic() noexcept
     DoSafeTurningMotor("Periodic()", [&]() -> void {
         if (m_turningMotor)
         {
+            // Use voltage compensation, to offset low battery voltage.
             m_turningMotor->SetVoltage(calculated * 12_V);
         }
     });
@@ -556,7 +556,7 @@ void SwerveModule::ResetTurning() noexcept
             if (m_turningEncoder->SetPosition(
                     units::angle::turn_t(position.value()).to<double>()) != rev::CANError::kOk)
             {
-                throw std::runtime_error("SetPosition()"); // XXX warn
+                throw std::runtime_error("SetPosition()");
             }
         }
     });
@@ -569,7 +569,7 @@ void SwerveModule::ResetDrive() noexcept
         {
             if (m_driveEncoder->SetPosition(0.0) != rev::CANError::kOk)
             {
-                throw std::runtime_error("SetPosition()"); // XXX warn
+                throw std::runtime_error("SetPosition()");
             }
         }
     });
@@ -633,7 +633,7 @@ void SwerveModule::SetTurningPosition(const units::angle::degree_t position) noe
 
     m_rioPIDController->SetSetpoint(adjustedPosition.to<double>());
 
-    if (m_rio)
+    if (m_rio || m_testModeControl)
     {
         return;
     }
@@ -644,7 +644,7 @@ void SwerveModule::SetTurningPosition(const units::angle::degree_t position) noe
             if (m_turningPID->SetReference(
                     units::angle::turn_t(adjustedPosition).to<double>(), rev::kPosition) != rev::CANError::kOk)
             {
-                throw std::runtime_error("SetReference()"); // XXX warn
+                throw std::runtime_error("SetReference()");
             }
         }
     });
@@ -663,9 +663,7 @@ bool SwerveModule::CheckTurningPosition(const units::angle::degree_t tolerance) 
         error -= 360_deg;
     }
 
-    m_turningPositionAsCommanded = error >= -tolerance && error < tolerance;
-
-    return m_turningPositionAsCommanded;
+    return error >= -tolerance && error < tolerance;
 }
 
 // Drive position and velocity are in rotations and rotations/second,
@@ -701,6 +699,11 @@ void SwerveModule::SetDriveDistance(units::length::meter_t distance) noexcept
     m_commandedDistance = distance;
     m_commandedVelocity = 0_mps;
 
+    if (m_testModeControl)
+    {
+        return;
+    }
+
     DoSafeDriveMotor("SetDriveDistance()", [&]() -> void {
         if (m_driveMotor && m_drivePID)
         {
@@ -709,14 +712,14 @@ void SwerveModule::SetDriveDistance(units::length::meter_t distance) noexcept
                 if (m_drivePID->SetReference(
                         (distance / physical::kDriveMetersPerRotation).to<double>(), rev::kPosition) != rev::CANError::kOk)
                 {
-                    throw std::runtime_error("SetReference()"); // XXX warn
+                    throw std::runtime_error("SetReference()");
                 }
 
                 if (!m_brakeApplied)
                 {
                     if (m_driveMotor->SetIdleMode(rev::CANSparkMax::IdleMode::kBrake) != rev::CANError::kOk)
                     {
-                        throw std::runtime_error("SetIdleMode()"); // XXX warn
+                        throw std::runtime_error("SetIdleMode()");
                     }
 
                     m_brakeApplied = true;
@@ -730,7 +733,7 @@ void SwerveModule::SetDriveDistance(units::length::meter_t distance) noexcept
                 {
                     if (m_driveMotor->SetIdleMode(rev::CANSparkMax::IdleMode::kCoast) != rev::CANError::kOk)
                     {
-                        throw std::runtime_error("SetIdleMode()"); // XXX warn
+                        throw std::runtime_error("SetIdleMode()");
                     }
 
                     m_brakeApplied = false;
@@ -761,6 +764,11 @@ void SwerveModule::SetDriveVelocity(units::velocity::meters_per_second_t velocit
     m_commandedDistance = 0_m;
     m_commandedVelocity = velocity;
 
+    if (m_testModeControl)
+    {
+        return;
+    }
+
     DoSafeDriveMotor("SetDriveVelocity()", [&]() -> void {
         if (m_driveMotor && m_drivePID)
         {
@@ -770,7 +778,7 @@ void SwerveModule::SetDriveVelocity(units::velocity::meters_per_second_t velocit
                 if (m_drivePID->SetReference(
                         (velocity * 60_s / physical::kDriveMetersPerRotation).to<double>(), rev::kVelocity, 1) != rev::CANError::kOk)
                 {
-                    throw std::runtime_error("SetReference()"); // XXX warn
+                    throw std::runtime_error("SetReference()");
                 }
 #else
                 m_driveMotor->SetVoltage(velocity * 1_s / physical::kDriveMetersPerRotation * 3_V);
@@ -780,7 +788,7 @@ void SwerveModule::SetDriveVelocity(units::velocity::meters_per_second_t velocit
                 {
                     if (m_driveMotor->SetIdleMode(rev::CANSparkMax::IdleMode::kBrake) != rev::CANError::kOk)
                     {
-                        throw std::runtime_error("SetIdleMode()"); // XXX warn
+                        throw std::runtime_error("SetIdleMode()");
                     }
 
                     m_brakeApplied = true;
@@ -794,7 +802,7 @@ void SwerveModule::SetDriveVelocity(units::velocity::meters_per_second_t velocit
                 {
                     if (m_driveMotor->SetIdleMode(rev::CANSparkMax::IdleMode::kCoast) != rev::CANError::kOk)
                     {
-                        throw std::runtime_error("SetIdleMode()"); // XXX warn
+                        throw std::runtime_error("SetIdleMode()");
                     }
 
                     m_brakeApplied = false;
@@ -821,7 +829,7 @@ void SwerveModule::SetDesiredState(const frc::SwerveModuleState &referenceState)
 
     const auto position = GetAbsolutePosition();
 
-    if (position.has_value()) // XXX don't do this when debugging (maybe never in test mode?)
+    if (position.has_value())
     {
         state = frc::SwerveModuleState::Optimize(referenceState, frc::Rotation2d(position.value()));
     }
@@ -841,6 +849,10 @@ void SwerveModule::ResetEncoders() noexcept
 // programmatically.
 void SwerveModule::TestInit() noexcept
 {
+    m_testModeControl = true;
+    m_turningMotorControllerValidated = false;
+    m_driveMotorControllerValidated = false;
+
     std::printf("Swerve Module (%s) Test Mode Init... ", m_name.c_str());
 
     // It would be very nice if Shufflboard allowed specifying properties here:
@@ -969,8 +981,19 @@ void SwerveModule::TestInit() noexcept
     std::printf(" OK.\n");
 }
 
+void SwerveModule::TestExit() noexcept
+{
+    m_testModeControl = false;
+    m_turningMotorControllerValidated = true;
+    m_driveMotorControllerValidated = true;
+
+    // Robot is likely not enabled at this stage, but go ahead and command turn
+    // to home position.  This will take effect when enabled.
+    SetTurningPosition(0_deg);
+}
+
 // This updates data in the Shuffleboard tab and handles HMI interaction.
-void SwerveModule::TestPeriodic(const bool setMotors) noexcept
+void SwerveModule::TestPeriodic() noexcept
 {
     // Read controls information from Shuffleboard and manage interactive UI.
     bool zeroTurning = m_turningMotorReset->GetEntry().GetBoolean(false);
@@ -1098,7 +1121,7 @@ void SwerveModule::TestPeriodic(const bool setMotors) noexcept
                 }
             }
 
-            if (setMotors)
+            if (m_testModeControl)
             {
                 m_turningMotor->Set(setTurning);
             }
@@ -1233,7 +1256,7 @@ void SwerveModule::TestPeriodic(const bool setMotors) noexcept
                 }
             }
 
-            if (setMotors)
+            if (m_testModeControl)
             {
                 m_driveMotor->Set(setDrive);
             }
@@ -1310,35 +1333,35 @@ void SwerveModule::SetTurningPositionPID() noexcept
     DoSafeTurningMotor("SetTurningPositionPID()", [&]() -> void {
         if (!m_turningPID)
         {
-            throw std::runtime_error("m_turningPID"); // XXX warn
+            throw std::runtime_error("m_turningPID");
         }
         if (m_turningPID->SetP(m_turningPosition_P) != rev::CANError::kOk)
         {
-            throw std::runtime_error("SetP()"); // XXX warn
+            throw std::runtime_error("SetP()");
         }
         if (m_turningPID->SetI(m_turningPosition_I) != rev::CANError::kOk)
         {
-            throw std::runtime_error("SetI()"); // XXX warn
+            throw std::runtime_error("SetI()");
         }
         if (m_turningPID->SetIZone(m_turningPosition_IZ) != rev::CANError::kOk)
         {
-            throw std::runtime_error("SetIZone()"); // XXX warn
+            throw std::runtime_error("SetIZone()");
         }
         if (m_turningPID->SetIMaxAccum(m_turningPosition_IM) != rev::CANError::kOk)
         {
-            throw std::runtime_error("SetIMaxAccum()"); // XXX warn
+            throw std::runtime_error("SetIMaxAccum()");
         }
         if (m_turningPID->SetD(m_turningPosition_D) != rev::CANError::kOk)
         {
-            throw std::runtime_error("SetD()"); // XXX warn
+            throw std::runtime_error("SetD()");
         }
         if (m_turningPID->SetDFilter(m_turningPosition_DF) != rev::CANError::kOk)
         {
-            throw std::runtime_error("SetDFilter()"); // XXX warn
+            throw std::runtime_error("SetDFilter()");
         }
         if (m_turningPID->SetFF(m_turningPosition_F) != rev::CANError::kOk)
         {
-            throw std::runtime_error("SetFF()"); // XXX warn
+            throw std::runtime_error("SetFF()");
         }
     });
 }
@@ -1348,35 +1371,35 @@ void SwerveModule::SetDrivePositionPID() noexcept
     DoSafeDriveMotor("SetDrivePositionPID()", [&]() -> void {
         if (!m_drivePID)
         {
-            throw std::runtime_error("m_drivePID"); // XXX warn
+            throw std::runtime_error("m_drivePID");
         }
         if (m_drivePID->SetP(m_drivePosition_P) != rev::CANError::kOk)
         {
-            throw std::runtime_error("SetP()"); // XXX warn
+            throw std::runtime_error("SetP()");
         }
         if (m_drivePID->SetI(m_drivePosition_I) != rev::CANError::kOk)
         {
-            throw std::runtime_error("SetI()"); // XXX warn
+            throw std::runtime_error("SetI()");
         }
         if (m_drivePID->SetIZone(m_drivePosition_IZ) != rev::CANError::kOk)
         {
-            throw std::runtime_error("SetIZone()"); // XXX warn
+            throw std::runtime_error("SetIZone()");
         }
         if (m_drivePID->SetIMaxAccum(m_drivePosition_IM) != rev::CANError::kOk)
         {
-            throw std::runtime_error("SetIMaxAccum()"); // XXX warn
+            throw std::runtime_error("SetIMaxAccum()");
         }
         if (m_drivePID->SetD(m_drivePosition_D) != rev::CANError::kOk)
         {
-            throw std::runtime_error("SetD()"); // XXX warn
+            throw std::runtime_error("SetD()");
         }
         if (m_drivePID->SetDFilter(m_drivePosition_DF) != rev::CANError::kOk)
         {
-            throw std::runtime_error("SetDFilter()"); // XXX warn
+            throw std::runtime_error("SetDFilter()");
         }
         if (m_drivePID->SetFF(m_drivePosition_F) != rev::CANError::kOk)
         {
-            throw std::runtime_error("SetFF()"); // XXX warn
+            throw std::runtime_error("SetFF()");
         }
     });
 }
@@ -1386,35 +1409,35 @@ void SwerveModule::SetDriveVelocityPID() noexcept
     DoSafeDriveMotor("SetDriveVelocityPID()", [&]() -> void {
         if (!m_drivePID)
         {
-            throw std::runtime_error("m_drivePID"); // XXX warn
+            throw std::runtime_error("m_drivePID");
         }
         if (m_drivePID->SetP(m_driveVelocity_P, 1) != rev::CANError::kOk)
         {
-            throw std::runtime_error("SetP()"); // XXX warn
+            throw std::runtime_error("SetP()");
         }
         if (m_drivePID->SetI(m_driveVelocity_I, 1) != rev::CANError::kOk)
         {
-            throw std::runtime_error("SetI()"); // XXX warn
+            throw std::runtime_error("SetI()");
         }
         if (m_drivePID->SetIZone(m_driveVelocity_IZ, 1) != rev::CANError::kOk)
         {
-            throw std::runtime_error("SetIZone()"); // XXX warn
+            throw std::runtime_error("SetIZone()");
         }
         if (m_drivePID->SetIMaxAccum(m_driveVelocity_IM, 1) != rev::CANError::kOk)
         {
-            throw std::runtime_error("SetIMaxAccum()"); // XXX warn
+            throw std::runtime_error("SetIMaxAccum()");
         }
         if (m_drivePID->SetD(m_driveVelocity_D, 1) != rev::CANError::kOk)
         {
-            throw std::runtime_error("SetD()"); // XXX warn
+            throw std::runtime_error("SetD()");
         }
         if (m_drivePID->SetDFilter(m_driveVelocity_DF, 1) != rev::CANError::kOk)
         {
-            throw std::runtime_error("SetDFilter()"); // XXX warn
+            throw std::runtime_error("SetDFilter()");
         }
         if (m_drivePID->SetFF(m_driveVelocity_F, 1) != rev::CANError::kOk)
         {
-            throw std::runtime_error("SetFF()"); // XXX warn
+            throw std::runtime_error("SetFF()");
         }
     });
 }
@@ -1429,7 +1452,7 @@ bool SwerveModule::VerifyTurningMotorControllerConfig() noexcept
     return DidSafeTurningMotor("VerifyTurningMotorControllerConfig()", [&]() -> bool {
         if (!m_turningMotor || !m_turningEncoder || !m_turningPID)
         {
-            throw std::runtime_error("m_turningMotor"); // XXX warn
+            throw std::runtime_error("m_turningMotor");
         }
 
         std::string turningMotorControllerConfig;
@@ -1514,7 +1537,7 @@ bool SwerveModule::VerifyDriveMotorControllerConfig() noexcept
     return DidSafeDriveMotor("VerifyDriveMotorControllerConfig()", [&]() -> bool {
         if (!m_driveMotor || !m_drivePID)
         {
-            throw std::runtime_error("m_driveMotor"); // XXX warn
+            throw std::runtime_error("m_driveMotor");
         }
 
         std::string driveMotorControllerConfig;
@@ -1532,7 +1555,6 @@ bool SwerveModule::VerifyDriveMotorControllerConfig() noexcept
         // test mode.  In any case, do not fail if this is set as expected,
         // even if the current setting is not the same as that saved on the
         // motor controller.
-        // XXX Make sure this all hangs together...
         if (m_driveMotor->GetIdleMode() != (m_brakeApplied ? rev::CANSparkMax::IdleMode::kBrake : rev::CANSparkMax::IdleMode::kCoast))
         {
             driveMotorControllerConfig += " IM";
@@ -1625,12 +1647,12 @@ void SwerveModule::CreateTurningMotorControllerConfig() noexcept
     DoSafeTurningMotor("CreateTurningMotorControllerConfig()", [&]() -> void {
         if (!m_turningMotor)
         {
-            throw std::runtime_error("m_turningMotor"); // XXX warn
+            throw std::runtime_error("m_turningMotor");
         }
 
         if (m_turningMotor->RestoreFactoryDefaults() != rev::CANError::kOk)
         {
-            throw std::runtime_error("RestoreFactoryDefaults()"); // XXX warn
+            throw std::runtime_error("RestoreFactoryDefaults()");
         }
     });
 
@@ -1655,12 +1677,12 @@ void SwerveModule::CreateTurningMotorControllerConfig() noexcept
     DoSafeTurningMotor("CreateTurningMotorControllerConfig()", [&]() -> void {
         if (!m_turningMotor)
         {
-            throw std::runtime_error("m_turningMotor"); // XXX warn
+            throw std::runtime_error("m_turningMotor");
         }
 
         if (m_turningMotor->SetIdleMode(rev::CANSparkMax::IdleMode::kBrake) != rev::CANError::kOk)
         {
-            throw std::runtime_error("SetIdleMode()"); // XXX warn
+            throw std::runtime_error("SetIdleMode()");
         }
     });
 
@@ -1677,12 +1699,12 @@ void SwerveModule::CreateTurningMotorControllerConfig() noexcept
     DoSafeTurningMotor("CreateTurningMotorControllerConfig()", [&]() -> void {
         if (!m_turningMotor)
         {
-            throw std::runtime_error("m_turningMotor"); // XXX warn
+            throw std::runtime_error("m_turningMotor");
         }
 
         if (m_turningMotor->BurnFlash() != rev::CANError::kOk)
         {
-            throw std::runtime_error("BurnFlash()"); // XXX warn
+            throw std::runtime_error("BurnFlash()");
         }
     });
 
@@ -1703,12 +1725,12 @@ void SwerveModule::CreateDriveMotorControllerConfig() noexcept
     DoSafeDriveMotor("CreateDriveMotorControllerConfig()", [&]() -> void {
         if (!m_driveMotor)
         {
-            throw std::runtime_error("m_driveMotor"); // XXX warn
+            throw std::runtime_error("m_driveMotor");
         }
 
         if (m_driveMotor->RestoreFactoryDefaults() != rev::CANError::kOk)
         {
-            throw std::runtime_error("RestoreFactoryDefaults()"); // XXX warn
+            throw std::runtime_error("RestoreFactoryDefaults()");
         }
     });
 
@@ -1733,12 +1755,12 @@ void SwerveModule::CreateDriveMotorControllerConfig() noexcept
     DoSafeDriveMotor("CreateDriveMotorControllerConfig()", [&]() -> void {
         if (!m_driveMotor)
         {
-            throw std::runtime_error("m_driveMotor"); // XXX warn
+            throw std::runtime_error("m_driveMotor");
         }
 
         if (m_driveMotor->SetIdleMode(rev::CANSparkMax::IdleMode::kCoast) != rev::CANError::kOk)
         {
-            throw std::runtime_error("SetIdleMode()"); // XXX warn
+            throw std::runtime_error("SetIdleMode()");
         }
     });
 
@@ -1757,12 +1779,12 @@ void SwerveModule::CreateDriveMotorControllerConfig() noexcept
     DoSafeDriveMotor("CreateDriveMotorControllerConfig()", [&]() -> void {
         if (!m_driveMotor)
         {
-            throw std::runtime_error("m_driveMotor"); // XXX warn
+            throw std::runtime_error("m_driveMotor");
         }
 
         if (m_driveMotor->BurnFlash() != rev::CANError::kOk)
         {
-            throw std::runtime_error("BurnFlash()"); // XXX warn
+            throw std::runtime_error("BurnFlash()");
         }
     });
 

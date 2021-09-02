@@ -29,6 +29,7 @@ public:
   frc2::Command *GetAutonomousCommand() noexcept;
 
   void TestInit() noexcept;
+  void TestExit() noexcept;
   void TestPeriodic() noexcept;
 
 private:

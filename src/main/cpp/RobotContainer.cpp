@@ -9,6 +9,8 @@
 #include <frc2/command/Command.h>
 #include <frc2/command/RunCommand.h>
 
+#include <cmath>
+
 RobotContainer::RobotContainer() noexcept : m_autonomousCommand(&m_driveSubsystem)
 {
   // Initialize all of your commands and subsystems here
@@ -69,7 +71,11 @@ std::tuple<double, double, double> RobotContainer::GetDriveTeleopControls() noex
   // released and return to "zero".  These implement a continuous deadband, one
   // in which the full range of outputs may be generated, once joysticks move
   // outside the deadband.
-  auto deadband = [](double raw) -> double {
+
+  // Also, cube the result, to provide more opertor control.  Just cubing the
+  // raw value does a pretty good job with the deadband, but doing both is easy
+  // and guarantees no movement in the deadband.
+  auto shape = [](double raw) -> double {
     constexpr double range = 0.05;
     constexpr double slope = 1.0 / (1.0 - range);
 
@@ -88,10 +94,10 @@ std::tuple<double, double, double> RobotContainer::GetDriveTeleopControls() noex
       raw *= slope;
     }
 
-    return raw;
+    return std::pow(raw, 3.0);
   };
 
-  return std::make_tuple(deadband(x), deadband(y), deadband(z));
+  return std::make_tuple(shape(x), shape(y), shape(z));
 }
 
 void RobotContainer::TestInit() noexcept
@@ -105,6 +111,11 @@ void RobotContainer::TestInit() noexcept
   chooser->AddOption("Orbit", nullptr);
   chooser->AddOption("Spirograph", nullptr);
   chooser->AddOption("Drive", nullptr);
+}
+
+void RobotContainer::TestExit() noexcept
+{
+  m_driveSubsystem.TestExit();
 }
 
 void RobotContainer::TestPeriodic() noexcept

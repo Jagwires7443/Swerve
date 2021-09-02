@@ -130,7 +130,7 @@ public:
 
   // Is swerve module healthy and motor controller configuration current?
   // Note that the latter condition is only checked in test mode.
-  bool GetStatus() noexcept;
+  bool GetStatus() const noexcept;
 
   // Set motor controller turning position using absolute position sensor (best
   // done when robot is at rest).
@@ -145,6 +145,10 @@ public:
 
   // Act.  Command the swerve module to take on the specified absolute heading.
   void SetTurningPosition(const units::angle::degree_t position) noexcept;
+
+  // Determine if commanded turning position has been achieved, to within
+  // specified tolerance.  Called only from Periodic().
+  bool CheckTurningPosition(const units::angle::degree_t tolerance = 2_deg) noexcept;
 
   // Drive is normally oriented around velocity, but distance enables odometry,
   // simple dead reckoning, etc.  Possibly useful for autonomous driving.
@@ -175,8 +179,10 @@ public:
   void SetDesiredState(const frc::SwerveModuleState &state) noexcept;
 
   // Fancy test mode!
+  void TestModeControl(const bool enabled) noexcept { m_testModeControl = enabled; }
   void TestInit() noexcept;
-  void TestPeriodic(const bool setMotors) noexcept;
+  void TestExit() noexcept;
+  void TestPeriodic() noexcept;
 
   // Provide PID settings used for all motion control (besides from test mode).
   void TurningPositionPID(double P, double I, double IZ, double IM, double D, double DF, double F) noexcept;
@@ -228,10 +234,6 @@ private:
 
   void CreateTurningMotorControllerConfig() noexcept;
   void CreateDriveMotorControllerConfig() noexcept;
-
-  // Determine if commanded turning position has been achieved, to within
-  // specified tolerance.  Called only from Periodic().
-  bool CheckTurningPosition(const units::angle::degree_t tolerance = 2_deg) noexcept;
 
   const std::string m_name;
   const int m_driveMotorCanID;
@@ -310,6 +312,8 @@ private:
   bool m_distanceVelocityNot{false};
   units::length::meter_t m_commandedDistance{0};
   units::velocity::meters_per_second_t m_commandedVelocity{0};
+
+  bool m_testModeControl{false};
 
   // Test Mode (only) instance of a "Gyro", needed for Shuffleboard UI.
   HeadingGyro m_headingGyro;

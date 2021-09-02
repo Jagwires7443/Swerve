@@ -45,6 +45,7 @@ public:
   void Periodic() noexcept override;
 
   void TestInit() noexcept;
+  void TestExit() noexcept;
   void TestPeriodic() noexcept;
 
   // Obtain a non-owning pointer to the Command chooser, in the Test Mode UI.
@@ -53,14 +54,14 @@ public:
   // into Test Mode, interactively.  If nullptr, TestInit() was never called.
   frc::SendableChooser<frc2::Command *> *TestModeChooser() noexcept { return m_chooser.get(); }
 
-  bool GetStatus() noexcept;
+  bool GetStatus() const noexcept;
 
   // Test or simple autonomous (no motion planning) oriented methods;
   // note that these return false until the requested action has completed.
+  void SetDriveBrakeMode(bool brake) noexcept;                             // Brake or coast
   bool ZeroModules() noexcept;                                             // Face forward
   bool SetTurnInPlace(bool) noexcept;                                      // Orient modules for spin in-place
   bool SetTurningPosition(const units::angle::degree_t position) noexcept; // Orient modules same direction
-  bool SetDriveBrakeMode(bool brake) noexcept;                             // Brake or coast
   bool SetTurnByAngle(units::degree_t angle) noexcept;                     // Spin, once set to spin in-place
   bool SetDriveDistance(units::length::meter_t distance) noexcept;         // Drive for specified distance
 
@@ -164,12 +165,12 @@ public:
           "enabled", [&]() -> bool { return m_e; }, [&](bool value) -> void { m_e = value; });
     }
 
-    double GetP() noexcept { return m_p; }
-    double GetI() noexcept { return m_i; }
-    double GetD() noexcept { return m_d; }
-    double GetF() noexcept { return m_f; }
-    double GetS() noexcept { return m_s; }
-    bool GetE() noexcept { return m_e; }
+    double GetP() const noexcept { return m_p; }
+    double GetI() const noexcept { return m_i; }
+    double GetD() const noexcept { return m_d; }
+    double GetF() const noexcept { return m_f; }
+    double GetS() const noexcept { return m_s; }
+    bool GetE() const noexcept { return m_e; }
 
     void SetS(const double &value) noexcept { m_s = value; }
     void SetE(const bool value) noexcept { m_e = value; }
