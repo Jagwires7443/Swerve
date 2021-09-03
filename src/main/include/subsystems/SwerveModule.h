@@ -147,7 +147,7 @@ public:
   void SetTurningPosition(const units::angle::degree_t position) noexcept;
 
   // Determine if commanded turning position has been achieved, to within
-  // specified tolerance.  Called only from Periodic().
+  // specified tolerance.
   bool CheckTurningPosition(const units::angle::degree_t tolerance = 2_deg) noexcept;
 
   // Drive is normally oriented around velocity, but distance enables odometry,
@@ -164,8 +164,13 @@ public:
   // Sense.  Return the cumulative drive distance since the last reset.
   units::length::meter_t GetDriveDistance() noexcept;
 
-  // Act.  Command the swerve module to drive for the specified distance.
+  // Act.  Command the swerve module to drive for the specified distance.  Call
+  // ResetDrive() to zero the distance, or supply a running total distance.
   void SetDriveDistance(units::length::meter_t distance) noexcept;
+
+  // Determine if commanded drive distance has been achieved, to within
+  // specified tolerance.
+  bool CheckDriveDistance(const units::length::meter_t tolerance = 1_cm) noexcept;
 
   // Sense. Return the current drive velocity.
   units::velocity::meters_per_second_t GetDriveVelocity() noexcept;

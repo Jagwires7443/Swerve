@@ -7,7 +7,7 @@
 
 #include <frc2/command/button/JoystickButton.h>
 #include <frc2/command/Command.h>
-#include <frc2/command/RunCommand.h>
+#include <frc2/command/CommandScheduler.h>
 
 #include <cmath>
 
@@ -18,9 +18,10 @@ RobotContainer::RobotContainer() noexcept : m_autonomousCommand(&m_driveSubsyste
   // Configure the button bindings
   ConfigureButtonBindings();
 
-  // Set up default drive command
+  // Set up default drive command; non-owning pointer is passed by value.
+  auto requirements = {dynamic_cast<frc2::Subsystem *>(&m_driveSubsystem)};
 
-  m_driveSubsystem.SetDefaultCommand(frc2::RunCommand(
+  m_driveCommand = std::make_unique<frc2::RunCommand>(
       [&]() -> void {
         const auto controls = GetDriveTeleopControls();
 
@@ -30,7 +31,9 @@ RobotContainer::RobotContainer() noexcept : m_autonomousCommand(&m_driveSubsyste
             std::get<2>(controls) * physical::kMaxTurnRate,
             true);
       },
-      {&m_driveSubsystem}));
+      requirements);
+
+  m_driveSubsystem.SetDefaultCommand(*m_driveCommand);
 }
 
 void RobotContainer::ConfigureButtonBindings() noexcept
@@ -105,12 +108,14 @@ void RobotContainer::TestInit() noexcept
   m_driveSubsystem.TestInit();
 
   frc::SendableChooser<frc2::Command *> *chooser = m_driveSubsystem.TestModeChooser();
+
   chooser->SetDefaultOption("Zero", nullptr);
   chooser->AddOption("Xs and Os", nullptr);
   chooser->AddOption("Point", nullptr);
   chooser->AddOption("Orbit", nullptr);
+  chooser->AddOption("Square", nullptr);
   chooser->AddOption("Spirograph", nullptr);
-  chooser->AddOption("Drive", nullptr);
+  chooser->AddOption("Drive", m_driveCommand.get());
 }
 
 void RobotContainer::TestExit() noexcept
@@ -122,12 +127,7 @@ void RobotContainer::TestPeriodic() noexcept
 {
   m_driveSubsystem.TestPeriodic();
 
-  // XXX temp hack, until TestInit() sets up commands
-  const auto controls = GetDriveTeleopControls();
-
-  m_driveSubsystem.Drive(
-      std::get<0>(controls) * physical::kMaxDriveSpeed,
-      std::get<1>(controls) * physical::kMaxDriveSpeed,
-      std::get<2>(controls) * physical::kMaxTurnRate,
-      true);
+  // The command scheduler does not ordinarily run in Test Mode, so run it here
+  // in case any commands have been schedued.
+  frc2::CommandScheduler::GetInstance().Run();
 }

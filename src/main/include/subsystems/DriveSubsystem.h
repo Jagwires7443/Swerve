@@ -58,9 +58,11 @@ public:
 
   // Test or simple autonomous (no motion planning) oriented methods;
   // note that these return false until the requested action has completed.
+  void ResetDrive() noexcept;                                              // Zero drive distance
   void SetDriveBrakeMode(bool brake) noexcept;                             // Brake or coast
   bool ZeroModules() noexcept;                                             // Face forward
-  bool SetTurnInPlace(bool) noexcept;                                      // Orient modules for spin in-place
+  bool SetTurnInPlace() noexcept;                                          // Orient modules for spin in-place
+  bool SetLockWheelsX() noexcept;                                          // Orient modules for staying ("X")
   bool SetTurningPosition(const units::angle::degree_t position) noexcept; // Orient modules same direction
   bool SetTurnByAngle(units::degree_t angle) noexcept;                     // Spin, once set to spin in-place
   bool SetDriveDistance(units::length::meter_t distance) noexcept;         // Drive for specified distance
@@ -243,6 +245,7 @@ private:
   std::unique_ptr<TuningPID> m_driveVelocityPIDController;
 
   std::unique_ptr<frc::SendableChooser<frc2::Command *>> m_chooser;
+  frc2::Command *m_command{nullptr};
 
   // Last commanded drive inputs, for Test Mode display.
   double m_rotation{0.0};

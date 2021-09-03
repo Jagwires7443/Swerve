@@ -326,7 +326,8 @@ void DriveSubsystem::TestPeriodic() noexcept
   }
 
   // Test mode is not handled by the scheduler, so normal Periodic() is not
-  // called in test mode; do this here.
+  // called in test mode; do this here.  It normaly runs before other code,
+  // early in the main scheduling loop, every 20ms.
   Periodic();
 
   m_frontLeftSwerveModule->TestPeriodic();
@@ -457,11 +458,35 @@ void DriveSubsystem::TestPeriodic() noexcept
                                               pidf::kDriveVelocityIZ, d, pidf::kDriveVelocityDF, f);
   }
 
-  // m_chooser->GetSelected()
-  // XXX run chosen command in test mode
-  // XXX if run, frc2::CommandScheduler::GetInstance().Run();
-  // XXX if stop, frc2::CommandScheduler::GetInstance().CancelAll();
-  // XXX when chosen, chosenCommand->Schedule();
+  // Now, run any selected command.  First, if in low-level Test Mode, cancel
+  // any running command and return, before setting up any new command.
+  if (!m_run)
+  {
+    if (m_command)
+    {
+      m_command->Cancel();
+    }
+    m_command = nullptr;
+
+    return;
+  }
+
+  frc2::Command *command = m_chooser->GetSelected();
+
+  // If a new command has been selected, cancel any old one and then schedule
+  // the new one.
+  if (m_command != command)
+  {
+    if (m_command)
+    {
+      m_command->Cancel();
+    }
+    m_command = command;
+    if (m_command)
+    {
+      m_command->Schedule(true);
+    }
+  }
 }
 
 bool DriveSubsystem::GetStatus() const noexcept
@@ -471,6 +496,14 @@ bool DriveSubsystem::GetStatus() const noexcept
          m_frontRightSwerveModule->GetStatus() &&
          m_rearLeftSwerveModule->GetStatus() &&
          m_rearRightSwerveModule->GetStatus();
+}
+
+void DriveSubsystem::ResetDrive() noexcept
+{
+  m_frontLeftSwerveModule->ResetDrive();
+  m_frontRightSwerveModule->ResetDrive();
+  m_rearLeftSwerveModule->ResetDrive();
+  m_rearRightSwerveModule->ResetDrive();
 }
 
 void DriveSubsystem::SetDriveBrakeMode(bool brake) noexcept
@@ -483,7 +516,7 @@ void DriveSubsystem::SetDriveBrakeMode(bool brake) noexcept
 
 bool DriveSubsystem::ZeroModules() noexcept { return SetTurningPosition(0_deg); }
 
-bool DriveSubsystem::SetTurnInPlace(bool) noexcept
+bool DriveSubsystem::SetTurnInPlace() noexcept
 {
   // Set all wheels tangent, at the given module.
   const wpi::array<frc::SwerveModuleState, 4> states = kDriveKinematics.ToSwerveModuleStates(
@@ -495,6 +528,44 @@ bool DriveSubsystem::SetTurnInPlace(bool) noexcept
   frontRight.speed = 0_mps;
   rearLeft.speed = 0_mps;
   rearRight.speed = 0_mps;
+
+  m_commandedStateFrontLeft = frontLeft;
+  m_commandedStateFrontRight = frontRight;
+  m_commandedStateRearLeft = rearLeft;
+  m_commandedStateRearRight = rearRight;
+
+  m_frontLeftSwerveModule->SetTurningPosition(frontLeft.angle.Degrees());
+  m_frontRightSwerveModule->SetTurningPosition(frontRight.angle.Degrees());
+  m_rearLeftSwerveModule->SetTurningPosition(rearLeft.angle.Degrees());
+  m_rearRightSwerveModule->SetTurningPosition(rearRight.angle.Degrees());
+
+  const bool fl = m_frontLeftSwerveModule->CheckTurningPosition();
+  const bool fr = m_frontRightSwerveModule->CheckTurningPosition();
+  const bool rl = m_rearLeftSwerveModule->CheckTurningPosition();
+  const bool rr = m_rearRightSwerveModule->CheckTurningPosition();
+
+  return fl && fr && rl && rr;
+}
+
+bool DriveSubsystem::SetLockWheelsX() noexcept
+{
+  // Set all wheels at right angle to tangent, at the given module.  This forms
+  // an "X", so the wheels resist being pushed (do not attempt to drive in this
+  // configuration).
+  const wpi::array<frc::SwerveModuleState, 4> states = kDriveKinematics.ToSwerveModuleStates(
+      frc::ChassisSpeeds{0_mps, 0_mps, physical::kMaxTurnRate});
+
+  auto [frontLeft, frontRight, rearLeft, rearRight] = states;
+
+  frontLeft.speed = 0_mps;
+  frontRight.speed = 0_mps;
+  rearLeft.speed = 0_mps;
+  rearRight.speed = 0_mps;
+
+  frontLeft.angle += frc::Rotation2d(90_deg);
+  frontRight.angle += frc::Rotation2d(90_deg);
+  rearLeft.angle += frc::Rotation2d(90_deg);
+  rearRight.angle += frc::Rotation2d(90_deg);
 
   m_commandedStateFrontLeft = frontLeft;
   m_commandedStateFrontRight = frontRight;
@@ -544,8 +615,20 @@ bool DriveSubsystem::SetTurnByAngle(units::degree_t angle) noexcept
   return SetDriveDistance(angle / 360_deg * physical::kDriveMetersPerTurningCircle);
 }
 
-// XXX
-bool DriveSubsystem::SetDriveDistance(units::length::meter_t distance) noexcept { return false; }
+bool DriveSubsystem::SetDriveDistance(units::length::meter_t distance) noexcept
+{
+  m_frontLeftSwerveModule->SetDriveDistance(distance);
+  m_frontRightSwerveModule->SetDriveDistance(distance);
+  m_rearLeftSwerveModule->SetDriveDistance(distance);
+  m_rearRightSwerveModule->SetDriveDistance(distance);
+
+  const bool fl = m_frontLeftSwerveModule->CheckDriveDistance();
+  const bool fr = m_frontRightSwerveModule->CheckDriveDistance();
+  const bool rl = m_rearLeftSwerveModule->CheckDriveDistance();
+  const bool rr = m_rearRightSwerveModule->CheckDriveDistance();
+
+  return fl && fr && rl && rr;
+}
 
 // The most general form of movement for a swerve is specified by thee vectors,
 // at each wheel: X and Y velocity, and rotational velocity, about an arbitrary

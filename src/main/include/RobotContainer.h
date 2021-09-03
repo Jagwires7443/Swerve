@@ -6,12 +6,14 @@
 
 #include <frc/XboxController.h>
 #include <frc2/command/Command.h>
+#include <frc2/command/RunCommand.h>
 
 #include "commands/ExampleCommand.h"
 #include "subsystems/DriveSubsystem.h"
 #include "subsystems/FeederSubsystem.h"
 #include "subsystems/ShooterSubsystem.h"
 
+#include <memory>
 #include <tuple>
 
 /**
@@ -35,12 +37,15 @@ public:
 private:
   std::tuple<double, double, double> GetDriveTeleopControls() noexcept;
 
+  void ConfigureButtonBindings() noexcept;
+
   // The robot's subsystems and commands are defined here...
   DriveSubsystem m_driveSubsystem;
   FeederSubsystem m_feederSubsystem;
   ShooterSubsystem m_shooterSubsystem;
-  ExampleCommand m_autonomousCommand;
-  frc::XboxController m_xbox{0};
 
-  void ConfigureButtonBindings() noexcept;
+  ExampleCommand m_autonomousCommand;
+  std::unique_ptr<frc2::RunCommand> m_driveCommand;
+
+  frc::XboxController m_xbox{0};
 };

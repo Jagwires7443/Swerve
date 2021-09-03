@@ -743,6 +743,18 @@ void SwerveModule::SetDriveDistance(units::length::meter_t distance) noexcept
     });
 }
 
+bool SwerveModule::CheckDriveDistance(const units::length::meter_t tolerance) noexcept
+{
+    if (!m_distanceVelocityNot)
+    {
+        return false;
+    }
+
+    const units::length::meter_t error = GetDriveDistance() - m_commandedDistance;
+
+    return error >= -tolerance && error < tolerance;
+}
+
 units::velocity::meters_per_second_t SwerveModule::GetDriveVelocity() noexcept
 {
     units::velocity::meters_per_second_t result{0};
