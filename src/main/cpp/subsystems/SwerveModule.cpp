@@ -6,14 +6,6 @@
 // The `m_rio` flag controls where this control is done, but the code is here
 // to implement this either on the roboRIO or on the SPARK MAX.
 
-// XXX add using
-
-// XXX explain error handling, consider CAN timeouts as non-fatal
-// XXX consider other possible failure points
-// XXX add comment on error handling strategy observed behavior, restart code, update code to match
-
-// XXX can set PID parameter to force updating of controllers -- or add a switch for this in DriveSubsystsem or overall robot, move there?
-
 #include "subsystems/SwerveModule.h"
 
 #include "Constants.h"
@@ -233,6 +225,36 @@ std::optional<units::angle::degree_t> SwerveModule::GetAbsolutePosition() noexce
 
     return m_turningPosition;
 }
+
+// The error handling strategy for a swerve module, at present, is to treat all
+// errors as fatal to the associated motor control, but to protect execution of
+// the overall program from these errors.  Thus far, no errors have been seen
+// and so it doesn't make sense to try to handle these.  In particular, it is
+// possible that, subsequent to an error, there is some problem that will
+// continue to cause errors.  Drivers are instructed on how to use the Driver
+// Station to "Restart Robot Code", if there is a need to recover from an error
+// that takes out a motor controller.  Not trying to recover simplifies things,
+// and results in more pradictable behaviour in the face of uncertain
+// conditions.  This way, there is less risk to keeping the rest of the robot
+// working.  The rest of the code keeps on operatiing normally, isolating the
+// problem motor controller.  In fact, this code will run without any motor
+// controllers.
+
+// One concern is a busy or electrically problematic CAN bus causing errors
+// or timeouts.  Should this occur, the preference is to fix the root cause
+// rather than trying to handle (and thereby hiding) the effects.
+
+// Code which is closed source (and which does not specify "noexcept") is
+// untrusted, in that it is surrounded by try/catch.  If a function returns any
+// error, the code currently uses throw() to propagate the error.  It would not
+// be hard to throw the error and catch fatal and non-fatal errors differently.
+// But there has not been any need thus far.  The following four routines
+// centralize the error handling logic.
+
+// The motor controllers are the main failure points.  If the absolute position
+// sensor stops working (likely a wiring issue), the code falls back to using
+// the encoder on the turning motor/controller.  So, error handling is oriented
+// around the two motor controllers.
 
 void SwerveModule::DoSafeTurningMotor(const char *const what, std::function<void()> work) noexcept
 {

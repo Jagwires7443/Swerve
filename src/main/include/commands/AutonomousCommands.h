@@ -28,5 +28,5 @@ public:
   explicit ExampleCommand(DriveSubsystem *subsystem) noexcept;
 
 private:
-  DriveSubsystem *m_subsystem = nullptr;
+  DriveSubsystem *m_subsystem{nullptr};
 };

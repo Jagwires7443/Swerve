@@ -29,7 +29,7 @@ RobotContainer::RobotContainer() noexcept : m_autonomousCommand(&m_driveSubsyste
             std::get<0>(controls) * physical::kMaxDriveSpeed,
             std::get<1>(controls) * physical::kMaxDriveSpeed,
             std::get<2>(controls) * physical::kMaxTurnRate,
-            true);
+            std::get<3>(controls));
       },
       requirements);
 
@@ -49,11 +49,10 @@ void RobotContainer::ConfigureButtonBindings() noexcept
 
 frc2::Command *RobotContainer::GetAutonomousCommand() noexcept
 {
-  // An example command will be run in autonomous
   return &m_autonomousCommand;
 }
 
-std::tuple<double, double, double> RobotContainer::GetDriveTeleopControls() noexcept
+std::tuple<double, double, double, bool> RobotContainer::GetDriveTeleopControls() noexcept
 {
   // The robot's frame of reference is the standard unit circle, from
   // trigonometry.  However, the front of the robot is facing along the positve
@@ -70,6 +69,9 @@ std::tuple<double, double, double> RobotContainer::GetDriveTeleopControls() noex
   double y = -m_xbox.GetX(frc::GenericHID::JoystickHand::kLeftHand);
   double z = -m_xbox.GetX(frc::GenericHID::JoystickHand::kRightHand);
 
+  // Some XBox controllers seem to do this strange thing with the rotation:
+  // double z = -m_xbox.GetTriggerAxis(frc::GenericHID::JoystickHand::kLeftHand);
+
   // Add some deadzone, so the robot doesn't drive when the joysticks are
   // released and return to "zero".  These implement a continuous deadband, one
   // in which the full range of outputs may be generated, once joysticks move
@@ -77,7 +79,9 @@ std::tuple<double, double, double> RobotContainer::GetDriveTeleopControls() noex
 
   // Also, cube the result, to provide more opertor control.  Just cubing the
   // raw value does a pretty good job with the deadband, but doing both is easy
-  // and guarantees no movement in the deadband.
+  // and guarantees no movement in the deadband.  Cubing makes it easier to
+  // command smaller/slower movements, while still being able to command full
+  // power.
   auto shape = [](double raw) -> double {
     constexpr double range = 0.05;
     constexpr double slope = 1.0 / (1.0 - range);
@@ -100,11 +104,13 @@ std::tuple<double, double, double> RobotContainer::GetDriveTeleopControls() noex
     return std::pow(raw, 3.0);
   };
 
-  return std::make_tuple(shape(x), shape(y), shape(z));
+  return std::make_tuple(shape(x), shape(y), shape(z), true);
 }
 
 void RobotContainer::TestInit() noexcept
 {
+  frc2::CommandScheduler::GetInstance().CancelAll();
+
   m_driveSubsystem.TestInit();
 
   frc::SendableChooser<frc2::Command *> *chooser = m_driveSubsystem.TestModeChooser();
@@ -116,18 +122,18 @@ void RobotContainer::TestInit() noexcept
   chooser->AddOption("Square", nullptr);
   chooser->AddOption("Spirograph", nullptr);
   chooser->AddOption("Drive", m_driveCommand.get());
+
+  frc2::CommandScheduler::GetInstance().Enable();
 }
 
 void RobotContainer::TestExit() noexcept
 {
   m_driveSubsystem.TestExit();
+
+  frc2::CommandScheduler::GetInstance().CancelAll();
 }
 
 void RobotContainer::TestPeriodic() noexcept
 {
   m_driveSubsystem.TestPeriodic();
-
-  // The command scheduler does not ordinarily run in Test Mode, so run it here
-  // in case any commands have been schedued.
-  frc2::CommandScheduler::GetInstance().Run();
 }

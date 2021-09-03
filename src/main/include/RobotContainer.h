@@ -8,7 +8,7 @@
 #include <frc2/command/Command.h>
 #include <frc2/command/RunCommand.h>
 
-#include "commands/ExampleCommand.h"
+#include "commands/AutonomousCommands.h"
 #include "subsystems/DriveSubsystem.h"
 #include "subsystems/FeederSubsystem.h"
 #include "subsystems/ShooterSubsystem.h"
@@ -35,7 +35,7 @@ public:
   void TestPeriodic() noexcept;
 
 private:
-  std::tuple<double, double, double> GetDriveTeleopControls() noexcept;
+  std::tuple<double, double, double, bool> GetDriveTeleopControls() noexcept;
 
   void ConfigureButtonBindings() noexcept;
 

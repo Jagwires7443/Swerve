@@ -27,8 +27,6 @@ namespace physical
     constexpr int kRearLeftAlignmentOffset = -1036;
     constexpr int kRearRightAlignmentOffset = +981;
 
-    // XXX explain these -- what they do, effects of too high or too low, empirically set
-
     // SDS Mk3 Standard (or Fast) Gear Ratio: 8.16:1 (or 6.86:1);
     // Nominal Wheel Diameter (4"): =0.1016m;
     // Nominal Wheel Circumference (pi * Diameter): ~0.3192m;
@@ -67,7 +65,7 @@ namespace physical
 
     // So the maximum rotational velocity (spinning in place) is kMaxDriveSpeed
     // / kDriveMetersPerTurningCircle * 360 degrees.  This should not need to
-    // be empirically adjusted.
+    // be empirically adjusted (but check).
     constexpr units::degrees_per_second_t kMaxTurnRate =
         kMaxDriveSpeed / kDriveMetersPerTurningCircle * 360_deg;
 

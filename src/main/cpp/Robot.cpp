@@ -43,7 +43,7 @@ void Robot::AutonomousInit() noexcept
 
   m_autonomousCommand = m_container.GetAutonomousCommand();
 
-  if (m_autonomousCommand != nullptr)
+  if (m_autonomousCommand)
   {
     m_autonomousCommand->Schedule();
   }
@@ -59,7 +59,7 @@ void Robot::TeleopInit() noexcept
   // teleop starts running. If you want the autonomous to
   // continue until interrupted by another command, remove
   // this line or comment it out.
-  if (m_autonomousCommand != nullptr)
+  if (m_autonomousCommand)
   {
     m_autonomousCommand->Cancel();
     m_autonomousCommand = nullptr;
@@ -73,8 +73,6 @@ void Robot::TeleopPeriodic() noexcept {}
 
 void Robot::TestInit() noexcept
 {
-  frc2::CommandScheduler::GetInstance().CancelAll();
-
   m_container.TestInit();
 }
 
