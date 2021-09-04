@@ -7,7 +7,6 @@
 // See https://github.com/wpilibsuite/allwpilib/blob/main/wpilibcExamples/src/main/cpp/examples/SwerveControllerCommand/cpp/subsystems/DriveSubsystem.cpp.
 
 #include "subsystems/DriveSubsystem.h"
-
 #include "subsystems/SwerveModule.h"
 
 #include <frc/shuffleboard/BuiltInWidgets.h>
@@ -544,7 +543,7 @@ bool DriveSubsystem::SetTurnInPlace() noexcept
   const bool rl = m_rearLeftSwerveModule->CheckTurningPosition();
   const bool rr = m_rearRightSwerveModule->CheckTurningPosition();
 
-  return fl && fr && rl && rr;
+  return (fl && fr && rl && rr) || !m_run;
 }
 
 bool DriveSubsystem::SetLockWheelsX() noexcept
@@ -582,7 +581,7 @@ bool DriveSubsystem::SetLockWheelsX() noexcept
   const bool rl = m_rearLeftSwerveModule->CheckTurningPosition();
   const bool rr = m_rearRightSwerveModule->CheckTurningPosition();
 
-  return fl && fr && rl && rr;
+  return (fl && fr && rl && rr) || !m_run;
 }
 
 bool DriveSubsystem::SetTurningPosition(const units::angle::degree_t position) noexcept
@@ -607,7 +606,7 @@ bool DriveSubsystem::SetTurningPosition(const units::angle::degree_t position) n
   const bool rl = m_rearLeftSwerveModule->CheckTurningPosition();
   const bool rr = m_rearRightSwerveModule->CheckTurningPosition();
 
-  return fl && fr && rl && rr;
+  return (fl && fr && rl && rr) || !m_run;
 }
 
 bool DriveSubsystem::SetTurnByAngle(units::degree_t angle) noexcept
@@ -627,7 +626,7 @@ bool DriveSubsystem::SetDriveDistance(units::length::meter_t distance) noexcept
   const bool rl = m_rearLeftSwerveModule->CheckDriveDistance();
   const bool rr = m_rearRightSwerveModule->CheckDriveDistance();
 
-  return fl && fr && rl && rr;
+  return (fl && fr && rl && rr) || !m_run;
 }
 
 // The most general form of movement for a swerve is specified by thee vectors,

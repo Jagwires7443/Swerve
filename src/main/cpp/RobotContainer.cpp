@@ -11,7 +11,7 @@
 
 #include <cmath>
 
-RobotContainer::RobotContainer() noexcept : m_autonomousCommand(&m_driveSubsystem)
+RobotContainer::RobotContainer() noexcept
 {
   // Initialize all of your commands and subsystems here
 
@@ -33,6 +33,27 @@ RobotContainer::RobotContainer() noexcept : m_autonomousCommand(&m_driveSubsyste
       },
       requirements);
 
+  m_pointCommand = std::make_unique<frc2::RunCommand>(
+      [&]() -> void {
+        const auto controls = GetDriveTeleopControls();
+
+        units::angle::radian_t angle{std::atan2(std::get<0>(controls), std::get<1>(controls))};
+
+        // Ingnore return (bool); no need to check that commanded angle has
+        // been reached.
+        (void)m_driveSubsystem.SetTurningPosition(angle);
+      },
+      requirements);
+
+  m_autonomousCommand = std::make_unique<ExampleCommand>(&m_driveSubsystem);
+
+  m_zeroCommand = std::make_unique<ZeroCommand>(&m_driveSubsystem);
+  m_xsAndOsCommand = std::make_unique<XsAndOsCommand>(&m_driveSubsystem);
+  m_squareCommand = std::make_unique<SquareCommand>(&m_driveSubsystem);
+  m_spirographCommand = std::make_unique<SpirographCommand>(&m_driveSubsystem);
+  m_orbitCommand = std::make_unique<OrbitCommand>(&m_driveSubsystem);
+  m_pirouetteCommand = std::make_unique<PirouetteCommand>(&m_driveSubsystem);
+
   m_driveSubsystem.SetDefaultCommand(*m_driveCommand);
 }
 
@@ -49,7 +70,7 @@ void RobotContainer::ConfigureButtonBindings() noexcept
 
 frc2::Command *RobotContainer::GetAutonomousCommand() noexcept
 {
-  return &m_autonomousCommand;
+  return m_autonomousCommand.get();
 }
 
 std::tuple<double, double, double, bool> RobotContainer::GetDriveTeleopControls() noexcept
@@ -115,12 +136,13 @@ void RobotContainer::TestInit() noexcept
 
   frc::SendableChooser<frc2::Command *> *chooser = m_driveSubsystem.TestModeChooser();
 
-  chooser->SetDefaultOption("Zero", nullptr);
-  chooser->AddOption("Xs and Os", nullptr);
-  chooser->AddOption("Point", nullptr);
-  chooser->AddOption("Orbit", nullptr);
-  chooser->AddOption("Square", nullptr);
-  chooser->AddOption("Spirograph", nullptr);
+  chooser->SetDefaultOption("Zero", m_zeroCommand.get());
+  chooser->AddOption("Xs and Os", m_xsAndOsCommand.get());
+  chooser->AddOption("Point", m_pointCommand.get());
+  chooser->AddOption("Square", m_squareCommand.get());
+  chooser->AddOption("Spirograph", m_spirographCommand.get());
+  chooser->AddOption("Orbit", m_orbitCommand.get());
+  chooser->AddOption("Pirouette", m_pirouetteCommand.get());
   chooser->AddOption("Drive", m_driveCommand.get());
 
   frc2::CommandScheduler::GetInstance().Enable();
