@@ -20,6 +20,7 @@
 #include <networktables/NetworkTableValue.h>
 
 #include <chrono>
+#include <cmath>
 #include <thread>
 
 DriveSubsystem::DriveSubsystem() noexcept
@@ -499,6 +500,10 @@ bool DriveSubsystem::GetStatus() const noexcept
 
 void DriveSubsystem::ResetDrive() noexcept
 {
+  m_rotation = 0.0;
+  m_x = 0.0;
+  m_y = 0.0;
+
   m_frontLeftSwerveModule->ResetDrive();
   m_frontRightSwerveModule->ResetDrive();
   m_rearLeftSwerveModule->ResetDrive();
@@ -517,6 +522,10 @@ bool DriveSubsystem::ZeroModules() noexcept { return SetTurningPosition(0_deg); 
 
 bool DriveSubsystem::SetTurnInPlace() noexcept
 {
+  m_rotation = 0.0;
+  m_x = 0.0;
+  m_y = 0.0;
+
   // Set all wheels tangent, at the given module.
   const wpi::array<frc::SwerveModuleState, 4> states = kDriveKinematics.ToSwerveModuleStates(
       frc::ChassisSpeeds{0_mps, 0_mps, physical::kMaxTurnRate});
@@ -548,6 +557,10 @@ bool DriveSubsystem::SetTurnInPlace() noexcept
 
 bool DriveSubsystem::SetLockWheelsX() noexcept
 {
+  m_rotation = 0.0;
+  m_x = 0.0;
+  m_y = 0.0;
+
   // Set all wheels at right angle to tangent, at the given module.  This forms
   // an "X", so the wheels resist being pushed (do not attempt to drive in this
   // configuration).
@@ -586,6 +599,10 @@ bool DriveSubsystem::SetLockWheelsX() noexcept
 
 bool DriveSubsystem::SetTurningPosition(const units::angle::degree_t position) noexcept
 {
+  m_rotation = 0.0;
+  m_x = std::sin(units::angle::radian_t{position}.to<double>());
+  m_y = std::cos(units::angle::radian_t{position}.to<double>());
+
   m_commandedStateFrontLeft.speed = 0_mps;
   m_commandedStateFrontRight.speed = 0_mps;
   m_commandedStateRearLeft.speed = 0_mps;
@@ -646,6 +663,13 @@ void DriveSubsystem::Drive(units::meters_per_second_t xSpeed,
                            units::meters_per_second_t ySpeed, units::radians_per_second_t rot,
                            bool fieldRelative) noexcept
 {
+  Drive(xSpeed, ySpeed, rot, fieldRelative, 0_m, 0_m);
+}
+
+void DriveSubsystem::Drive(units::meters_per_second_t xSpeed,
+                           units::meters_per_second_t ySpeed, units::radians_per_second_t rot,
+                           bool fieldRelative, units::meter_t x_center, units::meter_t y_center) noexcept
+{
   m_rotation = rot / physical::kMaxTurnRate;
   m_x = xSpeed / physical::kMaxDriveSpeed;
   m_y = ySpeed / physical::kMaxDriveSpeed;
@@ -664,12 +688,13 @@ void DriveSubsystem::Drive(units::meters_per_second_t xSpeed,
     fieldRelative = false;
   }
 
-  // Center of rotation argument is defaulted here, meaning rotation is about
-  // the center point of the robot.
+  // Center of rotation argument is defaulted to the center of the robot above,
+  // but it is also possible to rotate about a different point.
   wpi::array<frc::SwerveModuleState, 4> states = kDriveKinematics.ToSwerveModuleStates(
       fieldRelative ? frc::ChassisSpeeds::FromFieldRelativeSpeeds(
                           xSpeed, ySpeed, rot, botRot)
-                    : frc::ChassisSpeeds{xSpeed, ySpeed, rot});
+                    : frc::ChassisSpeeds{xSpeed, ySpeed, rot},
+      frc::Translation2d(x_center, y_center));
 
   kDriveKinematics.NormalizeWheelSpeeds(&states, physical::kMaxDriveSpeed);
 
@@ -692,6 +717,19 @@ void DriveSubsystem::SetModuleStates(wpi::array<frc::SwerveModuleState, 4> &desi
   m_commandedStateFrontRight = frontRight;
   m_commandedStateRearLeft = rearLeft;
   m_commandedStateRearRight = rearRight;
+
+  // Don't command turning if there is no drive; this is used from Drive(), and
+  // it winds up causing the modules to all home to zero any time there is no
+  // joystick input.  This check causes them to stay where they are, which is
+  // no worse and saves energy, wear, and, potentially, time.  This is done
+  // before applying m_limit (intentionally).
+  if (frontLeft.speed == 0_mps &&
+      frontRight.speed == 0_mps &&
+      rearLeft.speed == 0_mps &&
+      rearRight.speed == 0_mps)
+  {
+    return;
+  }
 
   // m_limit is always unity, except in Test Mode.  So, by default, it does not
   // modify anything here.  In Test Mode, it can be used to slow things down.

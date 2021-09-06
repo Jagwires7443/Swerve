@@ -27,6 +27,12 @@ public:
    */
   explicit ExampleCommand(DriveSubsystem *subsystem) noexcept;
 
+  void Initialize() noexcept override {}
+
+  void Execute() noexcept override {}
+
+  void End(bool interrupted) noexcept override {}
+
 private:
   DriveSubsystem *m_subsystem{nullptr};
 };

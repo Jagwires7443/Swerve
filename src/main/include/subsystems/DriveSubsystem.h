@@ -82,6 +82,10 @@ public:
              units::meters_per_second_t ySpeed, units::radians_per_second_t rot,
              bool fieldRelative) noexcept;
 
+  void Drive(units::meters_per_second_t xSpeed,
+             units::meters_per_second_t ySpeed, units::radians_per_second_t rot,
+             bool fieldRelative, units::meter_t x_center, units::meter_t y_center) noexcept;
+
   /**
    * Resets the drive encoders to currently read a position of 0.
    */

@@ -33,14 +33,16 @@ class XsAndOsCommand
 public:
     explicit XsAndOsCommand(DriveSubsystem *subsystem) noexcept;
 
-    void Initialize() noexcept override {}
+    void Initialize() noexcept override;
 
     void Execute() noexcept override;
 
-    void End(bool interrupted) noexcept override {}
+    void End(bool interrupted) noexcept override;
 
 private:
     DriveSubsystem *m_subsystem{nullptr};
+
+    unsigned m_iteration{0};
 };
 
 // Drive in a square.
@@ -50,14 +52,16 @@ class SquareCommand
 public:
     explicit SquareCommand(DriveSubsystem *subsystem) noexcept;
 
-    void Initialize() noexcept override {}
+    void Initialize() noexcept override;
 
     void Execute() noexcept override;
 
-    void End(bool interrupted) noexcept override {}
+    void End(bool interrupted) noexcept override;
 
 private:
     DriveSubsystem *m_subsystem{nullptr};
+
+    unsigned m_side{0};
 };
 
 // Drive in a spirograph pattern.
@@ -67,14 +71,16 @@ class SpirographCommand
 public:
     explicit SpirographCommand(DriveSubsystem *subsystem) noexcept;
 
-    void Initialize() noexcept override {}
+    void Initialize() noexcept override;
 
     void Execute() noexcept override;
 
-    void End(bool interrupted) noexcept override {}
+    void End(bool interrupted) noexcept override;
 
 private:
     DriveSubsystem *m_subsystem{nullptr};
+
+    unsigned m_angle{0};
 };
 
 // Drive in an orbit.
@@ -101,7 +107,7 @@ class PirouetteCommand
 public:
     explicit PirouetteCommand(DriveSubsystem *subsystem) noexcept;
 
-    void Initialize() noexcept override {}
+    void Initialize() noexcept override;
 
     void Execute() noexcept override;
 

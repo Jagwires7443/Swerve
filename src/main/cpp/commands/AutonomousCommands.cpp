@@ -5,4 +5,4 @@
 #include "commands/AutonomousCommands.h"
 
 ExampleCommand::ExampleCommand(DriveSubsystem *subsystem) noexcept
-    : m_subsystem{subsystem} {}
+    : m_subsystem{subsystem} { SetName("Example"); }
