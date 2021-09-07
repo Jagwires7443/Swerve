@@ -54,6 +54,7 @@ public:
   // into Test Mode, interactively.  If nullptr, TestInit() was never called.
   frc::SendableChooser<frc2::Command *> *TestModeChooser() noexcept { return m_chooser.get(); }
 
+  // Obtain status of the overall swerve drive subsystem.
   bool GetStatus() const noexcept;
 
   // Test or simple autonomous (no motion planning) oriented methods;
@@ -82,12 +83,14 @@ public:
              units::meters_per_second_t ySpeed, units::radians_per_second_t rot,
              bool fieldRelative) noexcept;
 
+  // As above, but allow specification of a different center of rotation.
   void Drive(units::meters_per_second_t xSpeed,
              units::meters_per_second_t ySpeed, units::radians_per_second_t rot,
              bool fieldRelative, units::meter_t x_center, units::meter_t y_center) noexcept;
 
   /**
-   * Resets the drive encoders to currently read a position of 0.
+   * Resets the drive encoder to zero, and the turning encoder based on the
+   * absolute position sensor.
    */
   void ResetEncoders() noexcept;
 
@@ -220,15 +223,13 @@ private:
   // The gyro sensor
   std::unique_ptr<AHRS> m_ahrs;
 
-  // Components (e.g. motor controllers and sensors) should generally be
-  // declared private and exposed only through public methods.
+  // Four swerve modules.
   std::unique_ptr<SwerveModule> m_frontLeftSwerveModule;
   std::unique_ptr<SwerveModule> m_frontRightSwerveModule;
   std::unique_ptr<SwerveModule> m_rearLeftSwerveModule;
   std::unique_ptr<SwerveModule> m_rearRightSwerveModule;
 
-  // Odometry class for tracking robot pose
-  // 4 defines the number of modules
+  // Odometry class for tracking robot pose; 4 specifies the number of modules.
   std::unique_ptr<frc::SwerveDriveOdometry<4>> m_odometry;
 
   // Test Mode (only) last commanded states (for optional display).
@@ -248,6 +249,7 @@ private:
   std::unique_ptr<TuningPID> m_drivePositionPIDController;
   std::unique_ptr<TuningPID> m_driveVelocityPIDController;
 
+  // Test Mode (only) instance of test command chooser.
   std::unique_ptr<frc::SendableChooser<frc2::Command *>> m_chooser;
   frc2::Command *m_command{nullptr};
 
@@ -256,8 +258,10 @@ private:
   double m_x{0.0};
   double m_y{0.0};
 
-  double m_limit{1.0};
+  // Test Mode modification of behavior, allows low-level control and
+  // modification of drive speed.
   bool m_run{true};
+  double m_limit{1.0};
 
   // Test Mode (only) data, obtained but not owned.
   frc::ComplexWidget *m_frontLeftTurning{nullptr};

@@ -123,9 +123,10 @@ public:
   // the motor controller, which doesn't work at present due to a REV issue).
   // This also provides a means to alter the drive motor control based on the
   // commanded and actual turning position.  It provides a guaranteed chance to
-  // read sensors, ahead of the next cycle of possible commands.  It should not
-  // be called when the motors are being directly controlled via SwerveModule()
-  // Test Mode (open-loop, manual control from per-module tab).
+  // read sensors, ahead of the next cycle of possible commands.  If the motors
+  // are being directly controlled via SwerveModule() Test Mode (open-loop,
+  // manual control from a per-module tab), the motors will not actually be
+  // commanded.
   void Periodic() noexcept;
 
   // Is swerve module healthy and motor controller configuration current?
@@ -158,7 +159,7 @@ public:
   // position has been reached to within the default tolerance of
   // CheckTurningPosition(), and when the commanded velocity is zero.  This is
   // only for velocity control -- under distance control brake mode is always
-  // enabled.
+  // enabled (but the turning position is still factored in).
   void SetDriveBrakeMode(bool brake) noexcept { m_commandedBrake = brake; }
 
   // Sense.  Return the cumulative drive distance since the last reset.
@@ -183,7 +184,8 @@ public:
   const frc::SwerveModuleState GetState() noexcept;
   void SetDesiredState(const frc::SwerveModuleState &state) noexcept;
 
-  // Fancy test mode!
+  // Fancy test mode!  TestModeControl(true) puts the swerve modules in
+  // low-level, open-lop, manual control.
   void TestModeControl(const bool enabled) noexcept { m_testModeControl = enabled; }
   void TestInit() noexcept;
   void TestExit() noexcept;
@@ -318,6 +320,7 @@ private:
   units::length::meter_t m_commandedDistance{0};
   units::velocity::meters_per_second_t m_commandedVelocity{0};
 
+  // Low-level test mode.
   bool m_testModeControl{false};
 
   // Test Mode (only) instance of a "Gyro", needed for Shuffleboard UI.

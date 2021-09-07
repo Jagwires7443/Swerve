@@ -7,8 +7,10 @@
 FeederSubsystem::FeederSubsystem() noexcept
 {
     DoSafeFeederMotors("ctor", [&]() -> void {
-        m_feederOneMotor = std::make_unique<ctre::phoenix::motorcontrol::can::WPI_VictorSPX>(nonDrive::kFeederOneCanID);
-        m_feederTwoMotor = std::make_unique<ctre::phoenix::motorcontrol::can::WPI_VictorSPX>(nonDrive::kFeederTwoCanID);
+        m_feederOneMotor = std::make_unique<ctre::phoenix::motorcontrol::can::WPI_VictorSPX>(
+            nonDrive::kFeederOneCanID);
+        m_feederTwoMotor = std::make_unique<ctre::phoenix::motorcontrol::can::WPI_VictorSPX>(
+            nonDrive::kFeederTwoCanID);
 
         if (!m_feederOneMotor || !m_feederTwoMotor)
         {

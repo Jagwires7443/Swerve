@@ -21,6 +21,7 @@ RobotContainer::RobotContainer() noexcept
   // Set up default drive command; non-owning pointer is passed by value.
   auto requirements = {dynamic_cast<frc2::Subsystem *>(&m_driveSubsystem)};
 
+  // Drive, as commanded by operator joystick controls.
   m_driveCommand = std::make_unique<frc2::RunCommand>(
       [&]() -> void {
         const auto controls = GetDriveTeleopControls();
@@ -33,6 +34,7 @@ RobotContainer::RobotContainer() noexcept
       },
       requirements);
 
+  // Point swerve modules, but do not actually drive.
   m_pointCommand = std::make_unique<frc2::RunCommand>(
       [&]() -> void {
         const auto controls = GetDriveTeleopControls();
@@ -150,9 +152,9 @@ void RobotContainer::TestInit() noexcept
 
 void RobotContainer::TestExit() noexcept
 {
-  m_driveSubsystem.TestExit();
-
   frc2::CommandScheduler::GetInstance().CancelAll();
+
+  m_driveSubsystem.TestExit();
 }
 
 void RobotContainer::TestPeriodic() noexcept
