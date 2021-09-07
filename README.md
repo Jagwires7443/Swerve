@@ -18,3 +18,7 @@ Here are some of the features implemented in this code:
 * Logic to manage and save configuration of motor controller settings;
 * Primitives useful for autonomous driving;
 * Integrated with WPILib.
+
+![alt text](https://github.com/Jagwires7443/Swerve/blob/master/TestMode1.PNG?raw=true)
+
+![alt text](https://github.com/Jagwires7443/Swerve/blob/master/TestMode2.PNG?raw=true)
