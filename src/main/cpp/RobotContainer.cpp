@@ -83,7 +83,7 @@ std::tuple<double, double, double, bool> RobotContainer::GetDriveTeleopControls(
   // port) side of the robot.  Poitive rotation is counter-clockwise.  On the
   // other hand, as the controller is held, the Y axis is aligned with forward.
   // And, specifically, it is the negative Y axis which extends forward.  So,
-  // the robot's X is the controolers inverted Y.  On the controller, the X
+  // the robot's X is the controllers inverted Y.  On the controller, the X
   // axis lines up with the robot's Y axis.  And, the controller's positive X
   // extends to the right.  So, the robot's Y is the controller's inverted X.
   // Finally, the other controller joystick is used for commanding rotation and
@@ -92,7 +92,7 @@ std::tuple<double, double, double, bool> RobotContainer::GetDriveTeleopControls(
   double y = -m_xbox.GetX(frc::GenericHID::JoystickHand::kLeftHand);
   double z = -m_xbox.GetX(frc::GenericHID::JoystickHand::kRightHand);
 
-  // Some XBox controllers seem to do this strange thing with the rotation:
+  // PlayStation controllers seem to do this strange thing with the rotation:
   // double z = -m_xbox.GetTriggerAxis(frc::GenericHID::JoystickHand::kLeftHand);
 
   // Add some deadzone, so the robot doesn't drive when the joysticks are
