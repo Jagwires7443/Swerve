@@ -61,6 +61,8 @@ void SquareCommand::Initialize() noexcept
     m_side = 0;
 
     m_subsystem->SetDriveBrakeMode(true);
+
+    m_subsystem->ResetDrive();
 }
 
 void SquareCommand::Execute() noexcept
@@ -92,6 +94,8 @@ void SquareCommand::Execute() noexcept
 void SquareCommand::End(bool interrupted) noexcept
 {
     m_subsystem->SetDriveBrakeMode(false);
+
+    m_subsystem->ResetDrive();
 }
 
 void SpirographCommand::Initialize() noexcept
@@ -99,6 +103,8 @@ void SpirographCommand::Initialize() noexcept
     m_angle = 0;
 
     m_subsystem->SetDriveBrakeMode(true);
+
+    m_subsystem->ResetDrive();
 }
 
 void SpirographCommand::Execute() noexcept
@@ -131,6 +137,8 @@ void SpirographCommand::Execute() noexcept
 void SpirographCommand::End(bool interrupted) noexcept
 {
     m_subsystem->SetDriveBrakeMode(false);
+
+    m_subsystem->ResetDrive();
 }
 
 void OrbitCommand::Execute() noexcept

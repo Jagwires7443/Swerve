@@ -149,7 +149,7 @@ public:
 
   // Determine if commanded turning position has been achieved, to within
   // specified tolerance.
-  bool CheckTurningPosition(const units::angle::degree_t tolerance = 2_deg) noexcept;
+  bool CheckTurningPosition(const units::angle::degree_t tolerance = 5_deg) noexcept;
 
   // Drive is normally oriented around velocity, but distance enables odometry,
   // simple dead reckoning, etc.  Possibly useful for autonomous driving.
@@ -171,7 +171,7 @@ public:
 
   // Determine if commanded drive distance has been achieved, to within
   // specified tolerance.
-  bool CheckDriveDistance(const units::length::meter_t tolerance = 1_cm) noexcept;
+  bool CheckDriveDistance(const units::length::meter_t tolerance = 5_cm) noexcept;
 
   // Sense. Return the current drive velocity.
   units::velocity::meters_per_second_t GetDriveVelocity() noexcept;

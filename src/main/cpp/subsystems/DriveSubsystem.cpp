@@ -751,7 +751,7 @@ units::degree_t DriveSubsystem::GetHeading() noexcept
   DoSafeIMU("GetAngle()", [&]() -> void {
     if (m_ahrs)
     {
-      heading = units::degree_t{m_ahrs->GetAngle()}; // In degrees already.
+      heading = units::degree_t{-m_ahrs->GetAngle()}; // In degrees already.
     }
   });
 
