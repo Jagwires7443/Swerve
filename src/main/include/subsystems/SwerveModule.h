@@ -4,7 +4,7 @@
 
 #include <frc/DigitalInput.h>
 #include <frc/DutyCycle.h>
-#include <frc/controller/PIDController.h>
+#include <frc/controller/ProfiledPIDController.h>
 #include <frc/kinematics/SwerveModuleState.h>
 #include <frc/shuffleboard/ComplexWidget.h>
 #include <frc/shuffleboard/SimpleWidget.h>
@@ -106,6 +106,14 @@
 class SwerveModule
 {
 public:
+  enum class GraphSelection
+  {
+    kNone = 0,
+    kTurningRotation,
+    kDrivePosition,
+    kDriveVelocity,
+  };
+
   // The only ctor of the SwerveModule class.
   SwerveModule(
       const char *const name,
@@ -186,7 +194,27 @@ public:
 
   // Fancy test mode!  TestModeControl(true) puts the swerve modules in
   // low-level, open-lop, manual control.
-  void TestModeControl(const bool enabled) noexcept { m_testModeControl = enabled; }
+  void TestModeControl(const bool enabled, const double voltage = 0.0) noexcept
+  {
+    m_testModeControl = enabled;
+
+    if (m_testModeControl)
+    {
+      m_testModeVoltage = voltage;
+    }
+    else
+    {
+      m_testModeVoltage = 0.0;
+    }
+  }
+
+  std::tuple<double, double, double, double> TestModeGraphData(const GraphSelection graphSelection) noexcept
+  {
+    m_graphSelection = graphSelection;
+
+    return std::make_tuple(m_processVariable, m_processError, m_processFirstDerivative, m_processSecondDerivitive);
+  }
+
   void TestInit() noexcept;
   void TestExit() noexcept;
   void TestPeriodic() noexcept;
@@ -258,7 +286,7 @@ private:
   const bool m_rio{true};
   bool m_brakeApplied{false};
   double m_rioPID_F{pidf::kTurningPositionF};
-  std::unique_ptr<frc2::PIDController> m_rioPIDController;
+  std::unique_ptr<frc::ProfiledPIDController<units::angle::degrees>> m_rioPIDController;
 
   // Turning position PID
   double m_turningPosition_P{pidf::kTurningPositionP};
@@ -322,6 +350,15 @@ private:
 
   // Low-level test mode.
   bool m_testModeControl{false};
+  double m_testModeVoltage{0.0};
+
+  // When graphing, track time-based derivatives.
+  GraphSelection m_graphSelection{GraphSelection::kNone};
+  uint64_t m_lastFPGATime{0};
+  double m_processVariable{0.0};
+  double m_processError{0.0};
+  double m_processFirstDerivative{0.0};
+  double m_processSecondDerivitive{0.0};
 
   // Test Mode (only) instance of a "Gyro", needed for Shuffleboard UI.
   HeadingGyro m_headingGyro;

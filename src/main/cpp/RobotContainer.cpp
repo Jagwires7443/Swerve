@@ -50,6 +50,7 @@ RobotContainer::RobotContainer() noexcept
   m_autonomousCommand = std::make_unique<ExampleCommand>(&m_driveSubsystem);
 
   m_zeroCommand = std::make_unique<ZeroCommand>(&m_driveSubsystem);
+  m_maxVAndACommand = std::make_unique<MaxVAndACommand>(&m_driveSubsystem);
   m_xsAndOsCommand = std::make_unique<XsAndOsCommand>(&m_driveSubsystem);
   m_squareCommand = std::make_unique<SquareCommand>(&m_driveSubsystem);
   m_spirographCommand = std::make_unique<SpirographCommand>(&m_driveSubsystem);
@@ -106,7 +107,7 @@ std::tuple<double, double, double, bool> RobotContainer::GetDriveTeleopControls(
   // command smaller/slower movements, while still being able to command full
   // power.
   auto shape = [](double raw) -> double {
-    constexpr double range = 0.05;
+    constexpr double range = 0.075;
     constexpr double slope = 1.0 / (1.0 - range);
 
     if (raw > -range && raw < +range)

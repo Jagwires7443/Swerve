@@ -11,6 +11,7 @@
 
 #include <frc/shuffleboard/BuiltInWidgets.h>
 #include <frc/shuffleboard/Shuffleboard.h>
+#include <frc/shuffleboard/ShuffleboardContainer.h>
 #include <frc/shuffleboard/ShuffleboardLayout.h>
 #include <frc/shuffleboard/ShuffleboardTab.h>
 #include <frc/shuffleboard/SimpleWidget.h>
@@ -18,10 +19,12 @@
 #include <networktables/NetworkTableInstance.h>
 #include <networktables/NetworkTableEntry.h>
 #include <networktables/NetworkTableValue.h>
+#include <wpi/ArrayRef.h>
 
 #include <chrono>
 #include <cmath>
 #include <thread>
+#include <vector>
 
 DriveSubsystem::DriveSubsystem() noexcept
 {
@@ -145,10 +148,64 @@ void DriveSubsystem::ResetOdometry(frc::Pose2d pose) noexcept
   m_odometry->ResetPosition(pose, botRot);
 }
 
+void DriveSubsystem::TestModeTurningVoltage(const double voltage) noexcept
+{
+  if (m_run)
+  {
+    return;
+  }
+
+  m_frontLeftSwerveModule->TestModeControl(true, voltage);
+  m_frontRightSwerveModule->TestModeControl(true, voltage);
+  m_rearLeftSwerveModule->TestModeControl(true, voltage);
+  m_rearRightSwerveModule->TestModeControl(true, voltage);
+}
+
+void DriveSubsystem::CreateGraphTab() noexcept
+{
+  // Only do this once.
+  if (m_graph)
+  {
+    return;
+  }
+
+  m_graph = true;
+
+  std::vector<double> fourZerosVector{0.0, 0.0, 0.0, 0.0};
+  wpi::ArrayRef<double> fourZerosArrayRef(fourZerosVector);
+
+  frc::ShuffleboardTab &shuffleboardTab = frc::Shuffleboard::GetTab("PID Tuning");
+
+  m_frontLeftGraph = &shuffleboardTab.Add("Front Left", fourZerosArrayRef)
+                          .WithPosition(0, 0)
+                          .WithSize(14, 6)
+                          .WithWidget(frc::BuiltInWidgets::kGraph);
+
+  m_frontRightGraph = &shuffleboardTab.Add("Front Right", fourZerosArrayRef)
+                           .WithPosition(14, 0)
+                           .WithSize(14, 6)
+                           .WithWidget(frc::BuiltInWidgets::kGraph);
+
+  m_rearLeftGraph = &shuffleboardTab.Add("Rear Left", fourZerosArrayRef)
+                         .WithPosition(0, 6)
+                         .WithSize(14, 6)
+                         .WithWidget(frc::BuiltInWidgets::kGraph);
+
+  m_rearRightGraph = &shuffleboardTab.Add("Rear Right", fourZerosArrayRef)
+                          .WithPosition(14, 6)
+                          .WithSize(14, 6)
+                          .WithWidget(frc::BuiltInWidgets::kGraph);
+
+  // SetType
+  //    .WithProperties(wpi::StringMap<std::shared_ptr<nt::Value>>{
+  //        std::make_pair("Counter clockwise", nt::Value::MakeBoolean(true))});
+}
+
 void DriveSubsystem::TestInit() noexcept
 {
   m_run = false;
   m_limit = 0.1;
+  m_graphSelection = SwerveModule::GraphSelection::kNone;
 
   m_frontLeftSwerveModule->TestInit();
   m_frontRightSwerveModule->TestInit();
@@ -218,7 +275,7 @@ void DriveSubsystem::TestInit() noexcept
                             .WithProperties(wpi::StringMap<std::shared_ptr<nt::Value>>{
                                 std::make_pair("Counter clockwise", nt::Value::MakeBoolean(true))});
   m_frontRightTurning = &shuffleboardLayoutSwerveTurning.Add("Front Right", m_frontRightGyro)
-                             .WithPosition(0, 1)
+                             .WithPosition(1, 0)
                              .WithWidget(frc::BuiltInWidgets::kGyro)
                              .WithProperties(wpi::StringMap<std::shared_ptr<nt::Value>>{
                                  std::make_pair("Counter clockwise", nt::Value::MakeBoolean(true))});
@@ -303,6 +360,7 @@ void DriveSubsystem::TestExit() noexcept
 {
   m_run = true;
   m_limit = 1.0;
+  m_graphSelection = SwerveModule::GraphSelection::kNone;
 
   m_frontLeftSwerveModule->TestExit();
   m_frontRightSwerveModule->TestExit();
@@ -319,6 +377,8 @@ void DriveSubsystem::TestPeriodic() noexcept
 
   if (m_run != run)
   {
+    m_graphSelection = SwerveModule::GraphSelection::kNone;
+
     m_frontLeftSwerveModule->TestModeControl(!m_run);
     m_frontRightSwerveModule->TestModeControl(!m_run);
     m_rearLeftSwerveModule->TestModeControl(!m_run);
@@ -395,12 +455,51 @@ void DriveSubsystem::TestPeriodic() noexcept
   m_swerveX->GetEntry().SetDouble(m_x);
   m_swerveY->GetEntry().SetDouble(m_y);
 
+  if (m_graphSelection != SwerveModule::GraphSelection::kNone)
+  {
+    CreateGraphTab();
+
+    std::vector<double> fourDatumsVector{0.0, 0.0, 0.0, 0.0};
+    wpi::ArrayRef<double> fourDatumsArrayRef(fourDatumsVector);
+
+    const auto fl = m_frontLeftSwerveModule->TestModeGraphData(m_graphSelection);
+    const auto fr = m_frontRightSwerveModule->TestModeGraphData(m_graphSelection);
+    const auto rl = m_rearLeftSwerveModule->TestModeGraphData(m_graphSelection);
+    const auto rr = m_rearRightSwerveModule->TestModeGraphData(m_graphSelection);
+
+    fourDatumsVector[0] = std::get<0>(fl);
+    fourDatumsVector[1] = std::get<1>(fl);
+    fourDatumsVector[2] = std::get<2>(fl);
+    fourDatumsVector[3] = std::get<3>(fl);
+    m_frontLeftGraph->GetEntry().SetDoubleArray(fourDatumsArrayRef);
+
+    fourDatumsVector[0] = std::get<0>(fr);
+    fourDatumsVector[1] = std::get<1>(fr);
+    fourDatumsVector[2] = std::get<2>(fr);
+    fourDatumsVector[3] = std::get<3>(fr);
+    m_frontRightGraph->GetEntry().SetDoubleArray(fourDatumsArrayRef);
+
+    fourDatumsVector[0] = std::get<0>(rl);
+    fourDatumsVector[1] = std::get<1>(rl);
+    fourDatumsVector[2] = std::get<2>(rl);
+    fourDatumsVector[3] = std::get<3>(rl);
+    m_rearLeftGraph->GetEntry().SetDoubleArray(fourDatumsArrayRef);
+
+    fourDatumsVector[0] = std::get<0>(rr);
+    fourDatumsVector[1] = std::get<1>(rr);
+    fourDatumsVector[2] = std::get<2>(rr);
+    fourDatumsVector[3] = std::get<3>(rr);
+    m_rearRightGraph->GetEntry().SetDoubleArray(fourDatumsArrayRef);
+  }
+
   if (m_turningPositionPIDController->GetE())
   {
     double p = m_turningPositionPIDController->GetP();
     double i = m_turningPositionPIDController->GetI();
     double d = m_turningPositionPIDController->GetD();
     double f = m_turningPositionPIDController->GetF();
+
+    m_graphSelection = SwerveModule::GraphSelection::kTurningRotation;
 
     m_turningPositionPIDController->SetE(false);
 
@@ -423,6 +522,8 @@ void DriveSubsystem::TestPeriodic() noexcept
     double d = m_drivePositionPIDController->GetD();
     double f = m_drivePositionPIDController->GetF();
 
+    m_graphSelection = SwerveModule::GraphSelection::kDrivePosition;
+
     m_drivePositionPIDController->SetE(false);
 
     std::printf("**** Drive Position PID: ( %f / %f / %f / %f )\n", p, i, d, f);
@@ -443,6 +544,8 @@ void DriveSubsystem::TestPeriodic() noexcept
     double i = m_driveVelocityPIDController->GetI();
     double d = m_driveVelocityPIDController->GetD();
     double f = m_driveVelocityPIDController->GetF();
+
+    m_graphSelection = SwerveModule::GraphSelection::kDriveVelocity;
 
     m_driveVelocityPIDController->SetE(false);
 

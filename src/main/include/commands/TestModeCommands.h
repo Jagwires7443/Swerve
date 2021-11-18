@@ -26,6 +26,25 @@ private:
     DriveSubsystem *m_subsystem{nullptr};
 };
 
+// Expose turning maximum velocity and acceleration.
+class MaxVAndACommand
+    : public frc2::CommandHelper<frc2::CommandBase, ZeroCommand>
+{
+public:
+    explicit MaxVAndACommand(DriveSubsystem *subsystem) noexcept;
+
+    void Initialize() noexcept override;
+
+    void Execute() noexcept override;
+
+    void End(bool interrupted) noexcept override;
+
+private:
+    DriveSubsystem *m_subsystem{nullptr};
+
+    unsigned m_iteration{0};
+};
+
 // Alternately command swerve modules to form X and O patterns.
 class XsAndOsCommand
     : public frc2::CommandHelper<frc2::CommandBase, XsAndOsCommand>

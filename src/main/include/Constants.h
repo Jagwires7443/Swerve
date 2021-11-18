@@ -5,6 +5,7 @@
 #pragma once
 
 #include <units/angle.h>
+#include <units/angular_acceleration.h>
 #include <units/angular_velocity.h>
 #include <units/length.h>
 #include <units/velocity.h>
@@ -108,6 +109,8 @@ namespace pidf
     constexpr double kTurningPositionD = 0.0;
     constexpr double kTurningPositionDF = 0.0;
     constexpr double kTurningPositionF = 0.003;
+    constexpr units::degrees_per_second_squared_t kTurningPositionMaxAcceleration = 1_deg_per_s_sq;
+    constexpr units::degrees_per_second_t kTurningPositionMaxVelocity = 1_deg_per_s;
 
     constexpr double kDrivePositionP = 0.125;
     constexpr double kDrivePositionI = 0.0;

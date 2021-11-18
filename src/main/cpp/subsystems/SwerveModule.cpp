@@ -10,6 +10,7 @@
 
 #include "Constants.h"
 
+#include <frc/RobotController.h>
 #include <frc/shuffleboard/BuiltInWidgets.h>
 #include <frc/shuffleboard/Shuffleboard.h>
 #include <frc/shuffleboard/ShuffleboardLayout.h>
@@ -115,12 +116,15 @@ SwerveModule::SwerveModule(
 
     // Construct turning position PID controller on the roboRIO; only used when
     // turning position control is running on the roborRIO.
-    m_rioPIDController = std::make_unique<frc2::PIDController>(
+    m_rioPIDController = std::make_unique<frc::ProfiledPIDController<units::angle::degrees>>(
         pidf::kTurningPositionP,
         pidf::kTurningPositionI,
-        pidf::kTurningPositionD);
+        pidf::kTurningPositionD,
+        std::move(frc::TrapezoidProfile<units::angle::degrees>::Constraints{
+            pidf::kTurningPositionMaxVelocity,
+            pidf::kTurningPositionMaxAcceleration}));
 
-    m_rioPIDController->EnableContinuousInput(-180.0, +180.0);
+    m_rioPIDController->EnableContinuousInput(-180_deg, +180_deg);
 
     // Construct turning absolute duty cycle encoder.  A `DigitalSource` is
     // required by the `DutyCycle` ctor.  Nothing here is expected to fail.
@@ -530,7 +534,7 @@ void SwerveModule::Periodic() noexcept
     }
 
     // Update (and apply below) turning position PID.
-    double calculated = m_rioPIDController->Calculate(m_turningPosition.to<double>());
+    double calculated = m_rioPIDController->Calculate(m_turningPosition);
 
     // Feedforward is a form of open-loop control.  For turning, there is not
     // much to do, but add in a constant value based only on the direction of
@@ -653,7 +657,7 @@ void SwerveModule::SetTurningPosition(const units::angle::degree_t position) noe
 
     m_commandedHeading = adjustedPosition;
 
-    m_rioPIDController->SetSetpoint(adjustedPosition.to<double>());
+    m_rioPIDController->SetGoal(adjustedPosition);
 
     if (m_rio || m_testModeControl)
     {
@@ -1049,9 +1053,9 @@ void SwerveModule::TestPeriodic() noexcept
         setDrive = 0.0;
     }
 
-    // Check motor controller configuration, but only infrequently!
+    // Check motor controller configuration, but only infrequently (and not when graphing)!
     const std::chrono::time_point now = std::chrono::steady_clock::now();
-    if (now >= m_verifyMotorControllersWhen)
+    if (m_graphSelection == GraphSelection::kNone && now >= m_verifyMotorControllersWhen)
     {
         using namespace std::chrono_literals;
 
@@ -1157,7 +1161,14 @@ void SwerveModule::TestPeriodic() noexcept
 
             if (m_testModeControl)
             {
-                m_turningMotor->Set(setTurning);
+                if (m_testModeVoltage == 0.0)
+                {
+                    m_turningMotor->Set(setTurning);
+                }
+                else
+                {
+                    m_turningMotor->SetVoltage(m_testModeVoltage * 1_V);
+                }
             }
         }
     });
@@ -1308,6 +1319,73 @@ void SwerveModule::TestPeriodic() noexcept
     m_driveMotorPercent->GetEntry().SetDouble(percent);
     m_driveMotorDistance->GetEntry().SetDouble(distance);
     m_driveMotorVelocity->GetEntry().SetDouble(velocity);
+
+    if (m_graphSelection == GraphSelection::kNone)
+    {
+        m_lastFPGATime = 0;
+        m_processVariable = 0.0;
+        m_processError = 0.0;
+        m_processFirstDerivative = 0.0;
+        m_processSecondDerivitive = 0.0;
+    }
+    else
+    {
+        // In microseconds.
+        uint64_t FPGATime = frc::RobotController::GetFPGATime();
+
+        // Seconds.
+        double deltaTime = (FPGATime - m_lastFPGATime) / 1000000.0;
+
+        if (m_lastFPGATime == 0)
+        {
+            deltaTime = 0.0;
+        }
+        m_lastFPGATime = FPGATime;
+
+        double deltaProcessError = m_processError;
+        double deltaFirstDerivative = m_processFirstDerivative;
+
+        switch (m_graphSelection)
+        {
+        case GraphSelection::kTurningRotation:
+            // Degrees.
+            m_processVariable = actualHeading;
+            m_processError = error;
+            break;
+        case GraphSelection::kDrivePosition:
+            // Meters.
+            m_processVariable = GetDriveDistance().to<double>();
+            if (m_distanceVelocityNot)
+            {
+                m_processError = m_processVariable - m_commandedDistance.to<double>();
+            }
+            else
+            {
+                m_processError = 0.0;
+            }
+            break;
+        case GraphSelection::kDriveVelocity:
+            // Meters/s.
+            m_processVariable = GetDriveVelocity().to<double>();
+            if (m_distanceVelocityNot)
+            {
+                m_processError = 0.0;
+            }
+            else
+            {
+                m_processError = m_processVariable - m_commandedVelocity.to<double>();
+            }
+            break;
+        }
+
+        if (deltaTime > 0.0)
+        {
+            deltaProcessError -= m_processError;
+            m_processFirstDerivative = deltaProcessError / deltaTime;
+            deltaFirstDerivative -= m_processFirstDerivative;
+            m_processSecondDerivitive = deltaFirstDerivative / deltaTime;
+        }
+    }
 
     if (zeroTurning && !m_turningMotorControllerValidated)
     {

@@ -54,6 +54,7 @@ private:
   std::unique_ptr<ExampleCommand> m_autonomousCommand;
 
   std::unique_ptr<ZeroCommand> m_zeroCommand;
+  std::unique_ptr<MaxVAndACommand> m_maxVAndACommand;
   std::unique_ptr<XsAndOsCommand> m_xsAndOsCommand;
   std::unique_ptr<SquareCommand> m_squareCommand;
   std::unique_ptr<SpirographCommand> m_spirographCommand;

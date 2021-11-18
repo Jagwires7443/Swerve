@@ -135,6 +135,12 @@ public:
    */
   void ResetOdometry(frc::Pose2d pose) noexcept;
 
+  // Test mode method to drive turning motors for characterization.
+  void TestModeTurningVoltage(const double voltage) noexcept;
+
+  // Test mode method to create graph tab for characterization.
+  void CreateGraphTab() noexcept;
+
   // Front: +x, Rear: -x; Left: +y, Right -y.  Zero heading is to the front
   // and +rotation is counter-clockwise.  This is all standard, although it
   // means the robot's front is along the x-axis, which is often pointed to
@@ -262,6 +268,8 @@ private:
   // modification of drive speed.
   bool m_run{true};
   double m_limit{1.0};
+  bool m_graph{false};
+  SwerveModule::GraphSelection m_graphSelection{SwerveModule::GraphSelection::kNone};
 
   // Test Mode (only) data, obtained but not owned.
   frc::ComplexWidget *m_frontLeftTurning{nullptr};
@@ -286,4 +294,9 @@ private:
   frc::SimpleWidget *m_swerveEnable{nullptr};
   frc::SimpleWidget *m_displayMode{nullptr};
   frc::ComplexWidget *m_commandChooser{nullptr};
+
+  frc::SimpleWidget *m_frontLeftGraph{nullptr};
+  frc::SimpleWidget *m_frontRightGraph{nullptr};
+  frc::SimpleWidget *m_rearLeftGraph{nullptr};
+  frc::SimpleWidget *m_rearRightGraph{nullptr};
 };
