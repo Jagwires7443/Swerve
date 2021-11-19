@@ -1348,12 +1348,12 @@ void SwerveModule::TestPeriodic() noexcept
         switch (m_graphSelection)
         {
         case GraphSelection::kTurningRotation:
-            // Degrees.
-            m_processVariable = actualHeading;
-            m_processError = error;
+            // In degrees, [-180, +180); normalize to [-1.0, +1.0).
+            m_processVariable = actualHeading / 180.0;
+            m_processError = error / 180.0;
             break;
         case GraphSelection::kDrivePosition:
-            // Meters.
+            // In meters.
             m_processVariable = GetDriveDistance().to<double>();
             if (m_distanceVelocityNot)
             {

@@ -107,19 +107,19 @@ std::tuple<double, double, double, bool> RobotContainer::GetDriveTeleopControls(
   // command smaller/slower movements, while still being able to command full
   // power.
   auto shape = [](double raw) -> double {
-    constexpr double range = 0.075;
+    constexpr double range = 0.05;
     constexpr double slope = 1.0 / (1.0 - range);
 
-    if (raw > -range && raw < +range)
+    if (raw >= -range && raw <= +range)
     {
       raw = 0.0;
     }
-    else if (raw <= -range)
+    else if (raw < -range)
     {
       raw += range;
       raw *= slope;
     }
-    else if (raw >= +range)
+    else if (raw > +range)
     {
       raw -= range;
       raw *= slope;

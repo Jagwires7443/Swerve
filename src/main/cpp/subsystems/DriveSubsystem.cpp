@@ -179,26 +179,30 @@ void DriveSubsystem::CreateGraphTab() noexcept
   m_frontLeftGraph = &shuffleboardTab.Add("Front Left", fourZerosArrayRef)
                           .WithPosition(0, 0)
                           .WithSize(14, 6)
-                          .WithWidget(frc::BuiltInWidgets::kGraph);
+                          .WithWidget(frc::BuiltInWidgets::kGraph)
+                          .WithProperties(wpi::StringMap<std::shared_ptr<nt::Value>>{
+                              std::make_pair("Unit", nt::Value::MakeString(""))});
 
   m_frontRightGraph = &shuffleboardTab.Add("Front Right", fourZerosArrayRef)
                            .WithPosition(14, 0)
                            .WithSize(14, 6)
-                           .WithWidget(frc::BuiltInWidgets::kGraph);
+                           .WithWidget(frc::BuiltInWidgets::kGraph)
+                           .WithProperties(wpi::StringMap<std::shared_ptr<nt::Value>>{
+                               std::make_pair("Unit", nt::Value::MakeString(""))});
 
   m_rearLeftGraph = &shuffleboardTab.Add("Rear Left", fourZerosArrayRef)
                          .WithPosition(0, 6)
                          .WithSize(14, 6)
-                         .WithWidget(frc::BuiltInWidgets::kGraph);
+                         .WithWidget(frc::BuiltInWidgets::kGraph)
+                         .WithProperties(wpi::StringMap<std::shared_ptr<nt::Value>>{
+                             std::make_pair("Unit", nt::Value::MakeString(""))});
 
   m_rearRightGraph = &shuffleboardTab.Add("Rear Right", fourZerosArrayRef)
                           .WithPosition(14, 6)
                           .WithSize(14, 6)
-                          .WithWidget(frc::BuiltInWidgets::kGraph);
-
-  // SetType
-  //    .WithProperties(wpi::StringMap<std::shared_ptr<nt::Value>>{
-  //        std::make_pair("Counter clockwise", nt::Value::MakeBoolean(true))});
+                          .WithWidget(frc::BuiltInWidgets::kGraph)
+                          .WithProperties(wpi::StringMap<std::shared_ptr<nt::Value>>{
+                              std::make_pair("Unit", nt::Value::MakeString(""))});
 }
 
 void DriveSubsystem::TestInit() noexcept
