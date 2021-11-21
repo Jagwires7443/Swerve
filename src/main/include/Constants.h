@@ -102,6 +102,8 @@ namespace firmware
 
 namespace pidf
 {
+    constexpr units::degrees_per_second_t kTurningPositionMaxVelocity = 1_deg_per_s;
+    constexpr units::degrees_per_second_squared_t kTurningPositionMaxAcceleration = 1_deg_per_s_sq;
     constexpr double kTurningPositionP = 0.003;
     constexpr double kTurningPositionI = 0.0;
     constexpr double kTurningPositionIZ = 0.0;
@@ -109,9 +111,9 @@ namespace pidf
     constexpr double kTurningPositionD = 0.0;
     constexpr double kTurningPositionDF = 0.0;
     constexpr double kTurningPositionF = 0.003;
-    constexpr units::degrees_per_second_squared_t kTurningPositionMaxAcceleration = 1_deg_per_s_sq;
-    constexpr units::degrees_per_second_t kTurningPositionMaxVelocity = 1_deg_per_s;
 
+    constexpr double kDrivePositionMaxVelocity = 0.0;
+    constexpr double kDrivePositionMaxAcceleration = 0.0;
     constexpr double kDrivePositionP = 0.125;
     constexpr double kDrivePositionI = 0.0;
     constexpr double kDrivePositionIZ = 0.0;
@@ -120,6 +122,8 @@ namespace pidf
     constexpr double kDrivePositionDF = 0.0;
     constexpr double kDrivePositionF = 0.0;
 
+    constexpr double kDriveVelocityMaxVelocity = 0.0;
+    constexpr double kDriveVelocityMaxAcceleration = 0.0;
     constexpr double kDriveVelocityP = 0.0;
     constexpr double kDriveVelocityI = 0.0;
     constexpr double kDriveVelocityIZ = 0.0;

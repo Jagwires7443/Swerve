@@ -140,6 +140,7 @@ void RobotContainer::TestInit() noexcept
   frc::SendableChooser<frc2::Command *> *chooser = m_driveSubsystem.TestModeChooser();
 
   chooser->SetDefaultOption("Zero", m_zeroCommand.get());
+  chooser->AddOption("Turning Max", m_maxVAndACommand.get());
   chooser->AddOption("Xs and Os", m_xsAndOsCommand.get());
   chooser->AddOption("Point", m_pointCommand.get());
   chooser->AddOption("Square", m_squareCommand.get());

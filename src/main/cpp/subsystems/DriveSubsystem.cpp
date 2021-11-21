@@ -533,13 +533,17 @@ void DriveSubsystem::TestPeriodic() noexcept
     std::printf("**** Drive Position PID: ( %f / %f / %f / %f )\n", p, i, d, f);
 
     m_frontLeftSwerveModule->DrivePositionPID(p, i, pidf::kDrivePositionIM,
-                                              pidf::kDrivePositionIZ, d, pidf::kDrivePositionDF, f);
+                                              pidf::kDrivePositionIZ, d, pidf::kDrivePositionDF, f,
+                                              pidf::kDrivePositionMaxVelocity, pidf::kDrivePositionMaxAcceleration);
     m_frontRightSwerveModule->DrivePositionPID(p, i, pidf::kDrivePositionIM,
-                                               pidf::kDrivePositionIZ, d, pidf::kDrivePositionDF, f);
+                                               pidf::kDrivePositionIZ, d, pidf::kDrivePositionDF, f,
+                                               pidf::kDrivePositionMaxVelocity, pidf::kDrivePositionMaxAcceleration);
     m_rearLeftSwerveModule->DrivePositionPID(p, i, pidf::kDrivePositionIM,
-                                             pidf::kDrivePositionIZ, d, pidf::kDrivePositionDF, f);
+                                             pidf::kDrivePositionIZ, d, pidf::kDrivePositionDF, f,
+                                             pidf::kDrivePositionMaxVelocity, pidf::kDrivePositionMaxAcceleration);
     m_rearRightSwerveModule->DrivePositionPID(p, i, pidf::kDrivePositionIM,
-                                              pidf::kDrivePositionIZ, d, pidf::kDrivePositionDF, f);
+                                              pidf::kDrivePositionIZ, d, pidf::kDrivePositionDF, f,
+                                              pidf::kDrivePositionMaxVelocity, pidf::kDrivePositionMaxAcceleration);
   }
 
   if (m_driveVelocityPIDController->GetE())
@@ -556,13 +560,17 @@ void DriveSubsystem::TestPeriodic() noexcept
     std::printf("**** Drive Velocity PID: ( %f / %f / %f / %f )\n", p, i, d, f);
 
     m_frontLeftSwerveModule->DriveVelocityPID(p, i, pidf::kDriveVelocityIM,
-                                              pidf::kDriveVelocityIZ, d, pidf::kDriveVelocityDF, f);
+                                              pidf::kDriveVelocityIZ, d, pidf::kDriveVelocityDF, f,
+                                              pidf::kDriveVelocityMaxVelocity, pidf::kDriveVelocityMaxAcceleration);
     m_frontRightSwerveModule->DriveVelocityPID(p, i, pidf::kDriveVelocityIM,
-                                               pidf::kDriveVelocityIZ, d, pidf::kDriveVelocityDF, f);
+                                               pidf::kDriveVelocityIZ, d, pidf::kDriveVelocityDF, f,
+                                               pidf::kDriveVelocityMaxVelocity, pidf::kDriveVelocityMaxAcceleration);
     m_rearLeftSwerveModule->DriveVelocityPID(p, i, pidf::kDriveVelocityIM,
-                                             pidf::kDriveVelocityIZ, d, pidf::kDriveVelocityDF, f);
+                                             pidf::kDriveVelocityIZ, d, pidf::kDriveVelocityDF, f,
+                                             pidf::kDriveVelocityMaxVelocity, pidf::kDriveVelocityMaxAcceleration);
     m_rearRightSwerveModule->DriveVelocityPID(p, i, pidf::kDriveVelocityIM,
-                                              pidf::kDriveVelocityIZ, d, pidf::kDriveVelocityDF, f);
+                                              pidf::kDriveVelocityIZ, d, pidf::kDriveVelocityDF, f,
+                                              pidf::kDriveVelocityMaxVelocity, pidf::kDriveVelocityMaxAcceleration);
   }
 
   // Now, run any selected command.  First, if in low-level Test Mode, cancel

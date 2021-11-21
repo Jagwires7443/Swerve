@@ -735,8 +735,10 @@ void SwerveModule::SetDriveDistance(units::length::meter_t distance) noexcept
         {
             if (m_turningPositionAsCommanded)
             {
+                // SetReference(SetPoint, rev::ControlType::kSmartMotion, 0, FeedForward)
+                // XXX Use m_drivePosition_F here?
                 if (m_drivePID->SetReference(
-                        (distance / physical::kDriveMetersPerRotation).to<double>(), rev::kPosition) != rev::CANError::kOk)
+                        (distance / physical::kDriveMetersPerRotation).to<double>(), rev::kSmartMotion) != rev::CANError::kOk)
                 {
                     throw std::runtime_error("SetReference()");
                 }
@@ -813,8 +815,9 @@ void SwerveModule::SetDriveVelocity(units::velocity::meters_per_second_t velocit
             if (m_turningPositionAsCommanded)
             {
 #if 0
+                // SetReference(SetPoint, rev::ControlType::kSmartVelocity, 1, FeedForward)
                 if (m_drivePID->SetReference(
-                        (velocity * 60_s / physical::kDriveMetersPerRotation).to<double>(), rev::kVelocity, 1) != rev::CANError::kOk)
+                        (velocity * 60_s / physical::kDriveMetersPerRotation).to<double>(), rev::kSmartVelocity, 1) != rev::CANError::kOk)
                 {
                     throw std::runtime_error("SetReference()");
                 }
@@ -1334,7 +1337,7 @@ void SwerveModule::TestPeriodic() noexcept
         uint64_t FPGATime = frc::RobotController::GetFPGATime();
 
         // Seconds.
-        double deltaTime = (FPGATime - m_lastFPGATime) / 1000000.0;
+        double deltaTime{(FPGATime - m_lastFPGATime) / 1000000.0};
 
         if (m_lastFPGATime == 0)
         {
@@ -1353,7 +1356,8 @@ void SwerveModule::TestPeriodic() noexcept
             m_processError = error / 180.0;
             break;
         case GraphSelection::kDrivePosition:
-            // In meters.
+            // In meters.  Test routines set initial position to zero and introduce
+            // step errors of 1_m, so already scaled, based on this maximum step error.
             m_processVariable = GetDriveDistance().to<double>();
             if (m_distanceVelocityNot)
             {
@@ -1365,7 +1369,7 @@ void SwerveModule::TestPeriodic() noexcept
             }
             break;
         case GraphSelection::kDriveVelocity:
-            // Meters/s.
+            // In meters/s.  XXX
             m_processVariable = GetDriveVelocity().to<double>();
             if (m_distanceVelocityNot)
             {
@@ -1376,6 +1380,8 @@ void SwerveModule::TestPeriodic() noexcept
                 m_processError = m_processVariable - m_commandedVelocity.to<double>();
             }
             break;
+        case GraphSelection::kNone:
+            break;
         }
 
         if (deltaTime > 0.0)
@@ -1384,6 +1390,21 @@ void SwerveModule::TestPeriodic() noexcept
             m_processFirstDerivative = deltaProcessError / deltaTime;
             deltaFirstDerivative -= m_processFirstDerivative;
             m_processSecondDerivitive = deltaFirstDerivative / deltaTime;
+        }
+
+        // Scale velocity and acceleration based on maximums.
+        switch (m_graphSelection)
+        {
+        case GraphSelection::kTurningRotation:
+            m_processFirstDerivative /= pidf::kTurningPositionMaxVelocity.to<double>();
+            m_processSecondDerivitive /= pidf::kTurningPositionMaxAcceleration.to<double>();
+            break;
+        case GraphSelection::kDrivePosition:
+            break;
+        case GraphSelection::kDriveVelocity:
+            break;
+        case GraphSelection::kNone:
+            break;
         }
     }
 
@@ -1414,7 +1435,7 @@ void SwerveModule::TurningPositionPID(double P, double I, double IZ, double IM, 
     SetTurningPositionPID();
 }
 
-void SwerveModule::DrivePositionPID(double P, double I, double IZ, double IM, double D, double DF, double F) noexcept
+void SwerveModule::DrivePositionPID(double P, double I, double IZ, double IM, double D, double DF, double F, double V, double A) noexcept
 {
     m_drivePosition_P = P;
     m_drivePosition_I = I;
@@ -1423,11 +1444,13 @@ void SwerveModule::DrivePositionPID(double P, double I, double IZ, double IM, do
     m_drivePosition_D = D;
     m_drivePosition_DF = DF;
     m_drivePosition_F = F;
+    m_drivePosition_V = V;
+    m_drivePosition_A = A;
 
     SetDrivePositionPID();
 }
 
-void SwerveModule::DriveVelocityPID(double P, double I, double IZ, double IM, double D, double DF, double F) noexcept
+void SwerveModule::DriveVelocityPID(double P, double I, double IZ, double IM, double D, double DF, double F, double V, double A) noexcept
 {
     m_driveVelocity_P = P;
     m_driveVelocity_I = I;
@@ -1436,6 +1459,8 @@ void SwerveModule::DriveVelocityPID(double P, double I, double IZ, double IM, do
     m_driveVelocity_D = D;
     m_driveVelocity_DF = DF;
     m_driveVelocity_F = F;
+    m_driveVelocity_V = V;
+    m_driveVelocity_A = A;
 
     SetDriveVelocityPID();
 }
@@ -1513,6 +1538,14 @@ void SwerveModule::SetDrivePositionPID() noexcept
         {
             throw std::runtime_error("SetFF()");
         }
+        if (m_drivePID->SetSmartMotionMaxVelocity(m_drivePosition_V) != rev::CANError::kOk)
+        {
+            throw std::runtime_error("SetSmartMotionMaxVelocity()");
+        }
+        if (m_drivePID->SetSmartMotionMaxAccel(m_drivePosition_A) != rev::CANError::kOk)
+        {
+            throw std::runtime_error("SetSmartMotionMaxAccel()");
+        }
     });
 }
 
@@ -1550,6 +1583,14 @@ void SwerveModule::SetDriveVelocityPID() noexcept
         if (m_drivePID->SetFF(m_driveVelocity_F, 1) != rev::CANError::kOk)
         {
             throw std::runtime_error("SetFF()");
+        }
+        if (m_drivePID->SetSmartMotionMaxVelocity(m_driveVelocity_V, 1) != rev::CANError::kOk)
+        {
+            throw std::runtime_error("SetSmartMotionMaxVelocity()");
+        }
+        if (m_drivePID->SetSmartMotionMaxAccel(m_driveVelocity_A, 1) != rev::CANError::kOk)
+        {
+            throw std::runtime_error("SetSmartMotionMaxAccel()");
         }
     });
 }
@@ -1704,6 +1745,14 @@ bool SwerveModule::VerifyDriveMotorControllerConfig() noexcept
         {
             driveMotorControllerConfig += " Fp";
         }
+        if (m_drivePID->GetSmartMotionMaxVelocity() != m_drivePosition_V)
+        {
+            driveMotorControllerConfig += " Vp";
+        }
+        if (m_drivePID->GetSmartMotionMaxAccel() != m_drivePosition_A)
+        {
+            driveMotorControllerConfig += " Ap";
+        }
 
         if (m_drivePID->GetP(1) != m_driveVelocity_P)
         {
@@ -1732,6 +1781,14 @@ bool SwerveModule::VerifyDriveMotorControllerConfig() noexcept
         if (m_drivePID->GetFF(1) != m_driveVelocity_F)
         {
             driveMotorControllerConfig += " Fv";
+        }
+        if (m_drivePID->GetSmartMotionMaxVelocity(1) != m_driveVelocity_V)
+        {
+            driveMotorControllerConfig += " Vv";
+        }
+        if (m_drivePID->GetSmartMotionMaxAccel(1) != m_driveVelocity_A)
+        {
+            driveMotorControllerConfig += " Av";
         }
 
         if (driveMotorControllerConfig.empty())

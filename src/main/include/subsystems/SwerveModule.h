@@ -103,6 +103,31 @@
 // swerve modules to save this additional configuration.  This is the fith (and
 // final) step in commissioning a robot, at least as the swerve modules go.
 
+// The first set of PID parameters to tune is that for turning position.  There
+// are several test mode routines meant to help here.  "Turning Max" is an open
+// loop routine designed to allow the maximum angular velocity and acceleration
+// for the turning modules to be measured.  The kTurningPositionMaxVelocity and
+// kTurningPositionMaxAcceleration constants hold these values.  Start with the
+// value set to unity (one) for both of these and bring up the PID Tuning graph
+// to see the plots of these values.  This is done by selecting the "Enabled"
+// control for the corresponding "PID Settings" panel.  Update these constants.
+
+// Once this is done, the "Xs and Os" routine may be used to command turning at
+// a regular interval.  It is useful to provide a simple feedforward ("F").
+// Start with everything set to zero and find a value low enough that none of
+// the modules turn, but reasonably close to the highest such value.  Then,
+// slowly increase "P" to get a good response, with no oscillation and ensuring
+// that it works well for all modules.  Do all of this with the modules up in
+// the air.  It may be worth verifying everything on the ground, with a similar
+// surface and weight as when on the field.  It should be possible to tune only
+// "F" and "P" and get good results.  If not, consult any of the FRC-friendly
+// PID tuning guides.
+
+// Once the modules turn well, use the "Zero" routine to verify home position
+// of all the modules.  Then, use the "Point" routine to verify that operator
+// controls and the software is all working as expected.  Before moving on, the
+// turning behavior should be operating well.
+
 class SwerveModule
 {
 public:
@@ -221,8 +246,8 @@ public:
 
   // Provide PID settings used for all motion control (besides from test mode).
   void TurningPositionPID(double P, double I, double IZ, double IM, double D, double DF, double F) noexcept;
-  void DrivePositionPID(double P, double I, double IZ, double IM, double D, double DF, double F) noexcept;
-  void DriveVelocityPID(double P, double I, double IZ, double IM, double D, double DF, double F) noexcept;
+  void DrivePositionPID(double P, double I, double IZ, double IM, double D, double DF, double F, double V, double A) noexcept;
+  void DriveVelocityPID(double P, double I, double IZ, double IM, double D, double DF, double F, double V, double A) noexcept;
 
   // Need to derive from abstract Sendable class in order to be able to use the
   // Gyro UI element in Shuffleboard; note that this doesn't actually derive from
@@ -305,6 +330,8 @@ private:
   double m_drivePosition_D{pidf::kDrivePositionD};
   double m_drivePosition_DF{pidf::kDrivePositionDF};
   double m_drivePosition_F{pidf::kDrivePositionF};
+  double m_drivePosition_V{pidf::kDrivePositionMaxVelocity};
+  double m_drivePosition_A{pidf::kDrivePositionMaxAcceleration};
 
   // Drive velocity PID
   double m_driveVelocity_P{pidf::kDriveVelocityP};
@@ -314,6 +341,8 @@ private:
   double m_driveVelocity_D{pidf::kDriveVelocityD};
   double m_driveVelocity_DF{pidf::kDriveVelocityDF};
   double m_driveVelocity_F{pidf::kDriveVelocityF};
+  double m_driveVelocity_V{pidf::kDriveVelocityMaxVelocity};
+  double m_driveVelocity_A{pidf::kDriveVelocityMaxAcceleration};
 
   std::unique_ptr<frc::DigitalInput> m_turningPositionSource;
   std::unique_ptr<frc::DutyCycle> m_turningPositionPWM;
