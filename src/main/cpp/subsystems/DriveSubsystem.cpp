@@ -148,19 +148,6 @@ void DriveSubsystem::ResetOdometry(frc::Pose2d pose) noexcept
   m_odometry->ResetPosition(pose, botRot);
 }
 
-void DriveSubsystem::TestModeTurningVoltage(const double voltage) noexcept
-{
-  if (m_run)
-  {
-    return;
-  }
-
-  m_frontLeftSwerveModule->TestModeControl(true, voltage);
-  m_frontRightSwerveModule->TestModeControl(true, voltage);
-  m_rearLeftSwerveModule->TestModeControl(true, voltage);
-  m_rearRightSwerveModule->TestModeControl(true, voltage);
-}
-
 void DriveSubsystem::CreateGraphTab() noexcept
 {
   // Only do this once.
@@ -379,15 +366,10 @@ void DriveSubsystem::TestPeriodic() noexcept
   m_run = m_swerveEnable->GetEntry().GetBoolean(false);
   m_limit = m_driveLimit->GetEntry().GetDouble(0.1);
 
-  if (m_run != run)
-  {
-    m_graphSelection = SwerveModule::GraphSelection::kNone;
-
-    m_frontLeftSwerveModule->TestModeControl(!m_run);
-    m_frontRightSwerveModule->TestModeControl(!m_run);
-    m_rearLeftSwerveModule->TestModeControl(!m_run);
-    m_rearRightSwerveModule->TestModeControl(!m_run);
-  }
+  m_frontLeftSwerveModule->TestModeControl(!m_run, m_testModeTurningVoltage, m_testModeDriveVoltage);
+  m_frontRightSwerveModule->TestModeControl(!m_run, m_testModeTurningVoltage, m_testModeDriveVoltage);
+  m_rearLeftSwerveModule->TestModeControl(!m_run, m_testModeTurningVoltage, m_testModeDriveVoltage);
+  m_rearRightSwerveModule->TestModeControl(!m_run, m_testModeTurningVoltage, m_testModeDriveVoltage);
 
   // Test mode is not handled by the scheduler, so normal Periodic() is not
   // called in test mode; do this here.  It normaly runs before other code,
@@ -471,26 +453,29 @@ void DriveSubsystem::TestPeriodic() noexcept
     const auto rl = m_rearLeftSwerveModule->TestModeGraphData(m_graphSelection);
     const auto rr = m_rearRightSwerveModule->TestModeGraphData(m_graphSelection);
 
-    fourDatumsVector[0] = std::get<0>(fl);
-    fourDatumsVector[1] = std::get<1>(fl);
+    // XXX
+    std::printf("V: %f; A: %f\n", std::get<2>(fl), std::get<3>(fl));
+
+    // fourDatumsVector[0] = std::get<0>(fl);
+    // fourDatumsVector[1] = std::get<1>(fl);
     fourDatumsVector[2] = std::get<2>(fl);
     fourDatumsVector[3] = std::get<3>(fl);
     m_frontLeftGraph->GetEntry().SetDoubleArray(fourDatumsArrayRef);
 
-    fourDatumsVector[0] = std::get<0>(fr);
-    fourDatumsVector[1] = std::get<1>(fr);
+    // fourDatumsVector[0] = std::get<0>(fr);
+    // fourDatumsVector[1] = std::get<1>(fr);
     fourDatumsVector[2] = std::get<2>(fr);
     fourDatumsVector[3] = std::get<3>(fr);
     m_frontRightGraph->GetEntry().SetDoubleArray(fourDatumsArrayRef);
 
-    fourDatumsVector[0] = std::get<0>(rl);
-    fourDatumsVector[1] = std::get<1>(rl);
+    // fourDatumsVector[0] = std::get<0>(rl);
+    // fourDatumsVector[1] = std::get<1>(rl);
     fourDatumsVector[2] = std::get<2>(rl);
     fourDatumsVector[3] = std::get<3>(rl);
     m_rearLeftGraph->GetEntry().SetDoubleArray(fourDatumsArrayRef);
 
-    fourDatumsVector[0] = std::get<0>(rr);
-    fourDatumsVector[1] = std::get<1>(rr);
+    // fourDatumsVector[0] = std::get<0>(rr);
+    // fourDatumsVector[1] = std::get<1>(rr);
     fourDatumsVector[2] = std::get<2>(rr);
     fourDatumsVector[3] = std::get<3>(rr);
     m_rearRightGraph->GetEntry().SetDoubleArray(fourDatumsArrayRef);

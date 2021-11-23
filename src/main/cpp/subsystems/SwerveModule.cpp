@@ -1164,13 +1164,13 @@ void SwerveModule::TestPeriodic() noexcept
 
             if (m_testModeControl)
             {
-                if (m_testModeVoltage == 0.0)
+                if (m_testModeTurningVoltage == 0.0)
                 {
                     m_turningMotor->Set(setTurning);
                 }
                 else
                 {
-                    m_turningMotor->SetVoltage(m_testModeVoltage * 1_V);
+                    m_turningMotor->SetVoltage(m_testModeTurningVoltage * 1_V);
                 }
             }
         }
@@ -1306,7 +1306,14 @@ void SwerveModule::TestPeriodic() noexcept
 
             if (m_testModeControl)
             {
-                m_driveMotor->Set(setDrive);
+                if (m_testModeDriveVoltage == 0.0)
+                {
+                    m_driveMotor->Set(setDrive);
+                }
+                else
+                {
+                    m_driveMotor->SetVoltage(m_testModeDriveVoltage * 1_V);
+                }
             }
         }
     });

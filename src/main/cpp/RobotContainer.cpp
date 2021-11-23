@@ -50,7 +50,8 @@ RobotContainer::RobotContainer() noexcept
   m_autonomousCommand = std::make_unique<ExampleCommand>(&m_driveSubsystem);
 
   m_zeroCommand = std::make_unique<ZeroCommand>(&m_driveSubsystem);
-  m_maxVAndACommand = std::make_unique<MaxVAndACommand>(&m_driveSubsystem);
+  m_maxVAndATurningCommand = std::make_unique<MaxVAndATurningCommand>(&m_driveSubsystem);
+  m_maxVAndADriveCommand = std::make_unique<MaxVAndADriveCommand>(&m_driveSubsystem);
   m_xsAndOsCommand = std::make_unique<XsAndOsCommand>(&m_driveSubsystem);
   m_squareCommand = std::make_unique<SquareCommand>(&m_driveSubsystem);
   m_spirographCommand = std::make_unique<SpirographCommand>(&m_driveSubsystem);
@@ -140,7 +141,8 @@ void RobotContainer::TestInit() noexcept
   frc::SendableChooser<frc2::Command *> *chooser = m_driveSubsystem.TestModeChooser();
 
   chooser->SetDefaultOption("Zero", m_zeroCommand.get());
-  chooser->AddOption("Turning Max", m_maxVAndACommand.get());
+  chooser->AddOption("Turning Max", m_maxVAndATurningCommand.get());
+  chooser->AddOption("Drive Max", m_maxVAndADriveCommand.get());
   chooser->AddOption("Xs and Os", m_xsAndOsCommand.get());
   chooser->AddOption("Point", m_pointCommand.get());
   chooser->AddOption("Square", m_squareCommand.get());

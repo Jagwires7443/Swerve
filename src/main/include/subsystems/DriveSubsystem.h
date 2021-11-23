@@ -135,11 +135,19 @@ public:
    */
   void ResetOdometry(frc::Pose2d pose) noexcept;
 
-  // Test mode method to drive turning motors for characterization.
-  void TestModeTurningVoltage(const double voltage) noexcept;
+  // Test mode method to power turning motors for characterization.
+  void TestModeTurningVoltage(const double voltage) noexcept
+  {
+    m_testModeTurningVoltage = voltage;
+    m_testModeDriveVoltage = 0.0;
+  }
 
-  // Test mode method to create graph tab for characterization.
-  void CreateGraphTab() noexcept;
+  // Test mode method to power drive motors for characterization.
+  void TestModeDriveVoltage(const double voltage) noexcept
+  {
+    m_testModeTurningVoltage = 0.0;
+    m_testModeDriveVoltage = voltage;
+  }
 
   // Front: +x, Rear: -x; Left: +y, Right -y.  Zero heading is to the front
   // and +rotation is counter-clockwise.  This is all standard, although it
@@ -226,7 +234,10 @@ public:
 private:
   void DoSafeIMU(const char *const what, std::function<void()> work) noexcept;
 
-  // The gyro sensor
+  // Test mode method to create graph tab for characterization.
+  void CreateGraphTab() noexcept;
+
+  // The gyro sensor.
   std::unique_ptr<AHRS> m_ahrs;
 
   // Four swerve modules.
@@ -269,6 +280,8 @@ private:
   bool m_run{true};
   double m_limit{1.0};
   bool m_graph{false};
+  double m_testModeTurningVoltage{0.0};
+  double m_testModeDriveVoltage{0.0};
   SwerveModule::GraphSelection m_graphSelection{SwerveModule::GraphSelection::kNone};
 
   // Test Mode (only) data, obtained but not owned.

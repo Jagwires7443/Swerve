@@ -9,8 +9,11 @@
 ZeroCommand::ZeroCommand(DriveSubsystem *subsystem) noexcept
     : m_subsystem{subsystem} { SetName("Zero"); }
 
-MaxVAndACommand::MaxVAndACommand(DriveSubsystem *subsystem) noexcept
-    : m_subsystem{subsystem} { SetName("MaxVAndA"); }
+MaxVAndATurningCommand::MaxVAndATurningCommand(DriveSubsystem *subsystem) noexcept
+    : m_subsystem{subsystem} { SetName("MaxVAndATurning"); }
+
+MaxVAndADriveCommand::MaxVAndADriveCommand(DriveSubsystem *subsystem) noexcept
+    : m_subsystem{subsystem} { SetName("MaxVAndADrive"); }
 
 XsAndOsCommand::XsAndOsCommand(DriveSubsystem *subsystem) noexcept
     : m_subsystem{subsystem} { SetName("Xs and Os"); }
@@ -29,14 +32,15 @@ PirouetteCommand::PirouetteCommand(DriveSubsystem *subsystem) noexcept
 
 void ZeroCommand::Execute() noexcept { (void)m_subsystem->ZeroModules(); }
 
-void MaxVAndACommand::Initialize() noexcept
+void MaxVAndATurningCommand::Initialize() noexcept
 {
     m_iteration = 0;
 
     m_subsystem->TestModeTurningVoltage(0.0);
+    m_subsystem->TestModeDriveVoltage(0.0);
 }
 
-void MaxVAndACommand::Execute() noexcept
+void MaxVAndATurningCommand::Execute() noexcept
 {
     // This is expected to run at ~20Hz.  So 100 iterations is ~5s.
     if (m_iteration < 100)
@@ -54,11 +58,46 @@ void MaxVAndACommand::Execute() noexcept
     }
 }
 
-void MaxVAndACommand::End(bool interrupted) noexcept
+void MaxVAndATurningCommand::End(bool interrupted) noexcept
 {
     m_iteration = 0;
 
     m_subsystem->TestModeTurningVoltage(0.0);
+    m_subsystem->TestModeDriveVoltage(0.0);
+}
+
+void MaxVAndADriveCommand::Initialize() noexcept
+{
+    m_iteration = 0;
+
+    m_subsystem->TestModeTurningVoltage(0.0);
+    m_subsystem->TestModeDriveVoltage(0.0);
+}
+
+void MaxVAndADriveCommand::Execute() noexcept
+{
+    // This is expected to run at ~20Hz.  So 100 iterations is ~5s.
+    if (m_iteration < 100)
+    {
+        m_subsystem->TestModeDriveVoltage(-12.0);
+    }
+    else
+    {
+        m_subsystem->TestModeDriveVoltage(+12.0);
+    }
+
+    if (++m_iteration >= 200)
+    {
+        m_iteration = 0;
+    }
+}
+
+void MaxVAndADriveCommand::End(bool interrupted) noexcept
+{
+    m_iteration = 0;
+
+    m_subsystem->TestModeTurningVoltage(0.0);
+    m_subsystem->TestModeDriveVoltage(0.0);
 }
 
 void XsAndOsCommand::Initialize() noexcept

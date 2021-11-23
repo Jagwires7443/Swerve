@@ -27,11 +27,30 @@ private:
 };
 
 // Expose turning maximum velocity and acceleration.
-class MaxVAndACommand
+class MaxVAndATurningCommand
     : public frc2::CommandHelper<frc2::CommandBase, ZeroCommand>
 {
 public:
-    explicit MaxVAndACommand(DriveSubsystem *subsystem) noexcept;
+    explicit MaxVAndATurningCommand(DriveSubsystem *subsystem) noexcept;
+
+    void Initialize() noexcept override;
+
+    void Execute() noexcept override;
+
+    void End(bool interrupted) noexcept override;
+
+private:
+    DriveSubsystem *m_subsystem{nullptr};
+
+    unsigned m_iteration{0};
+};
+
+// Expose drive maximum velocity and acceleration.
+class MaxVAndADriveCommand
+    : public frc2::CommandHelper<frc2::CommandBase, ZeroCommand>
+{
+public:
+    explicit MaxVAndADriveCommand(DriveSubsystem *subsystem) noexcept;
 
     void Initialize() noexcept override;
 

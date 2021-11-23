@@ -219,17 +219,19 @@ public:
 
   // Fancy test mode!  TestModeControl(true) puts the swerve modules in
   // low-level, open-lop, manual control.
-  void TestModeControl(const bool enabled, const double voltage = 0.0) noexcept
+  void TestModeControl(const bool enabled, const double turningVoltage, double driveVoltage) noexcept
   {
     m_testModeControl = enabled;
 
     if (m_testModeControl)
     {
-      m_testModeVoltage = voltage;
+      m_testModeTurningVoltage = turningVoltage;
+      m_testModeDriveVoltage = driveVoltage;
     }
     else
     {
-      m_testModeVoltage = 0.0;
+      m_testModeTurningVoltage = 0.0;
+      m_testModeDriveVoltage = 0.0;
     }
   }
 
@@ -379,7 +381,8 @@ private:
 
   // Low-level test mode.
   bool m_testModeControl{false};
-  double m_testModeVoltage{0.0};
+  double m_testModeTurningVoltage{0.0};
+  double m_testModeDriveVoltage{0.0};
 
   // When graphing, track time-based derivatives.
   GraphSelection m_graphSelection{GraphSelection::kNone};
