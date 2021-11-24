@@ -361,8 +361,6 @@ void DriveSubsystem::TestExit() noexcept
 
 void DriveSubsystem::TestPeriodic() noexcept
 {
-  const bool run = m_run;
-
   m_run = m_swerveEnable->GetEntry().GetBoolean(false);
   m_limit = m_driveLimit->GetEntry().GetDouble(0.1);
 
@@ -454,8 +452,6 @@ void DriveSubsystem::TestPeriodic() noexcept
     const auto rr = m_rearRightSwerveModule->TestModeGraphData(m_graphSelection);
 
     // XXX
-    std::printf("V: %f; A: %f\n", std::get<2>(fl), std::get<3>(fl));
-
     // fourDatumsVector[0] = std::get<0>(fl);
     // fourDatumsVector[1] = std::get<1>(fl);
     fourDatumsVector[2] = std::get<2>(fl);

@@ -528,7 +528,7 @@ void SwerveModule::Periodic() noexcept
     // If turning position PID is being done on the motor controller, there's
     // no more to do.  Even if PID is being done on the RIO, don't do this if
     // low-level test mode is controlling the motors.
-    if (!m_rio || m_testModeControl)
+    if (!m_rio || m_testModeControl || m_testModeTurningVoltage != 0.0)
     {
         return;
     }
@@ -659,7 +659,7 @@ void SwerveModule::SetTurningPosition(const units::angle::degree_t position) noe
 
     m_rioPIDController->SetGoal(adjustedPosition);
 
-    if (m_rio || m_testModeControl)
+    if (m_rio || m_testModeControl || m_testModeTurningVoltage != 0.0)
     {
         return;
     }
@@ -725,7 +725,7 @@ void SwerveModule::SetDriveDistance(units::length::meter_t distance) noexcept
     m_commandedDistance = distance;
     m_commandedVelocity = 0_mps;
 
-    if (m_testModeControl)
+    if (m_testModeControl || m_testModeDriveVoltage != 0.0)
     {
         return;
     }
@@ -804,7 +804,7 @@ void SwerveModule::SetDriveVelocity(units::velocity::meters_per_second_t velocit
     m_commandedDistance = 0_m;
     m_commandedVelocity = velocity;
 
-    if (m_testModeControl)
+    if (m_testModeControl || m_testModeDriveVoltage != 0.0)
     {
         return;
     }
@@ -1058,7 +1058,12 @@ void SwerveModule::TestPeriodic() noexcept
 
     // Check motor controller configuration, but only infrequently (and not when graphing)!
     const std::chrono::time_point now = std::chrono::steady_clock::now();
-    if (m_graphSelection == GraphSelection::kNone && now >= m_verifyMotorControllersWhen)
+    if (m_graphSelection != GraphSelection::kNone)
+    {
+        m_turningMotorControllerValidated = true;
+        m_driveMotorControllerValidated = true;
+    }
+    else if (now >= m_verifyMotorControllersWhen)
     {
         using namespace std::chrono_literals;
 
@@ -1164,14 +1169,11 @@ void SwerveModule::TestPeriodic() noexcept
 
             if (m_testModeControl)
             {
-                if (m_testModeTurningVoltage == 0.0)
-                {
-                    m_turningMotor->Set(setTurning);
-                }
-                else
-                {
-                    m_turningMotor->SetVoltage(m_testModeTurningVoltage * 1_V);
-                }
+                m_turningMotor->Set(setTurning);
+            }
+            else if (m_testModeTurningVoltage != 0.0)
+            {
+                m_turningMotor->SetVoltage(m_testModeTurningVoltage * 1_V);
             }
         }
     });
@@ -1306,14 +1308,11 @@ void SwerveModule::TestPeriodic() noexcept
 
             if (m_testModeControl)
             {
-                if (m_testModeDriveVoltage == 0.0)
-                {
-                    m_driveMotor->Set(setDrive);
-                }
-                else
-                {
-                    m_driveMotor->SetVoltage(m_testModeDriveVoltage * 1_V);
-                }
+                m_driveMotor->Set(setDrive);
+            }
+            else if (m_testModeDriveVoltage != 0.0)
+            {
+                m_driveMotor->SetVoltage(m_testModeDriveVoltage * 1_V);
             }
         }
     });

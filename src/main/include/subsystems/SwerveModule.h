@@ -225,13 +225,13 @@ public:
 
     if (m_testModeControl)
     {
-      m_testModeTurningVoltage = turningVoltage;
-      m_testModeDriveVoltage = driveVoltage;
+      m_testModeTurningVoltage = 0.0;
+      m_testModeDriveVoltage = 0.0;
     }
     else
     {
-      m_testModeTurningVoltage = 0.0;
-      m_testModeDriveVoltage = 0.0;
+      m_testModeTurningVoltage = turningVoltage;
+      m_testModeDriveVoltage = driveVoltage;
     }
   }
 
