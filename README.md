@@ -7,9 +7,9 @@ Here are some of the features implemented in this code:
 
 * Handling PWM input from SRX MAG ENCODER to derive absolute position;
 * Handling SPARK MAX motor controllers;
-* PID control of turning position;
+* Profiled PID control of turning position;
 * Using turning position to override commanded drive, when modules are not facing in commanded direction;
-* Distance and velocity PID control of drive motors;
+* Distance and velocity Profiled PID control of drive motors;
 * Test Mode includes interactive adjustment of PID settings;
 * Error handling for motor controllers, up to being able to test code on a roboRIO with no motor controllers;
 * Test Mode uses Shuffleboard to create a tab for each swerve module, and a tab for the overall swerve drive;
