@@ -1375,8 +1375,8 @@ void SwerveModule::TestPeriodic() noexcept
             }
             break;
         case GraphSelection::kDriveVelocity:
-            // In meters/s.  XXX
-            m_processVariable = GetDriveVelocity().to<double>();
+            // In meters/s.  Scaled to maximum.
+            m_processVariable = GetDriveVelocity().to<double>() / pidf::kDriveVelocityMaxVelocity;
             if (m_distanceVelocityNot)
             {
                 m_processError = 0.0;
@@ -1406,8 +1406,12 @@ void SwerveModule::TestPeriodic() noexcept
             m_processSecondDerivitive /= pidf::kTurningPositionMaxAcceleration.to<double>();
             break;
         case GraphSelection::kDrivePosition:
+            m_processFirstDerivative /= pidf::kDrivePositionMaxVelocity;
+            m_processSecondDerivitive /= pidf::kDrivePositionMaxAcceleration;
             break;
         case GraphSelection::kDriveVelocity:
+            m_processFirstDerivative /= pidf::kDriveVelocityMaxAcceleration;
+            m_processSecondDerivitive /= pidf::kDriveVelocityMaxJerk;
             break;
         case GraphSelection::kNone:
             break;

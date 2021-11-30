@@ -182,7 +182,7 @@ public:
 
   // Determine if commanded turning position has been achieved, to within
   // specified tolerance.
-  bool CheckTurningPosition(const units::angle::degree_t tolerance = 5_deg) noexcept;
+  bool CheckTurningPosition(const units::angle::degree_t tolerance = 1.25_deg) noexcept;
 
   // Drive is normally oriented around velocity, but distance enables odometry,
   // simple dead reckoning, etc.  Possibly useful for autonomous driving.
@@ -343,8 +343,8 @@ private:
   double m_driveVelocity_D{pidf::kDriveVelocityD};
   double m_driveVelocity_DF{pidf::kDriveVelocityDF};
   double m_driveVelocity_F{pidf::kDriveVelocityF};
-  double m_driveVelocity_V{pidf::kDriveVelocityMaxVelocity};
-  double m_driveVelocity_A{pidf::kDriveVelocityMaxAcceleration};
+  double m_driveVelocity_V{pidf::kDriveVelocityMaxAcceleration};
+  double m_driveVelocity_A{pidf::kDriveVelocityMaxJerk};
 
   std::unique_ptr<frc::DigitalInput> m_turningPositionSource;
   std::unique_ptr<frc::DutyCycle> m_turningPositionPWM;

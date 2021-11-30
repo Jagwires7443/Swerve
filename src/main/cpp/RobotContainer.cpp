@@ -108,7 +108,12 @@ std::tuple<double, double, double, bool> RobotContainer::GetDriveTeleopControls(
   // command smaller/slower movements, while still being able to command full
   // power.
   auto shape = [](double raw) -> double {
+    // Input deadband around 0.0 (+/- range).
     constexpr double range = 0.05;
+
+    // Shape, some mix between out = in^3.0 and out = in.
+    constexpr double mixer = 0.75;
+
     constexpr double slope = 1.0 / (1.0 - range);
 
     if (raw >= -range && raw <= +range)
@@ -126,7 +131,7 @@ std::tuple<double, double, double, bool> RobotContainer::GetDriveTeleopControls(
       raw *= slope;
     }
 
-    return std::pow(raw, 3.0);
+    return mixer * std::pow(raw, 3.0) + (1.0 - mixer) * raw;
   };
 
   return std::make_tuple(shape(x), shape(y), shape(z), true);
