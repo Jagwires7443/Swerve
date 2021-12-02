@@ -112,8 +112,8 @@ namespace pidf
     constexpr double kTurningPositionDF = 0.0;
     constexpr double kTurningPositionF = 0.003;
 
-    constexpr double kDrivePositionMaxVelocity = 1.0;
-    constexpr double kDrivePositionMaxAcceleration = 1.0;
+    constexpr double kDrivePositionMaxVelocity = 5700.0;     // Rotations per minute.
+    constexpr double kDrivePositionMaxAcceleration = 1000.0; // Rotations per minute per second.
     constexpr double kDrivePositionP = 0.125;
     constexpr double kDrivePositionI = 0.0;
     constexpr double kDrivePositionIZ = 0.0;
@@ -122,8 +122,8 @@ namespace pidf
     constexpr double kDrivePositionDF = 0.0;
     constexpr double kDrivePositionF = 0.0;
 
-    constexpr double kDriveVelocityMaxVelocity = 1.0;
-    constexpr double kDriveVelocityMaxAcceleration = 1.0;
+    constexpr double kDriveVelocityMaxVelocity = 5700.0;
+    constexpr double kDriveVelocityMaxAcceleration = 1000.0;
     constexpr double kDriveVelocityMaxJerk = 1.0;
     constexpr double kDriveVelocityP = 0.0;
     constexpr double kDriveVelocityI = 0.0;

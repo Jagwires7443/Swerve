@@ -266,6 +266,11 @@ private:
   std::unique_ptr<TuningPID> m_drivePositionPIDController;
   std::unique_ptr<TuningPID> m_driveVelocityPIDController;
 
+  double m_processVariable{0.0};
+  double m_processError{0.0};
+  double m_processFirstDerivative{0.0};
+  double m_processSecondDerivitive{0.0};
+
   // Test Mode (only) instance of test command chooser.
   std::unique_ptr<frc::SendableChooser<frc2::Command *>> m_chooser;
   frc2::Command *m_command{nullptr};

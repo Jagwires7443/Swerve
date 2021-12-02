@@ -21,6 +21,7 @@
 #include <networktables/NetworkTableValue.h>
 #include <wpi/ArrayRef.h>
 
+#include <algorithm>
 #include <chrono>
 #include <cmath>
 #include <thread>
@@ -168,6 +169,7 @@ void DriveSubsystem::CreateGraphTab() noexcept
                           .WithSize(14, 6)
                           .WithWidget(frc::BuiltInWidgets::kGraph)
                           .WithProperties(wpi::StringMap<std::shared_ptr<nt::Value>>{
+                              std::make_pair("Visible time", nt::Value::MakeDouble(5.0)),
                               std::make_pair("Unit", nt::Value::MakeString(""))});
 
   m_frontRightGraph = &shuffleboardTab.Add("Front Right", fourZerosArrayRef)
@@ -175,6 +177,7 @@ void DriveSubsystem::CreateGraphTab() noexcept
                            .WithSize(14, 6)
                            .WithWidget(frc::BuiltInWidgets::kGraph)
                            .WithProperties(wpi::StringMap<std::shared_ptr<nt::Value>>{
+                               std::make_pair("Visible time", nt::Value::MakeDouble(5.0)),
                                std::make_pair("Unit", nt::Value::MakeString(""))});
 
   m_rearLeftGraph = &shuffleboardTab.Add("Rear Left", fourZerosArrayRef)
@@ -182,6 +185,7 @@ void DriveSubsystem::CreateGraphTab() noexcept
                          .WithSize(14, 6)
                          .WithWidget(frc::BuiltInWidgets::kGraph)
                          .WithProperties(wpi::StringMap<std::shared_ptr<nt::Value>>{
+                             std::make_pair("Visible time", nt::Value::MakeDouble(5.0)),
                              std::make_pair("Unit", nt::Value::MakeString(""))});
 
   m_rearRightGraph = &shuffleboardTab.Add("Rear Right", fourZerosArrayRef)
@@ -189,6 +193,7 @@ void DriveSubsystem::CreateGraphTab() noexcept
                           .WithSize(14, 6)
                           .WithWidget(frc::BuiltInWidgets::kGraph)
                           .WithProperties(wpi::StringMap<std::shared_ptr<nt::Value>>{
+                              std::make_pair("Visible time", nt::Value::MakeDouble(5.0)),
                               std::make_pair("Unit", nt::Value::MakeString(""))});
 }
 
@@ -197,6 +202,10 @@ void DriveSubsystem::TestInit() noexcept
   m_run = false;
   m_limit = 0.1;
   m_graphSelection = SwerveModule::GraphSelection::kNone;
+  m_processVariable = 0.0;
+  m_processError = 0.0;
+  m_processFirstDerivative = 0.0;
+  m_processSecondDerivitive = 0.0;
 
   m_frontLeftSwerveModule->TestInit();
   m_frontRightSwerveModule->TestInit();
@@ -352,6 +361,10 @@ void DriveSubsystem::TestExit() noexcept
   m_run = true;
   m_limit = 1.0;
   m_graphSelection = SwerveModule::GraphSelection::kNone;
+  m_processVariable = 0.0;
+  m_processError = 0.0;
+  m_processFirstDerivative = 0.0;
+  m_processSecondDerivitive = 0.0;
 
   m_frontLeftSwerveModule->TestExit();
   m_frontRightSwerveModule->TestExit();
@@ -451,6 +464,11 @@ void DriveSubsystem::TestPeriodic() noexcept
     const auto rl = m_rearLeftSwerveModule->TestModeGraphData(m_graphSelection);
     const auto rr = m_rearRightSwerveModule->TestModeGraphData(m_graphSelection);
 
+    m_processVariable = std::max({m_processVariable, std::get<0>(fl), std::get<0>(fr), std::get<0>(rl), std::get<0>(rr)});
+    m_processError = std::max({m_processError, std::get<1>(fl), std::get<1>(fr), std::get<1>(rl), std::get<1>(rr)});
+    m_processFirstDerivative = std::max({m_processFirstDerivative, std::get<2>(fl), std::get<2>(fr), std::get<2>(rl), std::get<2>(rr)});
+    m_processSecondDerivitive = std::max({m_processSecondDerivitive, std::get<3>(fl), std::get<3>(fr), std::get<3>(rl), std::get<3>(rr)});
+
     // XXX
     // fourDatumsVector[0] = std::get<0>(fl);
     // fourDatumsVector[1] = std::get<1>(fl);
@@ -484,11 +502,19 @@ void DriveSubsystem::TestPeriodic() noexcept
     double d = m_turningPositionPIDController->GetD();
     double f = m_turningPositionPIDController->GetF();
 
-    m_graphSelection = SwerveModule::GraphSelection::kTurningRotation;
-
     m_turningPositionPIDController->SetE(false);
 
     std::printf("**** Turning Position PID: ( %f / %f / %f / %f )\n", p, i, d, f);
+    if (m_processVariable != 0.0 || m_processError != 0.0 || m_processFirstDerivative != 0.0 || m_processSecondDerivitive != 0.0)
+    {
+      std::printf("**** MAX: ( %f / %f / %f / %f )\n", m_processVariable, m_processError, m_processFirstDerivative, m_processSecondDerivitive);
+    }
+
+    m_graphSelection = SwerveModule::GraphSelection::kTurningRotation;
+    m_processVariable = 0.0;
+    m_processError = 0.0;
+    m_processFirstDerivative = 0.0;
+    m_processSecondDerivitive = 0.0;
 
     m_frontLeftSwerveModule->TurningPositionPID(p, i, pidf::kTurningPositionIM,
                                                 pidf::kTurningPositionIZ, d, pidf::kTurningPositionDF, f);
@@ -507,11 +533,19 @@ void DriveSubsystem::TestPeriodic() noexcept
     double d = m_drivePositionPIDController->GetD();
     double f = m_drivePositionPIDController->GetF();
 
-    m_graphSelection = SwerveModule::GraphSelection::kDrivePosition;
-
     m_drivePositionPIDController->SetE(false);
 
     std::printf("**** Drive Position PID: ( %f / %f / %f / %f )\n", p, i, d, f);
+    if (m_processVariable != 0.0 || m_processError != 0.0 || m_processFirstDerivative != 0.0 || m_processSecondDerivitive != 0.0)
+    {
+      std::printf("**** MAX: ( %f / %f / %f / %f )\n", m_processVariable, m_processError, m_processFirstDerivative, m_processSecondDerivitive);
+    }
+
+    m_graphSelection = SwerveModule::GraphSelection::kDrivePosition;
+    m_processVariable = 0.0;
+    m_processError = 0.0;
+    m_processFirstDerivative = 0.0;
+    m_processSecondDerivitive = 0.0;
 
     m_frontLeftSwerveModule->DrivePositionPID(p, i, pidf::kDrivePositionIM,
                                               pidf::kDrivePositionIZ, d, pidf::kDrivePositionDF, f,
@@ -534,11 +568,19 @@ void DriveSubsystem::TestPeriodic() noexcept
     double d = m_driveVelocityPIDController->GetD();
     double f = m_driveVelocityPIDController->GetF();
 
-    m_graphSelection = SwerveModule::GraphSelection::kDriveVelocity;
-
     m_driveVelocityPIDController->SetE(false);
 
     std::printf("**** Drive Velocity PID: ( %f / %f / %f / %f )\n", p, i, d, f);
+    if (m_processVariable != 0.0 || m_processError != 0.0 || m_processFirstDerivative != 0.0 || m_processSecondDerivitive != 0.0)
+    {
+      std::printf("**** MAX: ( %f / %f / %f / %f )\n", m_processVariable, m_processError, m_processFirstDerivative, m_processSecondDerivitive);
+    }
+
+    m_graphSelection = SwerveModule::GraphSelection::kDriveVelocity;
+    m_processVariable = 0.0;
+    m_processError = 0.0;
+    m_processFirstDerivative = 0.0;
+    m_processSecondDerivitive = 0.0;
 
     m_frontLeftSwerveModule->DriveVelocityPID(p, i, pidf::kDriveVelocityIM,
                                               pidf::kDriveVelocityIZ, d, pidf::kDriveVelocityDF, f,
