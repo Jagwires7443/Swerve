@@ -43,7 +43,7 @@ void MaxVAndATurningCommand::Initialize() noexcept
 void MaxVAndATurningCommand::Execute() noexcept
 {
     // This is expected to run at ~20Hz.  So 100 iterations is ~5s.
-    if (m_iteration < 100)
+    if (m_iteration < 50)
     {
         m_subsystem->TestModeTurningVoltage(-12.0);
     }
@@ -52,7 +52,7 @@ void MaxVAndATurningCommand::Execute() noexcept
         m_subsystem->TestModeTurningVoltage(+12.0);
     }
 
-    if (++m_iteration >= 200)
+    if (++m_iteration >= 100)
     {
         m_iteration = 0;
     }
@@ -77,7 +77,7 @@ void MaxVAndADriveCommand::Initialize() noexcept
 void MaxVAndADriveCommand::Execute() noexcept
 {
     // This is expected to run at ~20Hz.  So 100 iterations is ~5s.
-    if (m_iteration < 100)
+    if (m_iteration < 50)
     {
         m_subsystem->TestModeDriveVoltage(-12.0);
     }
@@ -86,7 +86,7 @@ void MaxVAndADriveCommand::Execute() noexcept
         m_subsystem->TestModeDriveVoltage(+12.0);
     }
 
-    if (++m_iteration >= 200)
+    if (++m_iteration >= 100)
     {
         m_iteration = 0;
     }

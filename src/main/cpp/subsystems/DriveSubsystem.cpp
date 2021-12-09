@@ -16,14 +16,17 @@
 #include <frc/shuffleboard/ShuffleboardTab.h>
 #include <frc/shuffleboard/SimpleWidget.h>
 #include <frc2/command/CommandScheduler.h>
-#include <networktables/NetworkTableInstance.h>
 #include <networktables/NetworkTableEntry.h>
+#include <networktables/NetworkTableInstance.h>
 #include <networktables/NetworkTableValue.h>
 #include <wpi/ArrayRef.h>
 
 #include <algorithm>
 #include <chrono>
 #include <cmath>
+#include <regex>
+#include <string>
+#include <string_view>
 #include <thread>
 #include <vector>
 
@@ -56,6 +59,8 @@ DriveSubsystem::DriveSubsystem() noexcept
         break;
       }
     }
+
+    m_ahrs->ZeroYaw();
   });
 
   // Initial position (third parameter) defaulted to "frc::Pose2d()"; initial
@@ -149,18 +154,19 @@ void DriveSubsystem::ResetOdometry(frc::Pose2d pose) noexcept
   m_odometry->ResetPosition(pose, botRot);
 }
 
-void DriveSubsystem::CreateGraphTab() noexcept
+void DriveSubsystem::CreateGraphTab(SwerveModule::GraphSelection graphSelection) noexcept
 {
   // Only do this once.
   if (m_graph)
   {
+    UpdateGraphTab(graphSelection);
+
     return;
   }
 
-  m_graph = true;
-
   std::vector<double> fourZerosVector{0.0, 0.0, 0.0, 0.0};
   wpi::ArrayRef<double> fourZerosArrayRef(fourZerosVector);
+  std::string path;
 
   frc::ShuffleboardTab &shuffleboardTab = frc::Shuffleboard::GetTab("PID Tuning");
 
@@ -170,7 +176,13 @@ void DriveSubsystem::CreateGraphTab() noexcept
                           .WithWidget(frc::BuiltInWidgets::kGraph)
                           .WithProperties(wpi::StringMap<std::shared_ptr<nt::Value>>{
                               std::make_pair("Visible time", nt::Value::MakeDouble(5.0)),
-                              std::make_pair("Unit", nt::Value::MakeString(""))});
+                              std::make_pair("Unit", nt::Value::MakeString("")),
+                              std::make_pair("X-axis auto scrolling", nt::Value::MakeBoolean(false))});
+
+  path = m_frontLeftGraph->GetEntry().GetName();
+  path = std::regex_replace(path, std::regex("^\\/Shuffleboard\\/"), "/Shuffleboard/.metadata/");
+  path += "/Properties/X-axis auto scrolling";
+  m_frontLeftGraphScroll = path;
 
   m_frontRightGraph = &shuffleboardTab.Add("Front Right", fourZerosArrayRef)
                            .WithPosition(14, 0)
@@ -178,7 +190,13 @@ void DriveSubsystem::CreateGraphTab() noexcept
                            .WithWidget(frc::BuiltInWidgets::kGraph)
                            .WithProperties(wpi::StringMap<std::shared_ptr<nt::Value>>{
                                std::make_pair("Visible time", nt::Value::MakeDouble(5.0)),
-                               std::make_pair("Unit", nt::Value::MakeString(""))});
+                               std::make_pair("Unit", nt::Value::MakeString("")),
+                               std::make_pair("X-axis auto scrolling", nt::Value::MakeBoolean(false))});
+
+  path = m_frontRightGraph->GetEntry().GetName();
+  path = std::regex_replace(path, std::regex("^\\/Shuffleboard\\/"), "/Shuffleboard/.metadata/");
+  path += "/Properties/X-axis auto scrolling";
+  m_frontRightGraphScroll = path;
 
   m_rearLeftGraph = &shuffleboardTab.Add("Rear Left", fourZerosArrayRef)
                          .WithPosition(0, 6)
@@ -186,7 +204,13 @@ void DriveSubsystem::CreateGraphTab() noexcept
                          .WithWidget(frc::BuiltInWidgets::kGraph)
                          .WithProperties(wpi::StringMap<std::shared_ptr<nt::Value>>{
                              std::make_pair("Visible time", nt::Value::MakeDouble(5.0)),
-                             std::make_pair("Unit", nt::Value::MakeString(""))});
+                             std::make_pair("Unit", nt::Value::MakeString("")),
+                             std::make_pair("X-axis auto scrolling", nt::Value::MakeBoolean(false))});
+
+  path = m_rearLeftGraph->GetEntry().GetName();
+  path = std::regex_replace(path, std::regex("^\\/Shuffleboard\\/"), "/Shuffleboard/.metadata/");
+  path += "/Properties/X-axis auto scrolling";
+  m_rearLeftGraphScroll = path;
 
   m_rearRightGraph = &shuffleboardTab.Add("Rear Right", fourZerosArrayRef)
                           .WithPosition(14, 6)
@@ -194,18 +218,78 @@ void DriveSubsystem::CreateGraphTab() noexcept
                           .WithWidget(frc::BuiltInWidgets::kGraph)
                           .WithProperties(wpi::StringMap<std::shared_ptr<nt::Value>>{
                               std::make_pair("Visible time", nt::Value::MakeDouble(5.0)),
-                              std::make_pair("Unit", nt::Value::MakeString(""))});
+                              std::make_pair("Unit", nt::Value::MakeString("")),
+                              std::make_pair("X-axis auto scrolling", nt::Value::MakeBoolean(false))});
+
+  path = m_rearRightGraph->GetEntry().GetName();
+  path = std::regex_replace(path, std::regex("^\\/Shuffleboard\\/"), "/Shuffleboard/.metadata/");
+  path += "/Properties/X-axis auto scrolling";
+  m_rearRightGraphScroll = path;
+
+  UpdateGraphTab(graphSelection);
+
+  m_graph = true;
+}
+
+void DriveSubsystem::UpdateGraphTab(SwerveModule::GraphSelection graphSelection) noexcept
+{
+  if (m_graphSelection != SwerveModule::GraphSelection::kNone)
+  {
+    switch (m_graphSelection)
+    {
+    case SwerveModule::GraphSelection::kTurningRotation:
+      std::printf("**** Turning Rotation Peak Values\n");
+      break;
+    case SwerveModule::GraphSelection::kDrivePosition:
+      std::printf("**** Drive Position Peak Values\n");
+      break;
+    case SwerveModule::GraphSelection::kDriveVelocity:
+      std::printf("**** Drive Velocity Peak Values\n");
+      break;
+    case SwerveModule::GraphSelection::kNone:
+      break;
+    }
+
+    if (m_minProcessVariable != 0.0 || m_minProcessError != 0.0 || m_minProcessFirstDerivative != 0.0 || m_minProcessSecondDerivitive != 0.0)
+    {
+      std::printf("**** MIN: ( %f / %f / %f / %f )\n", m_minProcessVariable, m_minProcessError, m_minProcessFirstDerivative, m_minProcessSecondDerivitive);
+    }
+    if (m_maxProcessVariable != 0.0 || m_maxProcessError != 0.0 || m_maxProcessFirstDerivative != 0.0 || m_maxProcessSecondDerivitive != 0.0)
+    {
+      std::printf("**** MAX: ( %f / %f / %f / %f )\n", m_maxProcessVariable, m_maxProcessError, m_maxProcessFirstDerivative, m_maxProcessSecondDerivitive);
+    }
+
+    if (m_graph)
+    {
+      nt::NetworkTableEntry fr = nt::NetworkTableInstance::GetDefault().GetEntry(m_frontRightGraphScroll);
+      nt::NetworkTableEntry fl = nt::NetworkTableInstance::GetDefault().GetEntry(m_frontLeftGraphScroll);
+      nt::NetworkTableEntry rr = nt::NetworkTableInstance::GetDefault().GetEntry(m_rearRightGraphScroll);
+      nt::NetworkTableEntry rl = nt::NetworkTableInstance::GetDefault().GetEntry(m_rearLeftGraphScroll);
+
+      if (!fr.SetBoolean(m_run) || !fl.SetBoolean(m_run) || !rr.SetBoolean(m_run) || !rl.SetBoolean(m_run))
+      {
+        std::printf("Graph Scroll Control Error.\n");
+      }
+    }
+  }
+
+  m_graphSelection = graphSelection;
+  m_minProcessVariable = 0.0;
+  m_maxProcessVariable = 0.0;
+  m_minProcessError = 0.0;
+  m_maxProcessError = 0.0;
+  m_minProcessFirstDerivative = 0.0;
+  m_maxProcessFirstDerivative = 0.0;
+  m_minProcessSecondDerivitive = 0.0;
+  m_maxProcessSecondDerivitive = 0.0;
 }
 
 void DriveSubsystem::TestInit() noexcept
 {
   m_run = false;
   m_limit = 0.1;
-  m_graphSelection = SwerveModule::GraphSelection::kNone;
-  m_processVariable = 0.0;
-  m_processError = 0.0;
-  m_processFirstDerivative = 0.0;
-  m_processSecondDerivitive = 0.0;
+
+  UpdateGraphTab(SwerveModule::GraphSelection::kNone);
 
   m_frontLeftSwerveModule->TestInit();
   m_frontRightSwerveModule->TestInit();
@@ -360,11 +444,8 @@ void DriveSubsystem::TestExit() noexcept
 {
   m_run = true;
   m_limit = 1.0;
-  m_graphSelection = SwerveModule::GraphSelection::kNone;
-  m_processVariable = 0.0;
-  m_processError = 0.0;
-  m_processFirstDerivative = 0.0;
-  m_processSecondDerivitive = 0.0;
+
+  UpdateGraphTab(SwerveModule::GraphSelection::kNone);
 
   m_frontLeftSwerveModule->TestExit();
   m_frontRightSwerveModule->TestExit();
@@ -374,8 +455,17 @@ void DriveSubsystem::TestExit() noexcept
 
 void DriveSubsystem::TestPeriodic() noexcept
 {
-  m_run = m_swerveEnable->GetEntry().GetBoolean(false);
+  const bool run = m_swerveEnable->GetEntry().GetBoolean(false);
+
   m_limit = m_driveLimit->GetEntry().GetDouble(0.1);
+
+  if (run != m_run)
+  {
+    m_run = run;
+
+    UpdateGraphTab(m_graphSelection);
+  }
+  m_run = run;
 
   m_frontLeftSwerveModule->TestModeControl(!m_run, m_testModeTurningVoltage, m_testModeDriveVoltage);
   m_frontRightSwerveModule->TestModeControl(!m_run, m_testModeTurningVoltage, m_testModeDriveVoltage);
@@ -454,8 +544,6 @@ void DriveSubsystem::TestPeriodic() noexcept
 
   if (m_graphSelection != SwerveModule::GraphSelection::kNone)
   {
-    CreateGraphTab();
-
     std::vector<double> fourDatumsVector{0.0, 0.0, 0.0, 0.0};
     wpi::ArrayRef<double> fourDatumsArrayRef(fourDatumsVector);
 
@@ -464,32 +552,35 @@ void DriveSubsystem::TestPeriodic() noexcept
     const auto rl = m_rearLeftSwerveModule->TestModeGraphData(m_graphSelection);
     const auto rr = m_rearRightSwerveModule->TestModeGraphData(m_graphSelection);
 
-    m_processVariable = std::max({m_processVariable, std::get<0>(fl), std::get<0>(fr), std::get<0>(rl), std::get<0>(rr)});
-    m_processError = std::max({m_processError, std::get<1>(fl), std::get<1>(fr), std::get<1>(rl), std::get<1>(rr)});
-    m_processFirstDerivative = std::max({m_processFirstDerivative, std::get<2>(fl), std::get<2>(fr), std::get<2>(rl), std::get<2>(rr)});
-    m_processSecondDerivitive = std::max({m_processSecondDerivitive, std::get<3>(fl), std::get<3>(fr), std::get<3>(rl), std::get<3>(rr)});
+    m_minProcessVariable = std::min({m_minProcessVariable, std::get<0>(fl), std::get<0>(fr), std::get<0>(rl), std::get<0>(rr)});
+    m_maxProcessVariable = std::max({m_maxProcessVariable, std::get<0>(fl), std::get<0>(fr), std::get<0>(rl), std::get<0>(rr)});
+    m_minProcessError = std::min({m_minProcessError, std::get<1>(fl), std::get<1>(fr), std::get<1>(rl), std::get<1>(rr)});
+    m_maxProcessError = std::max({m_maxProcessError, std::get<1>(fl), std::get<1>(fr), std::get<1>(rl), std::get<1>(rr)});
+    m_minProcessFirstDerivative = std::min({m_minProcessFirstDerivative, std::get<2>(fl), std::get<2>(fr), std::get<2>(rl), std::get<2>(rr)});
+    m_maxProcessFirstDerivative = std::max({m_maxProcessFirstDerivative, std::get<2>(fl), std::get<2>(fr), std::get<2>(rl), std::get<2>(rr)});
+    m_minProcessSecondDerivitive = std::min({m_minProcessSecondDerivitive, std::get<3>(fl), std::get<3>(fr), std::get<3>(rl), std::get<3>(rr)});
+    m_maxProcessSecondDerivitive = std::max({m_maxProcessSecondDerivitive, std::get<3>(fl), std::get<3>(fr), std::get<3>(rl), std::get<3>(rr)});
 
-    // XXX
-    // fourDatumsVector[0] = std::get<0>(fl);
-    // fourDatumsVector[1] = std::get<1>(fl);
+    fourDatumsVector[0] = std::get<0>(fl);
+    fourDatumsVector[1] = std::get<1>(fl);
     fourDatumsVector[2] = std::get<2>(fl);
     fourDatumsVector[3] = std::get<3>(fl);
     m_frontLeftGraph->GetEntry().SetDoubleArray(fourDatumsArrayRef);
 
-    // fourDatumsVector[0] = std::get<0>(fr);
-    // fourDatumsVector[1] = std::get<1>(fr);
+    fourDatumsVector[0] = std::get<0>(fr);
+    fourDatumsVector[1] = std::get<1>(fr);
     fourDatumsVector[2] = std::get<2>(fr);
     fourDatumsVector[3] = std::get<3>(fr);
     m_frontRightGraph->GetEntry().SetDoubleArray(fourDatumsArrayRef);
 
-    // fourDatumsVector[0] = std::get<0>(rl);
-    // fourDatumsVector[1] = std::get<1>(rl);
+    fourDatumsVector[0] = std::get<0>(rl);
+    fourDatumsVector[1] = std::get<1>(rl);
     fourDatumsVector[2] = std::get<2>(rl);
     fourDatumsVector[3] = std::get<3>(rl);
     m_rearLeftGraph->GetEntry().SetDoubleArray(fourDatumsArrayRef);
 
-    // fourDatumsVector[0] = std::get<0>(rr);
-    // fourDatumsVector[1] = std::get<1>(rr);
+    fourDatumsVector[0] = std::get<0>(rr);
+    fourDatumsVector[1] = std::get<1>(rr);
     fourDatumsVector[2] = std::get<2>(rr);
     fourDatumsVector[3] = std::get<3>(rr);
     m_rearRightGraph->GetEntry().SetDoubleArray(fourDatumsArrayRef);
@@ -505,16 +596,8 @@ void DriveSubsystem::TestPeriodic() noexcept
     m_turningPositionPIDController->SetE(false);
 
     std::printf("**** Turning Position PID: ( %f / %f / %f / %f )\n", p, i, d, f);
-    if (m_processVariable != 0.0 || m_processError != 0.0 || m_processFirstDerivative != 0.0 || m_processSecondDerivitive != 0.0)
-    {
-      std::printf("**** MAX: ( %f / %f / %f / %f )\n", m_processVariable, m_processError, m_processFirstDerivative, m_processSecondDerivitive);
-    }
 
-    m_graphSelection = SwerveModule::GraphSelection::kTurningRotation;
-    m_processVariable = 0.0;
-    m_processError = 0.0;
-    m_processFirstDerivative = 0.0;
-    m_processSecondDerivitive = 0.0;
+    CreateGraphTab(SwerveModule::GraphSelection::kTurningRotation);
 
     m_frontLeftSwerveModule->TurningPositionPID(p, i, pidf::kTurningPositionIM,
                                                 pidf::kTurningPositionIZ, d, pidf::kTurningPositionDF, f);
@@ -536,16 +619,8 @@ void DriveSubsystem::TestPeriodic() noexcept
     m_drivePositionPIDController->SetE(false);
 
     std::printf("**** Drive Position PID: ( %f / %f / %f / %f )\n", p, i, d, f);
-    if (m_processVariable != 0.0 || m_processError != 0.0 || m_processFirstDerivative != 0.0 || m_processSecondDerivitive != 0.0)
-    {
-      std::printf("**** MAX: ( %f / %f / %f / %f )\n", m_processVariable, m_processError, m_processFirstDerivative, m_processSecondDerivitive);
-    }
 
-    m_graphSelection = SwerveModule::GraphSelection::kDrivePosition;
-    m_processVariable = 0.0;
-    m_processError = 0.0;
-    m_processFirstDerivative = 0.0;
-    m_processSecondDerivitive = 0.0;
+    CreateGraphTab(SwerveModule::GraphSelection::kDrivePosition);
 
     m_frontLeftSwerveModule->DrivePositionPID(p, i, pidf::kDrivePositionIM,
                                               pidf::kDrivePositionIZ, d, pidf::kDrivePositionDF, f,
@@ -571,16 +646,8 @@ void DriveSubsystem::TestPeriodic() noexcept
     m_driveVelocityPIDController->SetE(false);
 
     std::printf("**** Drive Velocity PID: ( %f / %f / %f / %f )\n", p, i, d, f);
-    if (m_processVariable != 0.0 || m_processError != 0.0 || m_processFirstDerivative != 0.0 || m_processSecondDerivitive != 0.0)
-    {
-      std::printf("**** MAX: ( %f / %f / %f / %f )\n", m_processVariable, m_processError, m_processFirstDerivative, m_processSecondDerivitive);
-    }
 
-    m_graphSelection = SwerveModule::GraphSelection::kDriveVelocity;
-    m_processVariable = 0.0;
-    m_processError = 0.0;
-    m_processFirstDerivative = 0.0;
-    m_processSecondDerivitive = 0.0;
+    CreateGraphTab(SwerveModule::GraphSelection::kDriveVelocity);
 
     m_frontLeftSwerveModule->DriveVelocityPID(p, i, pidf::kDriveVelocityIM,
                                               pidf::kDriveVelocityIZ, d, pidf::kDriveVelocityDF, f,

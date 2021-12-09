@@ -822,7 +822,7 @@ void SwerveModule::SetDriveVelocity(units::velocity::meters_per_second_t velocit
                     throw std::runtime_error("SetReference()");
                 }
 #else
-                m_driveMotor->SetVoltage(velocity * 1_s / physical::kDriveMetersPerRotation * 2_V);
+                m_driveMotor->SetVoltage(velocity * 1_s / physical::kDriveMetersPerRotation * 1_V);
 #endif
 
                 if (!m_brakeApplied && m_commandedBrake)

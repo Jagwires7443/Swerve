@@ -235,7 +235,8 @@ private:
   void DoSafeIMU(const char *const what, std::function<void()> work) noexcept;
 
   // Test mode method to create graph tab for characterization.
-  void CreateGraphTab() noexcept;
+  void CreateGraphTab(SwerveModule::GraphSelection graphSelection) noexcept;
+  void UpdateGraphTab(SwerveModule::GraphSelection graphSelection) noexcept;
 
   // The gyro sensor.
   std::unique_ptr<AHRS> m_ahrs;
@@ -266,10 +267,14 @@ private:
   std::unique_ptr<TuningPID> m_drivePositionPIDController;
   std::unique_ptr<TuningPID> m_driveVelocityPIDController;
 
-  double m_processVariable{0.0};
-  double m_processError{0.0};
-  double m_processFirstDerivative{0.0};
-  double m_processSecondDerivitive{0.0};
+  double m_minProcessVariable{0.0};
+  double m_maxProcessVariable{0.0};
+  double m_minProcessError{0.0};
+  double m_maxProcessError{0.0};
+  double m_minProcessFirstDerivative{0.0};
+  double m_maxProcessFirstDerivative{0.0};
+  double m_minProcessSecondDerivitive{0.0};
+  double m_maxProcessSecondDerivitive{0.0};
 
   // Test Mode (only) instance of test command chooser.
   std::unique_ptr<frc::SendableChooser<frc2::Command *>> m_chooser;
@@ -317,4 +322,9 @@ private:
   frc::SimpleWidget *m_frontRightGraph{nullptr};
   frc::SimpleWidget *m_rearLeftGraph{nullptr};
   frc::SimpleWidget *m_rearRightGraph{nullptr};
+
+  std::string m_frontLeftGraphScroll;
+  std::string m_frontRightGraphScroll;
+  std::string m_rearLeftGraphScroll;
+  std::string m_rearRightGraphScroll;
 };
