@@ -45,18 +45,20 @@ DriveSubsystem::DriveSubsystem() noexcept
       throw std::runtime_error("m_ahrs");
     }
 
-    using namespace std::chrono_literals;
-
-    const std::chrono::steady_clock::time_point wait_until = std::chrono::steady_clock::now() + 20s;
-
-    while (!m_ahrs->IsConnected() || m_ahrs->IsCalibrating())
     {
-      std::this_thread::sleep_for(100ms);
-      // Upon timeout, go on and hope for the best; the driver can switch off
-      // field-relative drive if there's a major problem.
-      if (std::chrono::steady_clock::now() >= wait_until)
+      using namespace std::chrono_literals;
+
+      const std::chrono::steady_clock::time_point wait_until = std::chrono::steady_clock::now() + 20s;
+
+      while (!m_ahrs->IsConnected() || m_ahrs->IsCalibrating())
       {
-        break;
+        std::this_thread::sleep_for(100ms);
+        // Upon timeout, go on and hope for the best; the driver can switch off
+        // field-relative drive if there's a major problem.
+        if (std::chrono::steady_clock::now() >= wait_until)
+        {
+          break;
+        }
       }
     }
 
@@ -250,13 +252,27 @@ void DriveSubsystem::UpdateGraphTab(SwerveModule::GraphSelection graphSelection)
       break;
     }
 
-    if (m_minProcessVariable != 0.0 || m_minProcessError != 0.0 || m_minProcessFirstDerivative != 0.0 || m_minProcessSecondDerivitive != 0.0)
+    bool min = false;
+    bool max = false;
+
+    if (m_minProcessVariable != 0.0 || m_minProcessError != 0.0 || m_minProcessFirstDerivative != 0.0 || m_minProcessSecondDerivative != 0.0)
     {
-      std::printf("**** MIN: ( %f / %f / %f / %f )\n", m_minProcessVariable, m_minProcessError, m_minProcessFirstDerivative, m_minProcessSecondDerivitive);
+      min = true;
+      std::printf("**** MIN: ( %f / %f / %f / %f )\n", m_minProcessVariable, m_minProcessError, m_minProcessFirstDerivative, m_minProcessSecondDerivative);
     }
-    if (m_maxProcessVariable != 0.0 || m_maxProcessError != 0.0 || m_maxProcessFirstDerivative != 0.0 || m_maxProcessSecondDerivitive != 0.0)
+    if (m_maxProcessVariable != 0.0 || m_maxProcessError != 0.0 || m_maxProcessFirstDerivative != 0.0 || m_maxProcessSecondDerivative != 0.0)
     {
-      std::printf("**** MAX: ( %f / %f / %f / %f )\n", m_maxProcessVariable, m_maxProcessError, m_maxProcessFirstDerivative, m_maxProcessSecondDerivitive);
+      max = true;
+      std::printf("**** MAX: ( %f / %f / %f / %f )\n", m_maxProcessVariable, m_maxProcessError, m_maxProcessFirstDerivative, m_maxProcessSecondDerivative);
+    }
+    if (min && max)
+    {
+      m_maxProcessVariable = std::max(m_maxProcessVariable, std::abs(m_minProcessVariable));
+      m_maxProcessError = std::max(m_maxProcessError, std::abs(m_minProcessError));
+      m_maxProcessFirstDerivative = std::max(m_maxProcessFirstDerivative, std::abs(m_minProcessFirstDerivative));
+      m_maxProcessSecondDerivative = std::max(m_maxProcessSecondDerivative, std::abs(m_minProcessSecondDerivative));
+
+      std::printf("**** ABS: ( %f / %f / %f / %f )\n", m_maxProcessVariable, m_maxProcessError, m_maxProcessFirstDerivative, m_maxProcessSecondDerivative);
     }
 
     if (m_graph)
@@ -280,8 +296,8 @@ void DriveSubsystem::UpdateGraphTab(SwerveModule::GraphSelection graphSelection)
   m_maxProcessError = 0.0;
   m_minProcessFirstDerivative = 0.0;
   m_maxProcessFirstDerivative = 0.0;
-  m_minProcessSecondDerivitive = 0.0;
-  m_maxProcessSecondDerivitive = 0.0;
+  m_minProcessSecondDerivative = 0.0;
+  m_maxProcessSecondDerivative = 0.0;
 }
 
 void DriveSubsystem::TestInit() noexcept
@@ -484,7 +500,7 @@ void DriveSubsystem::TestPeriodic() noexcept
 
   if (m_displayMode->GetEntry().GetBoolean(true))
   {
-    // Display commanded information
+    // Display commanded information.
     m_frontLeftGyro.Set(m_commandedStateFrontLeft.angle.Degrees() / 1_deg);
     m_frontRightGyro.Set(m_commandedStateFrontRight.angle.Degrees() / 1_deg);
     m_rearLeftGyro.Set(m_commandedStateRearLeft.angle.Degrees() / 1_deg);
@@ -558,8 +574,8 @@ void DriveSubsystem::TestPeriodic() noexcept
     m_maxProcessError = std::max({m_maxProcessError, std::get<1>(fl), std::get<1>(fr), std::get<1>(rl), std::get<1>(rr)});
     m_minProcessFirstDerivative = std::min({m_minProcessFirstDerivative, std::get<2>(fl), std::get<2>(fr), std::get<2>(rl), std::get<2>(rr)});
     m_maxProcessFirstDerivative = std::max({m_maxProcessFirstDerivative, std::get<2>(fl), std::get<2>(fr), std::get<2>(rl), std::get<2>(rr)});
-    m_minProcessSecondDerivitive = std::min({m_minProcessSecondDerivitive, std::get<3>(fl), std::get<3>(fr), std::get<3>(rl), std::get<3>(rr)});
-    m_maxProcessSecondDerivitive = std::max({m_maxProcessSecondDerivitive, std::get<3>(fl), std::get<3>(fr), std::get<3>(rl), std::get<3>(rr)});
+    m_minProcessSecondDerivative = std::min({m_minProcessSecondDerivative, std::get<3>(fl), std::get<3>(fr), std::get<3>(rl), std::get<3>(rr)});
+    m_maxProcessSecondDerivative = std::max({m_maxProcessSecondDerivative, std::get<3>(fl), std::get<3>(fr), std::get<3>(rl), std::get<3>(rr)});
 
     fourDatumsVector[0] = std::get<0>(fl);
     fourDatumsVector[1] = std::get<1>(fl);
@@ -933,6 +949,11 @@ void DriveSubsystem::SetModuleStates(wpi::array<frc::SwerveModuleState, 4> &desi
       rearLeft.speed == 0_mps &&
       rearRight.speed == 0_mps)
   {
+    m_frontLeftSwerveModule->SetDriveVelocity(0_mps);
+    m_frontRightSwerveModule->SetDriveVelocity(0_mps);
+    m_rearLeftSwerveModule->SetDriveVelocity(0_mps);
+    m_rearRightSwerveModule->SetDriveVelocity(0_mps);
+
     return;
   }
 

@@ -273,8 +273,8 @@ private:
   double m_maxProcessError{0.0};
   double m_minProcessFirstDerivative{0.0};
   double m_maxProcessFirstDerivative{0.0};
-  double m_minProcessSecondDerivitive{0.0};
-  double m_maxProcessSecondDerivitive{0.0};
+  double m_minProcessSecondDerivative{0.0};
+  double m_maxProcessSecondDerivative{0.0};
 
   // Test Mode (only) instance of test command chooser.
   std::unique_ptr<frc::SendableChooser<frc2::Command *>> m_chooser;
