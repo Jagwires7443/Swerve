@@ -37,7 +37,8 @@ DriveSubsystem::DriveSubsystem() noexcept
   // Allow up to 20 seconds for callibration; it is supposed to be much faster,
   // when the IMU is kept still.  Consider using lights or other feedback so it
   // is very clear when this is occurring.
-  DoSafeIMU("ctor", [&]() -> void {
+  DoSafeIMU("ctor", [&]() -> void
+            {
     m_ahrs = std::make_unique<AHRS>(frc::SPI::Port::kMXP);
 
     if (!m_ahrs)
@@ -62,8 +63,7 @@ DriveSubsystem::DriveSubsystem() noexcept
       }
     }
 
-    m_ahrs->ZeroYaw();
-  });
+    m_ahrs->ZeroYaw(); });
 
   // Initial position (third parameter) defaulted to "frc::Pose2d()"; initial
   // angle (second parameter) is automatically zeroed by navX initialization.
@@ -128,12 +128,12 @@ void DriveSubsystem::Periodic() noexcept
 
   frc::Rotation2d botRot;
 
-  DoSafeIMU("GetRotation2d()", [&]() -> void {
+  DoSafeIMU("GetRotation2d()", [&]() -> void
+            {
     if (m_ahrs)
     {
       botRot = m_ahrs->GetRotation2d();
-    }
-  });
+    } });
 
   m_odometry->Update(botRot, m_frontLeftSwerveModule->GetState(),
                      m_frontRightSwerveModule->GetState(), m_rearLeftSwerveModule->GetState(),
@@ -146,12 +146,12 @@ void DriveSubsystem::ResetOdometry(frc::Pose2d pose) noexcept
 {
   frc::Rotation2d botRot;
 
-  DoSafeIMU("GetRotation2d()", [&]() -> void {
+  DoSafeIMU("GetRotation2d()", [&]() -> void
+            {
     if (m_ahrs)
     {
       botRot = m_ahrs->GetRotation2d();
-    }
-  });
+    } });
 
   m_odometry->ResetPosition(pose, botRot);
 }
@@ -525,7 +525,8 @@ void DriveSubsystem::TestPeriodic() noexcept
     double rearRightSpeed = m_rearRightSwerveModule->GetDriveVelocity() / physical::kMaxDriveSpeed;
 
     // If velocity is negative, flip both heading and velocity.
-    auto normalize = [](double &speed, double &turn) -> void {
+    auto normalize = [](double &speed, double &turn) -> void
+    {
       if (speed < 0)
       {
         speed *= -1.0;
@@ -897,12 +898,12 @@ void DriveSubsystem::Drive(units::meters_per_second_t xSpeed,
 
   frc::Rotation2d botRot;
 
-  DoSafeIMU("GetRotation2d()", [&]() -> void {
+  DoSafeIMU("GetRotation2d()", [&]() -> void
+            {
     if (m_ahrs)
     {
       botRot = m_ahrs->GetRotation2d();
-    }
-  });
+    } });
 
   if (!m_ahrs)
   {
@@ -974,36 +975,36 @@ units::degree_t DriveSubsystem::GetHeading() noexcept
 {
   units::degree_t heading{0};
 
-  DoSafeIMU("GetAngle()", [&]() -> void {
+  DoSafeIMU("GetAngle()", [&]() -> void
+            {
     if (m_ahrs)
     {
       heading = units::degree_t{-m_ahrs->GetAngle()}; // In degrees already.
-    }
-  });
+    } });
 
   return heading;
 }
 
 void DriveSubsystem::ZeroHeading() noexcept
 {
-  DoSafeIMU("ZeroYaw()", [&]() -> void {
+  DoSafeIMU("ZeroYaw()", [&]() -> void
+            {
     if (m_ahrs)
     {
       m_ahrs->ZeroYaw();
-    }
-  });
+    } });
 }
 
 double DriveSubsystem::GetTurnRate() noexcept
 {
   double rate{0.0};
 
-  DoSafeIMU("GetRate()", [&]() -> void {
+  DoSafeIMU("GetRate()", [&]() -> void
+            {
     if (m_ahrs)
     {
       rate = -m_ahrs->GetRate(); // In degrees/second (units not used in WPILib).
-    }
-  });
+    } });
 
   return rate;
 }

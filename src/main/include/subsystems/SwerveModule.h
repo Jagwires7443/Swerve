@@ -266,7 +266,9 @@ public:
     {
       builder.SetSmartDashboardType("Gyro");
       builder.AddDoubleProperty(
-          "Value", [&]() -> double { return m_value; }, nullptr);
+          "Value", [&]() -> double
+          { return m_value; },
+          nullptr);
     }
 
     void Set(const double &value) noexcept { m_value = value; }

@@ -6,7 +6,8 @@
 
 FeederSubsystem::FeederSubsystem() noexcept
 {
-    DoSafeFeederMotors("ctor", [&]() -> void {
+    DoSafeFeederMotors("ctor", [&]() -> void
+                       {
         m_feederOneMotor = std::make_unique<ctre::phoenix::motorcontrol::can::WPI_VictorSPX>(
             nonDrive::kFeederOneCanID);
         m_feederTwoMotor = std::make_unique<ctre::phoenix::motorcontrol::can::WPI_VictorSPX>(
@@ -18,8 +19,7 @@ FeederSubsystem::FeederSubsystem() noexcept
         }
 
         m_feederOneMotor->SetInverted(false);
-        m_feederTwoMotor->SetInverted(true);
-    });
+        m_feederTwoMotor->SetInverted(true); });
 }
 
 void FeederSubsystem::DoSafeFeederMotors(const char *const what, std::function<void()> work) noexcept
@@ -46,13 +46,13 @@ void FeederSubsystem::DoSafeFeederMotors(const char *const what, std::function<v
 
 void FeederSubsystem::Set(double percent) noexcept
 {
-    DoSafeFeederMotors("Set()", [&]() -> void {
+    DoSafeFeederMotors("Set()", [&]() -> void
+                       {
         if (!m_feederOneMotor || !m_feederTwoMotor)
         {
             return;
         }
 
         m_feederOneMotor->SetVoltage(percent * 12_V);
-        m_feederTwoMotor->SetVoltage(percent * 12_V);
-    });
+        m_feederTwoMotor->SetVoltage(percent * 12_V); });
 }

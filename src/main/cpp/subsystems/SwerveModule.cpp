@@ -387,7 +387,8 @@ void SwerveModule::ConstructTurningMotor() noexcept
     m_turningEncoder = nullptr;
     m_turningMotor = nullptr;
 
-    DoSafeTurningMotor("ctor", [&]() -> void {
+    DoSafeTurningMotor("ctor", [&]() -> void
+                       {
         m_turningMotor = std::make_unique<rev::CANSparkMax>(
             m_turningMotorCanID, rev::CANSparkMaxLowLevel::MotorType::kBrushless);
         m_turningEncoder = std::make_unique<rev::CANEncoder>(
@@ -420,8 +421,7 @@ void SwerveModule::ConstructTurningMotor() noexcept
         if (m_turningPID->SetFeedbackDevice(*m_turningEncoder) != rev::CANError::kOk)
         {
             throw std::runtime_error("SetFeedbackDevice()");
-        }
-    });
+        } });
 }
 
 // Construct and get/move drive motor objects.  It is possible for CAN or
@@ -439,7 +439,8 @@ void SwerveModule::ConstructDriveMotor() noexcept
     m_driveEncoder = nullptr;
     m_driveMotor = nullptr;
 
-    DoSafeDriveMotor("ctor", [&]() -> void {
+    DoSafeDriveMotor("ctor", [&]() -> void
+                     {
         m_driveMotor = std::make_unique<rev::CANSparkMax>(
             m_driveMotorCanID, rev::CANSparkMaxLowLevel::MotorType::kBrushless);
         m_driveEncoder = std::make_unique<rev::CANEncoder>(
@@ -472,8 +473,7 @@ void SwerveModule::ConstructDriveMotor() noexcept
         if (m_drivePID->SetFeedbackDevice(*m_driveEncoder) != rev::CANError::kOk)
         {
             throw std::runtime_error("SetFeedbackDevice()");
-        }
-    });
+        } });
 }
 
 bool SwerveModule::GetStatus() const noexcept
@@ -550,13 +550,13 @@ void SwerveModule::Periodic() noexcept
         calculated -= m_rioPID_F;
     }
 
-    DoSafeTurningMotor("Periodic()", [&]() -> void {
+    DoSafeTurningMotor("Periodic()", [&]() -> void
+                       {
         if (m_turningMotor)
         {
             // Use voltage compensation, to offset low battery voltage.
             m_turningMotor->SetVoltage(calculated * 12_V);
-        }
-    });
+        } });
 }
 
 void SwerveModule::ResetTurning() noexcept
@@ -573,7 +573,8 @@ void SwerveModule::ResetTurning() noexcept
         return;
     }
 
-    DoSafeTurningMotor("ResetTurning()", [&]() -> void {
+    DoSafeTurningMotor("ResetTurning()", [&]() -> void
+                       {
         if (m_turningEncoder)
         {
             // Turning position is in rotations.  Any under/overflow should
@@ -584,21 +585,20 @@ void SwerveModule::ResetTurning() noexcept
             {
                 throw std::runtime_error("SetPosition()");
             }
-        }
-    });
+        } });
 }
 
 void SwerveModule::ResetDrive() noexcept
 {
-    DoSafeDriveMotor("ResetDrive()", [&]() -> void {
+    DoSafeDriveMotor("ResetDrive()", [&]() -> void
+                     {
         if (m_driveEncoder)
         {
             if (m_driveEncoder->SetPosition(0.0) != rev::CANError::kOk)
             {
                 throw std::runtime_error("SetPosition()");
             }
-        }
-    });
+        } });
 }
 
 units::angle::degree_t SwerveModule::GetTurningPosition() noexcept
@@ -618,12 +618,12 @@ units::angle::degree_t SwerveModule::GetTurningPosition() noexcept
     // the best that can be done here.
     units::angle::degree_t encoderPosition{0};
 
-    DoSafeTurningMotor("GetState()", [&]() -> void {
+    DoSafeTurningMotor("GetState()", [&]() -> void
+                       {
         if (m_turningEncoder)
         {
             encoderPosition = units::angle::turn_t{m_turningEncoder->GetPosition()};
-        }
-    });
+        } });
 
     while (encoderPosition < 180_deg)
     {
@@ -664,7 +664,8 @@ void SwerveModule::SetTurningPosition(const units::angle::degree_t position) noe
         return;
     }
 
-    DoSafeTurningMotor("SetTurningPosition()", [&]() -> void {
+    DoSafeTurningMotor("SetTurningPosition()", [&]() -> void
+                       {
         if (m_turningPID)
         {
             if (m_turningPID->SetReference(
@@ -672,8 +673,7 @@ void SwerveModule::SetTurningPosition(const units::angle::degree_t position) noe
             {
                 throw std::runtime_error("SetReference()");
             }
-        }
-    });
+        } });
 }
 
 bool SwerveModule::CheckTurningPosition(const units::angle::degree_t tolerance) noexcept
@@ -709,12 +709,12 @@ units::length::meter_t SwerveModule::GetDriveDistance() noexcept
 {
     units::length::meter_t result{0};
 
-    DoSafeDriveMotor("GetDriveDistance()", [&]() -> void {
+    DoSafeDriveMotor("GetDriveDistance()", [&]() -> void
+                     {
         if (m_driveEncoder)
         {
             result = m_driveEncoder->GetPosition() * physical::kDriveMetersPerRotation;
-        }
-    });
+        } });
 
     return result;
 }
@@ -730,7 +730,8 @@ void SwerveModule::SetDriveDistance(units::length::meter_t distance) noexcept
         return;
     }
 
-    DoSafeDriveMotor("SetDriveDistance()", [&]() -> void {
+    DoSafeDriveMotor("SetDriveDistance()", [&]() -> void
+                     {
         if (m_driveMotor && m_drivePID)
         {
             if (m_turningPositionAsCommanded)
@@ -767,8 +768,7 @@ void SwerveModule::SetDriveDistance(units::length::meter_t distance) noexcept
                     m_brakeApplied = false;
                 }
             }
-        }
-    });
+        } });
 }
 
 bool SwerveModule::CheckDriveDistance(const units::length::meter_t tolerance) noexcept
@@ -787,13 +787,13 @@ units::velocity::meters_per_second_t SwerveModule::GetDriveVelocity() noexcept
 {
     units::velocity::meters_per_second_t result{0};
 
-    DoSafeDriveMotor("GetDriveVelocity()", [&]() -> void {
+    DoSafeDriveMotor("GetDriveVelocity()", [&]() -> void
+                     {
         if (m_driveEncoder)
         {
             // GetVelocity() returns revolutions per minute, need meters per second
             result = m_driveEncoder->GetVelocity() * physical::kDriveMetersPerRotation / 60_s;
-        }
-    });
+        } });
 
     return result;
 }
@@ -809,7 +809,8 @@ void SwerveModule::SetDriveVelocity(units::velocity::meters_per_second_t velocit
         return;
     }
 
-    DoSafeDriveMotor("SetDriveVelocity()", [&]() -> void {
+    DoSafeDriveMotor("SetDriveVelocity()", [&]() -> void
+                     {
         if (m_driveMotor && m_drivePID)
         {
             if (m_turningPositionAsCommanded)
@@ -849,8 +850,7 @@ void SwerveModule::SetDriveVelocity(units::velocity::meters_per_second_t velocit
                     m_brakeApplied = false;
                 }
             }
-        }
-    });
+        } });
 }
 
 const frc::SwerveModuleState SwerveModule::GetState() noexcept
@@ -1129,7 +1129,8 @@ void SwerveModule::TestPeriodic() noexcept
     velocity = 0.0;
 
     // Obtain raw data from turning CANSparkMax and set the output.
-    DoSafeTurningMotor("TestPeriodic()", [&]() -> void {
+    DoSafeTurningMotor("TestPeriodic()", [&]() -> void
+                       {
         if (m_turningMotor)
         {
             temperature = m_turningMotor->GetMotorTemperature();
@@ -1175,8 +1176,7 @@ void SwerveModule::TestPeriodic() noexcept
             {
                 m_turningMotor->SetVoltage(m_testModeTurningVoltage * 1_V);
             }
-        }
-    });
+        } });
 
     // Compute the discrepancy between the absolute encoder and the incremental
     // encoder (as seen by the motor controller).  This should be very small if
@@ -1270,7 +1270,8 @@ void SwerveModule::TestPeriodic() noexcept
     velocity = 0.0;
 
     // Obtain raw data from drive CANSparkMax and set the output.
-    DoSafeDriveMotor("TestPeriodic()", [&]() -> void {
+    DoSafeDriveMotor("TestPeriodic()", [&]() -> void
+                     {
         if (m_driveMotor)
         {
             temperature = m_driveMotor->GetMotorTemperature();
@@ -1314,8 +1315,7 @@ void SwerveModule::TestPeriodic() noexcept
             {
                 m_driveMotor->SetVoltage(m_testModeDriveVoltage * 1_V);
             }
-        }
-    });
+        } });
 
     // Update shuffleboard data for drive CANSparkMax.
     m_driveMotorStatus->GetEntry().SetBoolean(m_driveMotor && m_driveMotorControllerValidated);
@@ -1477,7 +1477,8 @@ void SwerveModule::DriveVelocityPID(double P, double I, double IZ, double IM, do
 
 void SwerveModule::SetTurningPositionPID() noexcept
 {
-    DoSafeTurningMotor("SetTurningPositionPID()", [&]() -> void {
+    DoSafeTurningMotor("SetTurningPositionPID()", [&]() -> void
+                       {
         if (!m_turningPID)
         {
             throw std::runtime_error("m_turningPID");
@@ -1509,13 +1510,13 @@ void SwerveModule::SetTurningPositionPID() noexcept
         if (m_turningPID->SetFF(m_turningPosition_F) != rev::CANError::kOk)
         {
             throw std::runtime_error("SetFF()");
-        }
-    });
+        } });
 }
 
 void SwerveModule::SetDrivePositionPID() noexcept
 {
-    DoSafeDriveMotor("SetDrivePositionPID()", [&]() -> void {
+    DoSafeDriveMotor("SetDrivePositionPID()", [&]() -> void
+                     {
         if (!m_drivePID)
         {
             throw std::runtime_error("m_drivePID");
@@ -1555,13 +1556,13 @@ void SwerveModule::SetDrivePositionPID() noexcept
         if (m_drivePID->SetSmartMotionMaxAccel(m_drivePosition_A) != rev::CANError::kOk)
         {
             throw std::runtime_error("SetSmartMotionMaxAccel()");
-        }
-    });
+        } });
 }
 
 void SwerveModule::SetDriveVelocityPID() noexcept
 {
-    DoSafeDriveMotor("SetDriveVelocityPID()", [&]() -> void {
+    DoSafeDriveMotor("SetDriveVelocityPID()", [&]() -> void
+                     {
         if (!m_drivePID)
         {
             throw std::runtime_error("m_drivePID");
@@ -1601,8 +1602,7 @@ void SwerveModule::SetDriveVelocityPID() noexcept
         if (m_drivePID->SetSmartMotionMaxAccel(m_driveVelocity_A, 1) != rev::CANError::kOk)
         {
             throw std::runtime_error("SetSmartMotionMaxAccel()");
-        }
-    });
+        } });
 }
 
 bool SwerveModule::VerifyTurningMotorControllerConfig() noexcept
@@ -1612,7 +1612,8 @@ bool SwerveModule::VerifyTurningMotorControllerConfig() noexcept
         return false;
     }
 
-    return DidSafeTurningMotor("VerifyTurningMotorControllerConfig()", [&]() -> bool {
+    return DidSafeTurningMotor("VerifyTurningMotorControllerConfig()", [&]() -> bool
+                               {
         if (!m_turningMotor || !m_turningEncoder || !m_turningPID)
         {
             throw std::runtime_error("m_turningMotor");
@@ -1686,8 +1687,7 @@ bool SwerveModule::VerifyTurningMotorControllerConfig() noexcept
             m_turningMotorControllerConfig.swap(turningMotorControllerConfig);
         }
 
-        return false;
-    });
+        return false; });
 }
 
 bool SwerveModule::VerifyDriveMotorControllerConfig() noexcept
@@ -1697,7 +1697,8 @@ bool SwerveModule::VerifyDriveMotorControllerConfig() noexcept
         return false;
     }
 
-    return DidSafeDriveMotor("VerifyDriveMotorControllerConfig()", [&]() -> bool {
+    return DidSafeDriveMotor("VerifyDriveMotorControllerConfig()", [&]() -> bool
+                             {
         if (!m_driveMotor || !m_drivePID)
         {
             throw std::runtime_error("m_driveMotor");
@@ -1815,15 +1816,15 @@ bool SwerveModule::VerifyDriveMotorControllerConfig() noexcept
             m_driveMotorControllerConfig.swap(driveMotorControllerConfig);
         }
 
-        return false;
-    });
+        return false; });
 }
 
 void SwerveModule::CreateTurningMotorControllerConfig() noexcept
 {
     std::fprintf(stderr, "Swerve Module (%s) Turning Configuration... ", m_name.c_str());
 
-    DoSafeTurningMotor("CreateTurningMotorControllerConfig()", [&]() -> void {
+    DoSafeTurningMotor("CreateTurningMotorControllerConfig()", [&]() -> void
+                       {
         if (!m_turningMotor)
         {
             throw std::runtime_error("m_turningMotor");
@@ -1832,8 +1833,7 @@ void SwerveModule::CreateTurningMotorControllerConfig() noexcept
         if (m_turningMotor->RestoreFactoryDefaults() != rev::CANError::kOk)
         {
             throw std::runtime_error("RestoreFactoryDefaults()");
-        }
-    });
+        } });
 
     std::fprintf(stderr, "Restore... ");
     if (!m_turningMotor)
@@ -1853,7 +1853,8 @@ void SwerveModule::CreateTurningMotorControllerConfig() noexcept
         return;
     }
 
-    DoSafeTurningMotor("CreateTurningMotorControllerConfig()", [&]() -> void {
+    DoSafeTurningMotor("CreateTurningMotorControllerConfig()", [&]() -> void
+                       {
         if (!m_turningMotor)
         {
             throw std::runtime_error("m_turningMotor");
@@ -1862,8 +1863,7 @@ void SwerveModule::CreateTurningMotorControllerConfig() noexcept
         if (m_turningMotor->SetIdleMode(rev::CANSparkMax::IdleMode::kBrake) != rev::CANError::kOk)
         {
             throw std::runtime_error("SetIdleMode()");
-        }
-    });
+        } });
 
     SetTurningPositionPID();
 
@@ -1875,7 +1875,8 @@ void SwerveModule::CreateTurningMotorControllerConfig() noexcept
         return;
     }
 
-    DoSafeTurningMotor("CreateTurningMotorControllerConfig()", [&]() -> void {
+    DoSafeTurningMotor("CreateTurningMotorControllerConfig()", [&]() -> void
+                       {
         if (!m_turningMotor)
         {
             throw std::runtime_error("m_turningMotor");
@@ -1884,8 +1885,7 @@ void SwerveModule::CreateTurningMotorControllerConfig() noexcept
         if (m_turningMotor->BurnFlash() != rev::CANError::kOk)
         {
             throw std::runtime_error("BurnFlash()");
-        }
-    });
+        } });
 
     if (!m_turningMotor)
     {
@@ -1901,7 +1901,8 @@ void SwerveModule::CreateDriveMotorControllerConfig() noexcept
 {
     std::fprintf(stderr, "Swerve Module (%s) Drive Configuration... ", m_name.c_str());
 
-    DoSafeDriveMotor("CreateDriveMotorControllerConfig()", [&]() -> void {
+    DoSafeDriveMotor("CreateDriveMotorControllerConfig()", [&]() -> void
+                     {
         if (!m_driveMotor)
         {
             throw std::runtime_error("m_driveMotor");
@@ -1910,8 +1911,7 @@ void SwerveModule::CreateDriveMotorControllerConfig() noexcept
         if (m_driveMotor->RestoreFactoryDefaults() != rev::CANError::kOk)
         {
             throw std::runtime_error("RestoreFactoryDefaults()");
-        }
-    });
+        } });
 
     std::fprintf(stderr, "Restore... ");
     if (!m_driveMotor)
@@ -1931,7 +1931,8 @@ void SwerveModule::CreateDriveMotorControllerConfig() noexcept
         return;
     }
 
-    DoSafeDriveMotor("CreateDriveMotorControllerConfig()", [&]() -> void {
+    DoSafeDriveMotor("CreateDriveMotorControllerConfig()", [&]() -> void
+                     {
         if (!m_driveMotor)
         {
             throw std::runtime_error("m_driveMotor");
@@ -1940,8 +1941,7 @@ void SwerveModule::CreateDriveMotorControllerConfig() noexcept
         if (m_driveMotor->SetIdleMode(rev::CANSparkMax::IdleMode::kCoast) != rev::CANError::kOk)
         {
             throw std::runtime_error("SetIdleMode()");
-        }
-    });
+        } });
 
     SetDrivePositionPID();
 
@@ -1955,7 +1955,8 @@ void SwerveModule::CreateDriveMotorControllerConfig() noexcept
         return;
     }
 
-    DoSafeDriveMotor("CreateDriveMotorControllerConfig()", [&]() -> void {
+    DoSafeDriveMotor("CreateDriveMotorControllerConfig()", [&]() -> void
+                     {
         if (!m_driveMotor)
         {
             throw std::runtime_error("m_driveMotor");
@@ -1964,8 +1965,7 @@ void SwerveModule::CreateDriveMotorControllerConfig() noexcept
         if (m_driveMotor->BurnFlash() != rev::CANError::kOk)
         {
             throw std::runtime_error("BurnFlash()");
-        }
-    });
+        } });
 
     if (!m_driveMotor)
     {

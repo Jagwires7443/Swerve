@@ -4,10 +4,9 @@
 
 #include "Robot.h"
 
-#include <frc/smartdashboard/SmartDashboard.h>
 #include <frc2/command/CommandScheduler.h>
 
-void Robot::RobotInit() {}
+void Robot::RobotInit() noexcept {}
 
 /**
  * This function is called every robot packet, no matter the mode. Use
@@ -17,7 +16,10 @@ void Robot::RobotInit() {}
  * <p> This runs after the mode specific periodic functions, but before
  * LiveWindow and SmartDashboard integrated updating.
  */
-void Robot::RobotPeriodic()
+// This performs the sense portion of sense/think/act, including sending test
+// mode telemetry.  It also handles think and act, except in test mode.  In the
+// latter case, TestPeriodic() handles manually driven act.
+void Robot::RobotPeriodic() noexcept
 {
   frc2::CommandScheduler::GetInstance().Run();
 }
@@ -27,33 +29,37 @@ void Robot::RobotPeriodic()
  * can use it to reset any subsystem information you want to clear when the
  * robot is disabled.
  */
-void Robot::DisabledInit() {}
+void Robot::DisabledInit() noexcept { m_container.TestExit(); }
 
-void Robot::DisabledPeriodic() {}
+void Robot::DisabledPeriodic() noexcept {}
 
 /**
  * This autonomous runs the autonomous command selected by your {@link
  * RobotContainer} class.
  */
-void Robot::AutonomousInit()
+void Robot::AutonomousInit() noexcept
 {
+  m_container.TestExit();
+
   m_autonomousCommand = m_container.GetAutonomousCommand();
 
-  if (m_autonomousCommand != nullptr)
+  if (m_autonomousCommand)
   {
     m_autonomousCommand->Schedule();
   }
 }
 
-void Robot::AutonomousPeriodic() {}
+void Robot::AutonomousPeriodic() noexcept {}
 
-void Robot::TeleopInit()
+void Robot::TeleopInit() noexcept
 {
+  m_container.TestExit();
+
   // This makes sure that the autonomous stops running when
   // teleop starts running. If you want the autonomous to
   // continue until interrupted by another command, remove
   // this line or comment it out.
-  if (m_autonomousCommand != nullptr)
+  if (m_autonomousCommand)
   {
     m_autonomousCommand->Cancel();
     m_autonomousCommand = nullptr;
@@ -63,12 +69,22 @@ void Robot::TeleopInit()
 /**
  * This function is called periodically during operator control.
  */
-void Robot::TeleopPeriodic() {}
+void Robot::TeleopPeriodic() noexcept {}
+
+void Robot::TestInit() noexcept
+{
+  m_container.TestInit();
+}
 
 /**
  * This function is called periodically during test mode.
+ * Note that test mode does not follow the command-based paradigm; it follows
+ * Init/Periodic.
  */
-void Robot::TestPeriodic() {}
+void Robot::TestPeriodic() noexcept
+{
+  m_container.TestPeriodic();
+}
 
 #ifndef RUNNING_FRC_TESTS
 int main()

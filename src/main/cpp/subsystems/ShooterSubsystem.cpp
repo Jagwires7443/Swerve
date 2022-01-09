@@ -6,7 +6,8 @@
 
 ShooterSubsystem::ShooterSubsystem() noexcept
 {
-    DoSafeShooterMotors("ctor", [&]() -> void {
+    DoSafeShooterMotors("ctor", [&]() -> void
+                        {
         m_shooterOneMotor = std::make_unique<rev::CANSparkMax>(
             nonDrive::kShooterOneCanID,
             rev::CANSparkMaxLowLevel::MotorType::kBrushless);
@@ -20,8 +21,7 @@ ShooterSubsystem::ShooterSubsystem() noexcept
         }
 
         m_shooterOneMotor->SetInverted(false);
-        m_shooterTwoMotor->SetInverted(true);
-    });
+        m_shooterTwoMotor->SetInverted(true); });
 }
 
 void ShooterSubsystem::DoSafeShooterMotors(const char *const what, std::function<void()> work) noexcept
@@ -58,13 +58,13 @@ void ShooterSubsystem::DoSafeShooterMotors(const char *const what, std::function
 
 void ShooterSubsystem::Set(double percent) noexcept
 {
-    DoSafeShooterMotors("Set()", [&]() -> void {
+    DoSafeShooterMotors("Set()", [&]() -> void
+                        {
         if (!m_shooterOneMotor || !m_shooterTwoMotor)
         {
             return;
         }
 
         m_shooterOneMotor->SetVoltage(percent * 12_V);
-        m_shooterTwoMotor->SetVoltage(percent * 12_V);
-    });
+        m_shooterTwoMotor->SetVoltage(percent * 12_V); });
 }
