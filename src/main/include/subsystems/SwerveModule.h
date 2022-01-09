@@ -8,15 +8,15 @@
 #include <frc/kinematics/SwerveModuleState.h>
 #include <frc/shuffleboard/ComplexWidget.h>
 #include <frc/shuffleboard/SimpleWidget.h>
-#include <frc/smartdashboard/Sendable.h>
-#include <frc/smartdashboard/SendableBuilder.h>
-#include <frc/smartdashboard/SendableHelper.h>
 #include <rev/CANEncoder.h>
 #include <rev/CANPIDController.h>
 #include <rev/CANSparkMax.h>
 #include <units/angle.h>
 #include <units/length.h>
 #include <units/velocity.h>
+#include <wpi/sendable/Sendable.h>
+#include <wpi/sendable/SendableBuilder.h>
+#include <wpi/sendable/SendableHelper.h>
 
 #include <chrono>
 #include <functional>
@@ -254,7 +254,7 @@ public:
   // Need to derive from abstract Sendable class in order to be able to use the
   // Gyro UI element in Shuffleboard; note that this doesn't actually derive from
   // frc::Gyro or frc::GyroBase -- it's all down to inheritance and properties.
-  class HeadingGyro : public frc::Sendable, public frc::SendableHelper<HeadingGyro>
+  class HeadingGyro : public wpi::Sendable, public wpi::SendableHelper<HeadingGyro>
   {
   public:
     HeadingGyro() noexcept {}
@@ -262,7 +262,7 @@ public:
     HeadingGyro(const HeadingGyro &) = delete;
     HeadingGyro &operator=(const HeadingGyro &) = delete;
 
-    void InitSendable(frc::SendableBuilder &builder)
+    void InitSendable(wpi::SendableBuilder &builder)
     {
       builder.SetSmartDashboardType("Gyro");
       builder.AddDoubleProperty(
@@ -352,12 +352,12 @@ private:
   std::unique_ptr<frc::DutyCycle> m_turningPositionPWM;
 
   std::unique_ptr<rev::CANSparkMax> m_turningMotor;
-  std::unique_ptr<rev::CANEncoder> m_turningEncoder;
-  std::unique_ptr<rev::CANPIDController> m_turningPID;
+  std::unique_ptr<rev::SparkMaxAlternateEncoder> m_turningEncoder;
+  std::unique_ptr<rev::SparkMaxPIDController> m_turningPID;
 
   std::unique_ptr<rev::CANSparkMax> m_driveMotor;
-  std::unique_ptr<rev::CANEncoder> m_driveEncoder;
-  std::unique_ptr<rev::CANPIDController> m_drivePID;
+  std::unique_ptr<rev::SparkMaxRelativeEncoder> m_driveEncoder;
+  std::unique_ptr<rev::SparkMaxPIDController> m_drivePID;
 
   std::chrono::steady_clock::time_point m_verifyMotorControllersWhen;
   bool m_turningMotorControllerValidated{true};

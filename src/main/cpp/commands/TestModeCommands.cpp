@@ -245,7 +245,7 @@ void PirouetteCommand::Execute() noexcept
 
     // The robot should translate tangentially to the unit circle, in a
     // counter-clockwise fashion.  So, add 90 degrees.
-    major_angle += 90_deg;
+    major_angle = major_angle + frc::Rotation2d(90_deg);
 
     // Work out the radius of the circle where robot is actually sitting, so it
     // may be used to make an adjustment to try to get back onto the unit
@@ -263,7 +263,7 @@ void PirouetteCommand::Execute() noexcept
     {
         major_error = -0.5;
     }
-    major_angle += major_error * 20_deg;
+    major_angle = major_angle + frc::Rotation2d(major_error * 20_deg);
 
     // Update X and Y drive command inputs based on above computations, while
     // always commanding rotation.  The commanded drive needs to be adjusted to

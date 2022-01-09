@@ -65,7 +65,7 @@ RobotContainer::RobotContainer() noexcept
 
 void RobotContainer::ConfigureButtonBindings() noexcept
 {
-  frc2::JoystickButton(&m_xbox, static_cast<int>(frc::XboxController::Button::kBumperLeft))
+  frc2::JoystickButton(&m_xbox, static_cast<int>(frc::XboxController::Button::kLeftBumper))
       .WhenPressed(frc2::RunCommand([&]() -> void
                                     { m_feederSubsystem.Set(0.8); },
                                     {&m_feederSubsystem}))
@@ -73,7 +73,7 @@ void RobotContainer::ConfigureButtonBindings() noexcept
                                      { m_feederSubsystem.Set(0.0); },
                                      {&m_feederSubsystem}));
 
-  frc2::JoystickButton(&m_xbox, static_cast<int>(frc::XboxController::Button::kBumperRight))
+  frc2::JoystickButton(&m_xbox, static_cast<int>(frc::XboxController::Button::kRightBumper))
       .WhenPressed(frc2::RunCommand([&]() -> void
                                     { m_shooterSubsystem.Set(1.0); },
                                     {&m_shooterSubsystem}))
@@ -100,12 +100,13 @@ std::tuple<double, double, double, bool> RobotContainer::GetDriveTeleopControls(
   // extends to the right.  So, the robot's Y is the controller's inverted X.
   // Finally, the other controller joystick is used for commanding rotation and
   // things work out so that this is also an inverted X axis.
-  double x = -m_xbox.GetY(frc::GenericHID::JoystickHand::kLeftHand);
-  double y = -m_xbox.GetX(frc::GenericHID::JoystickHand::kLeftHand);
-  double z = -m_xbox.GetX(frc::GenericHID::JoystickHand::kRightHand);
+  double x = -m_xbox.GetLeftY();
+  double y = -m_xbox.GetLeftX();
+  double z = -m_xbox.GetRightX();
 
   // PlayStation controllers seem to do this strange thing with the rotation:
-  // double z = -m_xbox.GetTriggerAxis(frc::GenericHID::JoystickHand::kLeftHand);
+  // double z = -m_xbox.GetLeftTriggerAxis();
+  // Note: there is mow a PS4Controller class.
 
   // Add some deadzone, so the robot doesn't drive when the joysticks are
   // released and return to "zero".  These implement a continuous deadband, one

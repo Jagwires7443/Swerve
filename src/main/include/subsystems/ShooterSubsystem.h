@@ -22,10 +22,10 @@ private:
     void DoSafeShooterMotors(const char *const what, std::function<void()> work) noexcept;
 
     std::unique_ptr<rev::CANSparkMax> m_shooterOneMotor;
-    std::unique_ptr<rev::CANEncoder> m_shooterOneEncoder;
-    std::unique_ptr<rev::CANPIDController> m_shooterOnePID;
+    std::unique_ptr<rev::SparkMaxRelativeEncoder> m_shooterOneEncoder;
+    std::unique_ptr<rev::SparkMaxPIDController> m_shooterOnePID;
 
     std::unique_ptr<rev::CANSparkMax> m_shooterTwoMotor;
-    std::unique_ptr<rev::CANEncoder> m_shooterTwoEncoder;
-    std::unique_ptr<rev::CANPIDController> m_shooterTwoPID;
+    std::unique_ptr<rev::SparkMaxRelativeEncoder> m_shooterTwoEncoder;
+    std::unique_ptr<rev::SparkMaxPIDController> m_shooterTwoPID;
 };

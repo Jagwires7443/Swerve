@@ -17,7 +17,7 @@
 #include <frc/shuffleboard/ShuffleboardTab.h>
 #include <frc/shuffleboard/SimpleWidget.h>
 #include <networktables/NetworkTableValue.h>
-#include <rev/CANError.h>
+#include <rev/REVLibError.h>
 #include <rev/ControlType.h>
 #include <units/voltage.h>
 #include <wpi/StringMap.h>
@@ -391,9 +391,9 @@ void SwerveModule::ConstructTurningMotor() noexcept
                        {
         m_turningMotor = std::make_unique<rev::CANSparkMax>(
             m_turningMotorCanID, rev::CANSparkMaxLowLevel::MotorType::kBrushless);
-        m_turningEncoder = std::make_unique<rev::CANEncoder>(
-            m_turningMotor->GetAlternateEncoder(rev::CANEncoder::AlternateEncoderType::kQuadrature, 4096));
-        m_turningPID = std::make_unique<rev::CANPIDController>(m_turningMotor->GetPIDController());
+        m_turningEncoder = std::make_unique<rev::SparkMaxAlternateEncoder>(
+            m_turningMotor->GetAlternateEncoder(rev::SparkMaxAlternateEncoder::Type::kQuadrature, 4096));
+        m_turningPID = std::make_unique<rev::SparkMaxPIDController>(m_turningMotor->GetPIDController());
 
         if (!m_turningMotor)
         {
@@ -403,7 +403,7 @@ void SwerveModule::ConstructTurningMotor() noexcept
         // Does not get sent to the motor controller, done locally.
         m_turningMotor->SetInverted(m_turningMotorInverted);
 
-        if (m_turningMotor->ClearFaults() != rev::CANError::kOk)
+        if (m_turningMotor->ClearFaults() != rev::REVLibError::kOk)
         {
             throw std::runtime_error("ClearFaults()");
         }
@@ -413,12 +413,12 @@ void SwerveModule::ConstructTurningMotor() noexcept
             throw std::runtime_error("m_turningEncoder");
         }
 
-        if (m_turningEncoder->SetInverted(m_turningEncoderInverted) != rev::CANError::kOk)
+        if (m_turningEncoder->SetInverted(m_turningEncoderInverted) != rev::REVLibError::kOk)
         {
             throw std::runtime_error("SetInverted()");
         }
 
-        if (m_turningPID->SetFeedbackDevice(*m_turningEncoder) != rev::CANError::kOk)
+        if (m_turningPID->SetFeedbackDevice(*m_turningEncoder) != rev::REVLibError::kOk)
         {
             throw std::runtime_error("SetFeedbackDevice()");
         } });
@@ -443,9 +443,9 @@ void SwerveModule::ConstructDriveMotor() noexcept
                      {
         m_driveMotor = std::make_unique<rev::CANSparkMax>(
             m_driveMotorCanID, rev::CANSparkMaxLowLevel::MotorType::kBrushless);
-        m_driveEncoder = std::make_unique<rev::CANEncoder>(
-            m_driveMotor->GetEncoder(rev::CANEncoder::EncoderType::kHallSensor, 42));
-        m_drivePID = std::make_unique<rev::CANPIDController>(m_driveMotor->GetPIDController());
+        m_driveEncoder = std::make_unique<rev::SparkMaxRelativeEncoder>(
+            m_driveMotor->GetEncoder());
+        m_drivePID = std::make_unique<rev::SparkMaxPIDController>(m_driveMotor->GetPIDController());
 
         if (!m_driveMotor)
         {
@@ -455,12 +455,12 @@ void SwerveModule::ConstructDriveMotor() noexcept
         // Does not get sent to the motor controller, done locally.
         m_driveMotor->SetInverted(m_driveMotorInverted);
 
-        if (m_driveMotor->SetIdleMode(rev::CANSparkMax::IdleMode::kCoast) != rev::CANError::kOk)
+        if (m_driveMotor->SetIdleMode(rev::CANSparkMax::IdleMode::kCoast) != rev::REVLibError::kOk)
         {
             throw std::runtime_error("SetIdleMode()");
         }
 
-        if (m_driveMotor->ClearFaults() != rev::CANError::kOk)
+        if (m_driveMotor->ClearFaults() != rev::REVLibError::kOk)
         {
             throw std::runtime_error("ClearFaults()");
         }
@@ -470,7 +470,7 @@ void SwerveModule::ConstructDriveMotor() noexcept
             throw std::runtime_error("m_driveEncoder");
         }
 
-        if (m_drivePID->SetFeedbackDevice(*m_driveEncoder) != rev::CANError::kOk)
+        if (m_drivePID->SetFeedbackDevice(*m_driveEncoder) != rev::REVLibError::kOk)
         {
             throw std::runtime_error("SetFeedbackDevice()");
         } });
@@ -581,7 +581,7 @@ void SwerveModule::ResetTurning() noexcept
             // be wrapped but, in any case, a reset will place things
             // within [-0.5, +0.5).
             if (m_turningEncoder->SetPosition(
-                    units::angle::turn_t(position.value()).to<double>()) != rev::CANError::kOk)
+                    units::angle::turn_t(position.value()).to<double>()) != rev::REVLibError::kOk)
             {
                 throw std::runtime_error("SetPosition()");
             }
@@ -594,7 +594,7 @@ void SwerveModule::ResetDrive() noexcept
                      {
         if (m_driveEncoder)
         {
-            if (m_driveEncoder->SetPosition(0.0) != rev::CANError::kOk)
+            if (m_driveEncoder->SetPosition(0.0) != rev::REVLibError::kOk)
             {
                 throw std::runtime_error("SetPosition()");
             }
@@ -669,7 +669,7 @@ void SwerveModule::SetTurningPosition(const units::angle::degree_t position) noe
         if (m_turningPID)
         {
             if (m_turningPID->SetReference(
-                    units::angle::turn_t(adjustedPosition).to<double>(), rev::kPosition) != rev::CANError::kOk)
+                    units::angle::turn_t(adjustedPosition).to<double>(), rev::CANSparkMax::ControlType::kPosition) != rev::REVLibError::kOk)
             {
                 throw std::runtime_error("SetReference()");
             }
@@ -739,14 +739,14 @@ void SwerveModule::SetDriveDistance(units::length::meter_t distance) noexcept
                 // SetReference(SetPoint, rev::ControlType::kSmartMotion, 0, FeedForward)
                 // XXX Use m_drivePosition_F here?
                 if (m_drivePID->SetReference(
-                        (distance / physical::kDriveMetersPerRotation).to<double>(), rev::kSmartMotion) != rev::CANError::kOk)
+                        (distance / physical::kDriveMetersPerRotation).to<double>(), rev::CANSparkMax::ControlType::kSmartMotion) != rev::REVLibError::kOk)
                 {
                     throw std::runtime_error("SetReference()");
                 }
 
                 if (!m_brakeApplied)
                 {
-                    if (m_driveMotor->SetIdleMode(rev::CANSparkMax::IdleMode::kBrake) != rev::CANError::kOk)
+                    if (m_driveMotor->SetIdleMode(rev::CANSparkMax::IdleMode::kBrake) != rev::REVLibError::kOk)
                     {
                         throw std::runtime_error("SetIdleMode()");
                     }
@@ -760,7 +760,7 @@ void SwerveModule::SetDriveDistance(units::length::meter_t distance) noexcept
 
                 if (m_brakeApplied)
                 {
-                    if (m_driveMotor->SetIdleMode(rev::CANSparkMax::IdleMode::kCoast) != rev::CANError::kOk)
+                    if (m_driveMotor->SetIdleMode(rev::CANSparkMax::IdleMode::kCoast) != rev::REVLibError::kOk)
                     {
                         throw std::runtime_error("SetIdleMode()");
                     }
@@ -818,7 +818,7 @@ void SwerveModule::SetDriveVelocity(units::velocity::meters_per_second_t velocit
 #if 0
                 // SetReference(SetPoint, rev::ControlType::kSmartVelocity, 1, FeedForward)
                 if (m_drivePID->SetReference(
-                        (velocity * 60_s / physical::kDriveMetersPerRotation).to<double>(), rev::kSmartVelocity, 1) != rev::CANError::kOk)
+                        (velocity * 60_s / physical::kDriveMetersPerRotation).to<double>(), rev::CANSparkMax::ControlType::kSmartVelocity, 1) != rev::REVLibError::kOk)
                 {
                     throw std::runtime_error("SetReference()");
                 }
@@ -828,7 +828,7 @@ void SwerveModule::SetDriveVelocity(units::velocity::meters_per_second_t velocit
 
                 if (!m_brakeApplied && m_commandedBrake)
                 {
-                    if (m_driveMotor->SetIdleMode(rev::CANSparkMax::IdleMode::kBrake) != rev::CANError::kOk)
+                    if (m_driveMotor->SetIdleMode(rev::CANSparkMax::IdleMode::kBrake) != rev::REVLibError::kOk)
                     {
                         throw std::runtime_error("SetIdleMode()");
                     }
@@ -842,7 +842,7 @@ void SwerveModule::SetDriveVelocity(units::velocity::meters_per_second_t velocit
 
                 if (m_brakeApplied)
                 {
-                    if (m_driveMotor->SetIdleMode(rev::CANSparkMax::IdleMode::kCoast) != rev::CANError::kOk)
+                    if (m_driveMotor->SetIdleMode(rev::CANSparkMax::IdleMode::kCoast) != rev::REVLibError::kOk)
                     {
                         throw std::runtime_error("SetIdleMode()");
                     }
@@ -1151,7 +1151,7 @@ void SwerveModule::TestPeriodic() noexcept
             {
                 // Logic above ensures that `position` is now zero; reset the
                 // turning motor controller encoder to reflect this.
-                if (m_turningEncoder->SetPosition(0.0) != rev::CANError::kOk)
+                if (m_turningEncoder->SetPosition(0.0) != rev::REVLibError::kOk)
                 {
                     throw std::runtime_error("SetPosition()");
                 }
@@ -1162,7 +1162,7 @@ void SwerveModule::TestPeriodic() noexcept
         {
             if (zeroTurning)
             {
-                if (m_turningMotor->ClearFaults() != rev::CANError::kOk)
+                if (m_turningMotor->ClearFaults() != rev::REVLibError::kOk)
                 {
                     throw std::runtime_error("ClearFaults()");
                 }
@@ -1290,7 +1290,7 @@ void SwerveModule::TestPeriodic() noexcept
 
             if (zeroDrive)
             {
-                if (m_driveEncoder->SetPosition(0.0) != rev::CANError::kOk)
+                if (m_driveEncoder->SetPosition(0.0) != rev::REVLibError::kOk)
                 {
                     throw std::runtime_error("SetPosition()");
                 }
@@ -1301,7 +1301,7 @@ void SwerveModule::TestPeriodic() noexcept
         {
             if (zeroDrive)
             {
-                if (m_driveMotor->ClearFaults() != rev::CANError::kOk)
+                if (m_driveMotor->ClearFaults() != rev::REVLibError::kOk)
                 {
                     throw std::runtime_error("ClearFaults()");
                 }
@@ -1483,31 +1483,31 @@ void SwerveModule::SetTurningPositionPID() noexcept
         {
             throw std::runtime_error("m_turningPID");
         }
-        if (m_turningPID->SetP(m_turningPosition_P) != rev::CANError::kOk)
+        if (m_turningPID->SetP(m_turningPosition_P) != rev::REVLibError::kOk)
         {
             throw std::runtime_error("SetP()");
         }
-        if (m_turningPID->SetI(m_turningPosition_I) != rev::CANError::kOk)
+        if (m_turningPID->SetI(m_turningPosition_I) != rev::REVLibError::kOk)
         {
             throw std::runtime_error("SetI()");
         }
-        if (m_turningPID->SetIZone(m_turningPosition_IZ) != rev::CANError::kOk)
+        if (m_turningPID->SetIZone(m_turningPosition_IZ) != rev::REVLibError::kOk)
         {
             throw std::runtime_error("SetIZone()");
         }
-        if (m_turningPID->SetIMaxAccum(m_turningPosition_IM) != rev::CANError::kOk)
+        if (m_turningPID->SetIMaxAccum(m_turningPosition_IM) != rev::REVLibError::kOk)
         {
             throw std::runtime_error("SetIMaxAccum()");
         }
-        if (m_turningPID->SetD(m_turningPosition_D) != rev::CANError::kOk)
+        if (m_turningPID->SetD(m_turningPosition_D) != rev::REVLibError::kOk)
         {
             throw std::runtime_error("SetD()");
         }
-        if (m_turningPID->SetDFilter(m_turningPosition_DF) != rev::CANError::kOk)
+        if (m_turningPID->SetDFilter(m_turningPosition_DF) != rev::REVLibError::kOk)
         {
             throw std::runtime_error("SetDFilter()");
         }
-        if (m_turningPID->SetFF(m_turningPosition_F) != rev::CANError::kOk)
+        if (m_turningPID->SetFF(m_turningPosition_F) != rev::REVLibError::kOk)
         {
             throw std::runtime_error("SetFF()");
         } });
@@ -1521,39 +1521,39 @@ void SwerveModule::SetDrivePositionPID() noexcept
         {
             throw std::runtime_error("m_drivePID");
         }
-        if (m_drivePID->SetP(m_drivePosition_P) != rev::CANError::kOk)
+        if (m_drivePID->SetP(m_drivePosition_P) != rev::REVLibError::kOk)
         {
             throw std::runtime_error("SetP()");
         }
-        if (m_drivePID->SetI(m_drivePosition_I) != rev::CANError::kOk)
+        if (m_drivePID->SetI(m_drivePosition_I) != rev::REVLibError::kOk)
         {
             throw std::runtime_error("SetI()");
         }
-        if (m_drivePID->SetIZone(m_drivePosition_IZ) != rev::CANError::kOk)
+        if (m_drivePID->SetIZone(m_drivePosition_IZ) != rev::REVLibError::kOk)
         {
             throw std::runtime_error("SetIZone()");
         }
-        if (m_drivePID->SetIMaxAccum(m_drivePosition_IM) != rev::CANError::kOk)
+        if (m_drivePID->SetIMaxAccum(m_drivePosition_IM) != rev::REVLibError::kOk)
         {
             throw std::runtime_error("SetIMaxAccum()");
         }
-        if (m_drivePID->SetD(m_drivePosition_D) != rev::CANError::kOk)
+        if (m_drivePID->SetD(m_drivePosition_D) != rev::REVLibError::kOk)
         {
             throw std::runtime_error("SetD()");
         }
-        if (m_drivePID->SetDFilter(m_drivePosition_DF) != rev::CANError::kOk)
+        if (m_drivePID->SetDFilter(m_drivePosition_DF) != rev::REVLibError::kOk)
         {
             throw std::runtime_error("SetDFilter()");
         }
-        if (m_drivePID->SetFF(m_drivePosition_F) != rev::CANError::kOk)
+        if (m_drivePID->SetFF(m_drivePosition_F) != rev::REVLibError::kOk)
         {
             throw std::runtime_error("SetFF()");
         }
-        if (m_drivePID->SetSmartMotionMaxVelocity(m_drivePosition_V) != rev::CANError::kOk)
+        if (m_drivePID->SetSmartMotionMaxVelocity(m_drivePosition_V) != rev::REVLibError::kOk)
         {
             throw std::runtime_error("SetSmartMotionMaxVelocity()");
         }
-        if (m_drivePID->SetSmartMotionMaxAccel(m_drivePosition_A) != rev::CANError::kOk)
+        if (m_drivePID->SetSmartMotionMaxAccel(m_drivePosition_A) != rev::REVLibError::kOk)
         {
             throw std::runtime_error("SetSmartMotionMaxAccel()");
         } });
@@ -1567,39 +1567,39 @@ void SwerveModule::SetDriveVelocityPID() noexcept
         {
             throw std::runtime_error("m_drivePID");
         }
-        if (m_drivePID->SetP(m_driveVelocity_P, 1) != rev::CANError::kOk)
+        if (m_drivePID->SetP(m_driveVelocity_P, 1) != rev::REVLibError::kOk)
         {
             throw std::runtime_error("SetP()");
         }
-        if (m_drivePID->SetI(m_driveVelocity_I, 1) != rev::CANError::kOk)
+        if (m_drivePID->SetI(m_driveVelocity_I, 1) != rev::REVLibError::kOk)
         {
             throw std::runtime_error("SetI()");
         }
-        if (m_drivePID->SetIZone(m_driveVelocity_IZ, 1) != rev::CANError::kOk)
+        if (m_drivePID->SetIZone(m_driveVelocity_IZ, 1) != rev::REVLibError::kOk)
         {
             throw std::runtime_error("SetIZone()");
         }
-        if (m_drivePID->SetIMaxAccum(m_driveVelocity_IM, 1) != rev::CANError::kOk)
+        if (m_drivePID->SetIMaxAccum(m_driveVelocity_IM, 1) != rev::REVLibError::kOk)
         {
             throw std::runtime_error("SetIMaxAccum()");
         }
-        if (m_drivePID->SetD(m_driveVelocity_D, 1) != rev::CANError::kOk)
+        if (m_drivePID->SetD(m_driveVelocity_D, 1) != rev::REVLibError::kOk)
         {
             throw std::runtime_error("SetD()");
         }
-        if (m_drivePID->SetDFilter(m_driveVelocity_DF, 1) != rev::CANError::kOk)
+        if (m_drivePID->SetDFilter(m_driveVelocity_DF, 1) != rev::REVLibError::kOk)
         {
             throw std::runtime_error("SetDFilter()");
         }
-        if (m_drivePID->SetFF(m_driveVelocity_F, 1) != rev::CANError::kOk)
+        if (m_drivePID->SetFF(m_driveVelocity_F, 1) != rev::REVLibError::kOk)
         {
             throw std::runtime_error("SetFF()");
         }
-        if (m_drivePID->SetSmartMotionMaxVelocity(m_driveVelocity_V, 1) != rev::CANError::kOk)
+        if (m_drivePID->SetSmartMotionMaxVelocity(m_driveVelocity_V, 1) != rev::REVLibError::kOk)
         {
             throw std::runtime_error("SetSmartMotionMaxVelocity()");
         }
-        if (m_drivePID->SetSmartMotionMaxAccel(m_driveVelocity_A, 1) != rev::CANError::kOk)
+        if (m_drivePID->SetSmartMotionMaxAccel(m_driveVelocity_A, 1) != rev::REVLibError::kOk)
         {
             throw std::runtime_error("SetSmartMotionMaxAccel()");
         } });
@@ -1830,7 +1830,7 @@ void SwerveModule::CreateTurningMotorControllerConfig() noexcept
             throw std::runtime_error("m_turningMotor");
         }
 
-        if (m_turningMotor->RestoreFactoryDefaults() != rev::CANError::kOk)
+        if (m_turningMotor->RestoreFactoryDefaults() != rev::REVLibError::kOk)
         {
             throw std::runtime_error("RestoreFactoryDefaults()");
         } });
@@ -1860,7 +1860,7 @@ void SwerveModule::CreateTurningMotorControllerConfig() noexcept
             throw std::runtime_error("m_turningMotor");
         }
 
-        if (m_turningMotor->SetIdleMode(rev::CANSparkMax::IdleMode::kBrake) != rev::CANError::kOk)
+        if (m_turningMotor->SetIdleMode(rev::CANSparkMax::IdleMode::kBrake) != rev::REVLibError::kOk)
         {
             throw std::runtime_error("SetIdleMode()");
         } });
@@ -1882,7 +1882,7 @@ void SwerveModule::CreateTurningMotorControllerConfig() noexcept
             throw std::runtime_error("m_turningMotor");
         }
 
-        if (m_turningMotor->BurnFlash() != rev::CANError::kOk)
+        if (m_turningMotor->BurnFlash() != rev::REVLibError::kOk)
         {
             throw std::runtime_error("BurnFlash()");
         } });
@@ -1908,7 +1908,7 @@ void SwerveModule::CreateDriveMotorControllerConfig() noexcept
             throw std::runtime_error("m_driveMotor");
         }
 
-        if (m_driveMotor->RestoreFactoryDefaults() != rev::CANError::kOk)
+        if (m_driveMotor->RestoreFactoryDefaults() != rev::REVLibError::kOk)
         {
             throw std::runtime_error("RestoreFactoryDefaults()");
         } });
@@ -1938,7 +1938,7 @@ void SwerveModule::CreateDriveMotorControllerConfig() noexcept
             throw std::runtime_error("m_driveMotor");
         }
 
-        if (m_driveMotor->SetIdleMode(rev::CANSparkMax::IdleMode::kCoast) != rev::CANError::kOk)
+        if (m_driveMotor->SetIdleMode(rev::CANSparkMax::IdleMode::kCoast) != rev::REVLibError::kOk)
         {
             throw std::runtime_error("SetIdleMode()");
         } });
@@ -1962,7 +1962,7 @@ void SwerveModule::CreateDriveMotorControllerConfig() noexcept
             throw std::runtime_error("m_driveMotor");
         }
 
-        if (m_driveMotor->BurnFlash() != rev::CANError::kOk)
+        if (m_driveMotor->BurnFlash() != rev::REVLibError::kOk)
         {
             throw std::runtime_error("BurnFlash()");
         } });

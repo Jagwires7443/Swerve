@@ -19,7 +19,7 @@
 #include <networktables/NetworkTableEntry.h>
 #include <networktables/NetworkTableInstance.h>
 #include <networktables/NetworkTableValue.h>
-#include <wpi/ArrayRef.h>
+#include <wpi/span.h>
 
 #include <algorithm>
 #include <chrono>
@@ -167,12 +167,12 @@ void DriveSubsystem::CreateGraphTab(SwerveModule::GraphSelection graphSelection)
   }
 
   std::vector<double> fourZerosVector{0.0, 0.0, 0.0, 0.0};
-  wpi::ArrayRef<double> fourZerosArrayRef(fourZerosVector);
+  wpi::span<double> fourZerosSpan(fourZerosVector);
   std::string path;
 
   frc::ShuffleboardTab &shuffleboardTab = frc::Shuffleboard::GetTab("PID Tuning");
 
-  m_frontLeftGraph = &shuffleboardTab.Add("Front Left", fourZerosArrayRef)
+  m_frontLeftGraph = &shuffleboardTab.Add("Front Left", fourZerosSpan)
                           .WithPosition(0, 0)
                           .WithSize(14, 6)
                           .WithWidget(frc::BuiltInWidgets::kGraph)
@@ -186,7 +186,7 @@ void DriveSubsystem::CreateGraphTab(SwerveModule::GraphSelection graphSelection)
   path += "/Properties/X-axis auto scrolling";
   m_frontLeftGraphScroll = path;
 
-  m_frontRightGraph = &shuffleboardTab.Add("Front Right", fourZerosArrayRef)
+  m_frontRightGraph = &shuffleboardTab.Add("Front Right", fourZerosSpan)
                            .WithPosition(14, 0)
                            .WithSize(14, 6)
                            .WithWidget(frc::BuiltInWidgets::kGraph)
@@ -200,7 +200,7 @@ void DriveSubsystem::CreateGraphTab(SwerveModule::GraphSelection graphSelection)
   path += "/Properties/X-axis auto scrolling";
   m_frontRightGraphScroll = path;
 
-  m_rearLeftGraph = &shuffleboardTab.Add("Rear Left", fourZerosArrayRef)
+  m_rearLeftGraph = &shuffleboardTab.Add("Rear Left", fourZerosSpan)
                          .WithPosition(0, 6)
                          .WithSize(14, 6)
                          .WithWidget(frc::BuiltInWidgets::kGraph)
@@ -214,7 +214,7 @@ void DriveSubsystem::CreateGraphTab(SwerveModule::GraphSelection graphSelection)
   path += "/Properties/X-axis auto scrolling";
   m_rearLeftGraphScroll = path;
 
-  m_rearRightGraph = &shuffleboardTab.Add("Rear Right", fourZerosArrayRef)
+  m_rearRightGraph = &shuffleboardTab.Add("Rear Right", fourZerosSpan)
                           .WithPosition(14, 6)
                           .WithSize(14, 6)
                           .WithWidget(frc::BuiltInWidgets::kGraph)
@@ -562,7 +562,7 @@ void DriveSubsystem::TestPeriodic() noexcept
   if (m_graphSelection != SwerveModule::GraphSelection::kNone)
   {
     std::vector<double> fourDatumsVector{0.0, 0.0, 0.0, 0.0};
-    wpi::ArrayRef<double> fourDatumsArrayRef(fourDatumsVector);
+    wpi::span<double> fourDatumsSpan(fourDatumsVector);
 
     const auto fl = m_frontLeftSwerveModule->TestModeGraphData(m_graphSelection);
     const auto fr = m_frontRightSwerveModule->TestModeGraphData(m_graphSelection);
@@ -582,25 +582,25 @@ void DriveSubsystem::TestPeriodic() noexcept
     fourDatumsVector[1] = std::get<1>(fl);
     fourDatumsVector[2] = std::get<2>(fl);
     fourDatumsVector[3] = std::get<3>(fl);
-    m_frontLeftGraph->GetEntry().SetDoubleArray(fourDatumsArrayRef);
+    m_frontLeftGraph->GetEntry().SetDoubleArray(fourDatumsSpan);
 
     fourDatumsVector[0] = std::get<0>(fr);
     fourDatumsVector[1] = std::get<1>(fr);
     fourDatumsVector[2] = std::get<2>(fr);
     fourDatumsVector[3] = std::get<3>(fr);
-    m_frontRightGraph->GetEntry().SetDoubleArray(fourDatumsArrayRef);
+    m_frontRightGraph->GetEntry().SetDoubleArray(fourDatumsSpan);
 
     fourDatumsVector[0] = std::get<0>(rl);
     fourDatumsVector[1] = std::get<1>(rl);
     fourDatumsVector[2] = std::get<2>(rl);
     fourDatumsVector[3] = std::get<3>(rl);
-    m_rearLeftGraph->GetEntry().SetDoubleArray(fourDatumsArrayRef);
+    m_rearLeftGraph->GetEntry().SetDoubleArray(fourDatumsSpan);
 
     fourDatumsVector[0] = std::get<0>(rr);
     fourDatumsVector[1] = std::get<1>(rr);
     fourDatumsVector[2] = std::get<2>(rr);
     fourDatumsVector[3] = std::get<3>(rr);
-    m_rearRightGraph->GetEntry().SetDoubleArray(fourDatumsArrayRef);
+    m_rearRightGraph->GetEntry().SetDoubleArray(fourDatumsSpan);
   }
 
   if (m_turningPositionPIDController->GetE())
@@ -796,10 +796,10 @@ bool DriveSubsystem::SetLockWheelsX() noexcept
   rearLeft.speed = 0_mps;
   rearRight.speed = 0_mps;
 
-  frontLeft.angle += frc::Rotation2d(90_deg);
-  frontRight.angle += frc::Rotation2d(90_deg);
-  rearLeft.angle += frc::Rotation2d(90_deg);
-  rearRight.angle += frc::Rotation2d(90_deg);
+  frontLeft.angle = frontLeft.angle + frc::Rotation2d(90_deg);
+  frontRight.angle = frontRight.angle + frc::Rotation2d(90_deg);
+  rearLeft.angle = rearLeft.angle + frc::Rotation2d(90_deg);
+  rearRight.angle = rearRight.angle + frc::Rotation2d(90_deg);
 
   m_commandedStateFrontLeft = frontLeft;
   m_commandedStateFrontRight = frontRight;
@@ -918,7 +918,7 @@ void DriveSubsystem::Drive(units::meters_per_second_t xSpeed,
                     : frc::ChassisSpeeds{xSpeed, ySpeed, rot},
       frc::Translation2d(x_center, y_center));
 
-  kDriveKinematics.NormalizeWheelSpeeds(&states, physical::kMaxDriveSpeed);
+  kDriveKinematics.DesaturateWheelSpeeds(&states, physical::kMaxDriveSpeed);
 
   SetModuleStates(states);
 }

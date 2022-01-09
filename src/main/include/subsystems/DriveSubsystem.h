@@ -8,7 +8,7 @@
 
 #include "Constants.h"
 
-#include "AHRS.h"
+#include <AHRS.h>
 #include <frc/geometry/Pose2d.h>
 #include <frc/geometry/Rotation2d.h>
 #include <frc/geometry/Translation2d.h>
@@ -17,10 +17,7 @@
 #include <frc/kinematics/SwerveModuleState.h>
 #include <frc/shuffleboard/ComplexWidget.h>
 #include <frc/shuffleboard/SimpleWidget.h>
-#include <frc/smartdashboard/Sendable.h>
-#include <frc/smartdashboard/SendableBuilder.h>
 #include <frc/smartdashboard/SendableChooser.h>
-#include <frc/smartdashboard/SendableHelper.h>
 #include <frc2/command/Command.h>
 #include <frc2/command/SubsystemBase.h>
 #include <units/angle.h>
@@ -28,6 +25,9 @@
 #include <units/length.h>
 #include <units/velocity.h>
 #include <wpi/array.h>
+#include <wpi/sendable/Sendable.h>
+#include <wpi/sendable/SendableBuilder.h>
+#include <wpi/sendable/SendableHelper.h>
 
 #include <memory>
 
@@ -163,7 +163,7 @@ public:
   // PIDController UI element in Shuffleboard; note that this class doesn't
   // derive from frc::PIDController -- it's all down to inheritance and
   // properties.
-  class TuningPID : public frc::Sendable, public frc::SendableHelper<TuningPID>
+  class TuningPID : public wpi::Sendable, public wpi::SendableHelper<TuningPID>
   {
   public:
     TuningPID(double p, double i, double d, double f) noexcept : m_p(p), m_i(i), m_d(d), m_f(f) {}
@@ -171,21 +171,39 @@ public:
     TuningPID(const TuningPID &) = delete;
     TuningPID &operator=(const TuningPID &) = delete;
 
-    void InitSendable(frc::SendableBuilder &builder)
+    void InitSendable(wpi::SendableBuilder &builder)
     {
       builder.SetSmartDashboardType("PIDController");
       builder.AddDoubleProperty(
-          "p", [&]() -> double { return m_p; }, [&](double value) -> void { m_p = value; });
+          "p", [&]() -> double
+          { return m_p; },
+          [&](double value) -> void
+          { m_p = value; });
       builder.AddDoubleProperty(
-          "i", [&]() -> double { return m_i; }, [&](double value) -> void { m_i = value; });
+          "i", [&]() -> double
+          { return m_i; },
+          [&](double value) -> void
+          { m_i = value; });
       builder.AddDoubleProperty(
-          "d", [&]() -> double { return m_d; }, [&](double value) -> void { m_d = value; });
+          "d", [&]() -> double
+          { return m_d; },
+          [&](double value) -> void
+          { m_d = value; });
       builder.AddDoubleProperty(
-          "f", [&]() -> double { return m_f; }, [&](double value) -> void { m_f = value; });
+          "f", [&]() -> double
+          { return m_f; },
+          [&](double value) -> void
+          { m_f = value; });
       builder.AddDoubleProperty(
-          "setpoint", [&]() -> double { return m_s; }, [&](double value) -> void { m_s = value; });
+          "setpoint", [&]() -> double
+          { return m_s; },
+          [&](double value) -> void
+          { m_s = value; });
       builder.AddBooleanProperty(
-          "enabled", [&]() -> bool { return m_e; }, [&](bool value) -> void { m_e = value; });
+          "enabled", [&]() -> bool
+          { return m_e; },
+          [&](bool value) -> void
+          { m_e = value; });
     }
 
     double GetP() const noexcept { return m_p; }
@@ -210,7 +228,7 @@ public:
   // Need to derive from abstract Sendable class in order to be able to use the
   // Gyro UI element in Shuffleboard; note that this class does not derive from
   // frc::Gyro or frc::GyroBase -- it's all down to inheritance and properties.
-  class HeadingGyro : public frc::Sendable, public frc::SendableHelper<HeadingGyro>
+  class HeadingGyro : public wpi::Sendable, public wpi::SendableHelper<HeadingGyro>
   {
   public:
     HeadingGyro() noexcept {}
@@ -218,11 +236,13 @@ public:
     HeadingGyro(const HeadingGyro &) = delete;
     HeadingGyro &operator=(const HeadingGyro &) = delete;
 
-    void InitSendable(frc::SendableBuilder &builder)
+    void InitSendable(wpi::SendableBuilder &builder)
     {
       builder.SetSmartDashboardType("Gyro");
       builder.AddDoubleProperty(
-          "Value", [&]() -> double { return m_value; }, nullptr);
+          "Value", [&]() -> double
+          { return m_value; },
+          nullptr);
     }
 
     void Set(const double &value) noexcept { m_value = value; }
