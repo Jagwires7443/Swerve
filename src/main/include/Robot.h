@@ -12,21 +12,20 @@
 class Robot : public frc::TimedRobot
 {
 public:
-  void RobotInit() noexcept override;
-  void RobotPeriodic() noexcept override;
-  void DisabledInit() noexcept override;
-  void DisabledPeriodic() noexcept override;
-  void AutonomousInit() noexcept override;
-  void AutonomousPeriodic() noexcept override;
-  void TeleopInit() noexcept override;
-  void TeleopPeriodic() noexcept override;
-  void TestInit() noexcept override;
-  void TestPeriodic() noexcept override;
+  void RobotInit() override;
+  void RobotPeriodic() override;
+  void DisabledInit() override;
+  void DisabledPeriodic() override;
+  void AutonomousInit() override;
+  void AutonomousPeriodic() override;
+  void TeleopInit() override;
+  void TeleopPeriodic() override;
+  void TestPeriodic() override;
 
 private:
   // Have it null by default so that if testing teleop it
   // doesn't have undefined behavior and potentially crash.
-  frc2::Command *m_autonomousCommand{nullptr};
+  frc2::Command *m_autonomousCommand = nullptr;
 
   RobotContainer m_container;
 };
