@@ -392,7 +392,7 @@ void SwerveModule::ConstructTurningMotor() noexcept
         m_turningMotor = std::make_unique<rev::CANSparkMax>(
             m_turningMotorCanID, rev::CANSparkMaxLowLevel::MotorType::kBrushless);
         m_turningEncoder = std::make_unique<rev::SparkMaxAlternateEncoder>(
-            m_turningMotor->GetAlternateEncoder(rev::SparkMaxAlternateEncoder::Type::kQuadrature, 4096));
+            m_turningMotor->GetAlternateEncoder(4096));
         m_turningPID = std::make_unique<rev::SparkMaxPIDController>(m_turningMotor->GetPIDController());
 
         if (!m_turningMotor)
