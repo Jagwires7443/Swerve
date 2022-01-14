@@ -32,6 +32,38 @@ RobotContainer::RobotContainer() noexcept
             std::get<1>(controls) * physical::kMaxDriveSpeed,
             std::get<2>(controls) * physical::kMaxTurnRate,
             std::get<3>(controls));
+
+        const bool feederButton = m_xbox.GetRightBumper();
+        const double feeder = m_xbox.GetRightTriggerAxis();
+
+        if (feederButton)
+        {
+          m_feederSubsystem.Set(-0.5);
+        }
+        else if (feeder < 0.05)
+        {
+          m_feederSubsystem.Set(0.0);
+        }
+        else
+        {
+          m_feederSubsystem.Set(feeder);
+        }
+
+        const bool shooterButton = m_xbox.GetLeftBumper();
+        const double shooter = m_xbox.GetLeftTriggerAxis();
+
+        if (shooterButton)
+        {
+          m_shooterSubsystem.Set(-0.5);
+        }
+        else if (shooter < 0.05)
+        {
+          m_shooterSubsystem.Set(0.0);
+        }
+        else
+        {
+          m_shooterSubsystem.Set(shooter);
+        }
       },
       requirements);
 
@@ -65,6 +97,7 @@ RobotContainer::RobotContainer() noexcept
 
 void RobotContainer::ConfigureButtonBindings() noexcept
 {
+  /*
   frc2::JoystickButton(&m_xbox, static_cast<int>(frc::XboxController::Button::kLeftBumper))
       .WhenPressed(frc2::RunCommand([&]() -> void
                                     { m_feederSubsystem.Set(0.8); },
@@ -80,6 +113,7 @@ void RobotContainer::ConfigureButtonBindings() noexcept
       .WhenReleased(frc2::RunCommand([&]() -> void
                                      { m_shooterSubsystem.Set(0.0); },
                                      {&m_shooterSubsystem}));
+   */
 }
 
 frc2::Command *RobotContainer::GetAutonomousCommand() noexcept
@@ -146,7 +180,7 @@ std::tuple<double, double, double, bool> RobotContainer::GetDriveTeleopControls(
     return mixer * std::pow(raw, 3.0) + (1.0 - mixer) * raw;
   };
 
-  return std::make_tuple(shape(x), shape(y), shape(z), true);
+  return std::make_tuple(shape(x), shape(y), shape(z), false);
 }
 
 void RobotContainer::TestInit() noexcept
