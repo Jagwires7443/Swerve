@@ -114,7 +114,7 @@ namespace pidf
 
     constexpr double kDrivePositionMaxVelocity = 5700.0;     // Rotations per minute.
     constexpr double kDrivePositionMaxAcceleration = 1000.0; // Rotations per minute per second.
-    constexpr double kDrivePositionP = 0.006;
+    constexpr double kDrivePositionP = 0.004;
     constexpr double kDrivePositionI = 0.0;
     constexpr double kDrivePositionIZ = 0.0;
     constexpr double kDrivePositionIM = 0.0;
