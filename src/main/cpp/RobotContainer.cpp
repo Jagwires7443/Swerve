@@ -21,6 +21,8 @@ RobotContainer::RobotContainer() noexcept
   // Set up default drive command; non-owning pointer is passed by value.
   auto requirements = {dynamic_cast<frc2::Subsystem *>(&m_driveSubsystem)};
 
+  m_driveSubsystem.SetDriveBrakeMode(true);
+
   // Drive, as commanded by operator joystick controls.
   m_driveCommand = std::make_unique<frc2::RunCommand>(
       [&]() -> void
@@ -151,14 +153,12 @@ std::tuple<double, double, double, bool> RobotContainer::GetDriveTeleopControls(
   // raw value does a pretty good job with the deadband, but doing both is easy
   // and guarantees no movement in the deadband.  Cubing makes it easier to
   // command smaller/slower movements, while still being able to command full
-  // power.
-  auto shape = [](double raw) -> double
+  // power.  The 'mixer` parameter is used to shape the `raw` input, some mix
+  // between out = in^3.0 and out = in.
+  auto shape = [](double raw, double mixer = 0.75) -> double
   {
     // Input deadband around 0.0 (+/- range).
     constexpr double range = 0.05;
-
-    // Shape, some mix between out = in^3.0 and out = in.
-    constexpr double mixer = 0.75;
 
     constexpr double slope = 1.0 / (1.0 - range);
 
@@ -180,7 +180,7 @@ std::tuple<double, double, double, bool> RobotContainer::GetDriveTeleopControls(
     return mixer * std::pow(raw, 3.0) + (1.0 - mixer) * raw;
   };
 
-  return std::make_tuple(shape(x), shape(y), shape(z), false);
+  return std::make_tuple(shape(x), shape(y), shape(z, 0.0), false);
 }
 
 void RobotContainer::TestInit() noexcept

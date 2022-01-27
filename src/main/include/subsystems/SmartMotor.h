@@ -67,9 +67,9 @@ public:
     // idle mode
     // position scaling
     // velocity scaling
-    // position PID
-    // velocity PID
-    // firmware version
+    // position PID / Smart
+    // velocity PID / Smart
+    // firmware version (check only)
 
     virtual void AddConfig(const ConfigMap config) noexcept = 0;
 
@@ -161,7 +161,7 @@ public:
                   "SmartMotor must be templated on either an angle_unit or a length_unit.");
 
     // Non-owning reference.
-    SmartMotor(SmartMotorBase &base) noexcept : base_{base} {}
+    explicit SmartMotor(SmartMotorBase &base) noexcept : base_{base} {}
 
     SmartMotor(const SmartMotor &) = delete;
     SmartMotor &operator=(const SmartMotor &) = delete;
