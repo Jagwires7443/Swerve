@@ -313,7 +313,7 @@ private:
   // Until REV bug for continuous rotation is fixed, must do turning PID on the
   // roboRIO.  Setting m_rio false allows testing turning PID on the SPARK MAX.
   const bool m_rio{true};
-  bool m_brakeApplied{false};
+  bool m_brakeApplied{true};
   double m_rioPID_F{pidf::kTurningPositionF};
   std::unique_ptr<frc::ProfiledPIDController<units::angle::degrees>> m_rioPIDController;
 
@@ -376,7 +376,7 @@ private:
 
   // Last commanded turn heading and drive distance/speed.
   units::angle::degree_t m_commandedHeading{0};
-  bool m_commandedBrake{false};
+  bool m_commandedBrake{true};
   bool m_distanceVelocityNot{false};
   units::length::meter_t m_commandedDistance{0};
   units::velocity::meters_per_second_t m_commandedVelocity{0};

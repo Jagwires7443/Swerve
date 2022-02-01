@@ -455,7 +455,7 @@ void SwerveModule::ConstructDriveMotor() noexcept
         // Does not get sent to the motor controller, done locally.
         m_driveMotor->SetInverted(m_driveMotorInverted);
 
-        if (m_driveMotor->SetIdleMode(rev::CANSparkMax::IdleMode::kCoast) != rev::REVLibError::kOk)
+        if (m_driveMotor->SetIdleMode(rev::CANSparkMax::IdleMode::kBrake) != rev::REVLibError::kOk)
         {
             throw std::runtime_error("SetIdleMode()");
         }

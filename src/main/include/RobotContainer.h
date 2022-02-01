@@ -43,6 +43,8 @@ private:
 
   void ConfigureButtonBindings() noexcept;
 
+  bool m_fieldOriented = true;
+
   // The robot's subsystems and commands are defined here...
   DriveSubsystem m_driveSubsystem;
   FeederSubsystem m_feederSubsystem;

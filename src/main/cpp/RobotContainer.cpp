@@ -21,8 +21,6 @@ RobotContainer::RobotContainer() noexcept
   // Set up default drive command; non-owning pointer is passed by value.
   auto requirements = {dynamic_cast<frc2::Subsystem *>(&m_driveSubsystem)};
 
-  m_driveSubsystem.SetDriveBrakeMode(true);
-
   // Drive, as commanded by operator joystick controls.
   m_driveCommand = std::make_unique<frc2::RunCommand>(
       [&]() -> void
@@ -99,6 +97,15 @@ RobotContainer::RobotContainer() noexcept
 
 void RobotContainer::ConfigureButtonBindings() noexcept
 {
+  frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kX).WhenPressed(frc2::RunCommand([&]() -> void
+                                                                                              { m_fieldOriented = false; },
+                                                                                              {&m_driveSubsystem}));
+  frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kY).WhenPressed(frc2::RunCommand([&]() -> void
+                                                                                              {
+                                                                                                  m_fieldOriented = true;
+                                                                                                  m_driveSubsystem.ResetEncoders(); },
+                                                                                              {&m_driveSubsystem}));
+
   /*
   frc2::JoystickButton(&m_xbox, static_cast<int>(frc::XboxController::Button::kLeftBumper))
       .WhenPressed(frc2::RunCommand([&]() -> void
@@ -180,7 +187,7 @@ std::tuple<double, double, double, bool> RobotContainer::GetDriveTeleopControls(
     return mixer * std::pow(raw, 3.0) + (1.0 - mixer) * raw;
   };
 
-  return std::make_tuple(shape(x), shape(y), shape(z, 0.0), false);
+  return std::make_tuple(shape(x), shape(y), shape(z, 0.0), m_fieldOriented);
 }
 
 void RobotContainer::TestInit() noexcept
