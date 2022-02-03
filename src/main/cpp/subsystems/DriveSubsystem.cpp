@@ -61,9 +61,9 @@ DriveSubsystem::DriveSubsystem() noexcept
           break;
         }
       }
-    }
+    } });
 
-    m_ahrs->ZeroYaw(); });
+  ZeroHeading();
 
   // Initial position (third parameter) defaulted to "frc::Pose2d()"; initial
   // angle (second parameter) is automatically zeroed by navX initialization.

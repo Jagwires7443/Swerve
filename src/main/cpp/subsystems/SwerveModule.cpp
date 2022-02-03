@@ -1938,7 +1938,7 @@ void SwerveModule::CreateDriveMotorControllerConfig() noexcept
             throw std::runtime_error("m_driveMotor");
         }
 
-        if (m_driveMotor->SetIdleMode(rev::CANSparkMax::IdleMode::kCoast) != rev::REVLibError::kOk)
+        if (m_driveMotor->SetIdleMode(rev::CANSparkMax::IdleMode::kBrake) != rev::REVLibError::kOk)
         {
             throw std::runtime_error("SetIdleMode()");
         } });

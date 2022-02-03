@@ -97,32 +97,13 @@ RobotContainer::RobotContainer() noexcept
 
 void RobotContainer::ConfigureButtonBindings() noexcept
 {
-  frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kX).WhenPressed(frc2::RunCommand([&]() -> void
-                                                                                              { m_fieldOriented = false; },
-                                                                                              {&m_driveSubsystem}));
-  frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kY).WhenPressed(frc2::RunCommand([&]() -> void
-                                                                                              {
-                                                                                                  m_fieldOriented = true;
-                                                                                                  m_driveSubsystem.ResetEncoders(); },
-                                                                                              {&m_driveSubsystem}));
-
-  /*
-  frc2::JoystickButton(&m_xbox, static_cast<int>(frc::XboxController::Button::kLeftBumper))
-      .WhenPressed(frc2::RunCommand([&]() -> void
-                                    { m_feederSubsystem.Set(0.8); },
-                                    {&m_feederSubsystem}))
-      .WhenReleased(frc2::RunCommand([&]() -> void
-                                     { m_feederSubsystem.Set(0.0); },
-                                     {&m_feederSubsystem}));
-
-  frc2::JoystickButton(&m_xbox, static_cast<int>(frc::XboxController::Button::kRightBumper))
-      .WhenPressed(frc2::RunCommand([&]() -> void
-                                    { m_shooterSubsystem.Set(1.0); },
-                                    {&m_shooterSubsystem}))
-      .WhenReleased(frc2::RunCommand([&]() -> void
-                                     { m_shooterSubsystem.Set(0.0); },
-                                     {&m_shooterSubsystem}));
-   */
+  frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kX).WhileHeld(frc2::RunCommand([&]() -> void
+                                                                                            { m_fieldOriented = false; },
+                                                                                            {&m_driveSubsystem}));
+  frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kY).WhileHeld(frc2::RunCommand([&]() -> void
+                                                                                            { m_driveSubsystem.ZeroHeading();
+                                                                                            m_fieldOriented = true; },
+                                                                                            {&m_driveSubsystem}));
 }
 
 frc2::Command *RobotContainer::GetAutonomousCommand() noexcept
@@ -149,7 +130,7 @@ std::tuple<double, double, double, bool> RobotContainer::GetDriveTeleopControls(
 
   // PlayStation controllers seem to do this strange thing with the rotation:
   // double z = -m_xbox.GetLeftTriggerAxis();
-  // Note: there is mow a PS4Controller class.
+  // Note: there is now a PS4Controller class.
 
   // Add some deadzone, so the robot doesn't drive when the joysticks are
   // released and return to "zero".  These implement a continuous deadband, one
