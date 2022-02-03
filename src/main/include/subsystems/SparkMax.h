@@ -118,7 +118,8 @@ namespace SparkMaxFactory
 // they may be returned to the default value, even if this code is not managing
 // them (since it will call this function, as part of persisting config
 // parametrs).  This applies to all parametrs below which show up only in
-// comments (and not in the list of parameters with their default value).
+// comments (and not in the list of managed parameters with their default
+// value).
 
 // kPolePairs
 //   This configuration parameter also has no set and get and would only change
@@ -156,7 +157,8 @@ namespace SparkMaxFactory
 //   be the case that get is reading information in the roboRIO, not directly
 //   from the controller.  For these reasons, this is not managed but will have
 //   been set (based on the `encoderCount` parameter of SparkMax constructor)
-//   any time configuration parameters are saved.
+//   any time configuration parameters are saved.  To top it all off, the
+//   not-alternate encoder count likely only applies for a brushed motor.
 
 // kAnalogPositionConversion
 // kAnalogVelocityConversion
@@ -196,11 +198,11 @@ namespace SparkMaxFactory
 //   as non-default if IsFollow() returns true.  If they are non-default, it is
 //   assumed that they match any specified non-default value.  Therefore, it is
 //   possible to have problems changing from one non-default setting to another
-//   (including changing the CAN ID to follow).  To get around this, just set
-//   things to default and then to the new non-default settings, saving the
-//   config at each step along the way.  Alternatively, the REV Hardware Client
-//   may be used to make such a change.  See the Spark Max documentation to
-//   find the proper values to specify.
+//   (including changing the CAN ID to follow).  To get around this, these will
+//   be updated any time config parameters are being updated and saved.  So, be
+//   sure to go through this process following any such change.
+//   Alternatively, the REV Hardware Client may be used to make such changes.
+//   See the Spark Max documentation to determine the proper values to specify.
 
 // Finally, the "normal" configuration parameters!  These work as one would
 // expect, with means of getting and setting them.  They are fully managed by
@@ -246,6 +248,7 @@ namespace SparkMaxFactory
 // kD_#
 // kF_#
 // kIZone_#
+// kIMaxAccum_#
 // kDFilter_#
 // kOutputMin_#
 // kOutputMax_#
@@ -254,17 +257,36 @@ namespace SparkMaxFactory
 // kSmartMotionMinVelOutput_#
 // kSmartMotionAllowedClosedLoopError_#
 // kSmartMotionAccelStrategy_#
-// kIMaxAccum_#
 //   These relate to closed-loop control.  The "_0" set is used for position,
 //   and the "_1" set is used for velocity.  There is also a "_2" and "_3" set,
-//   but these are not currently being used (or managed).
+//   but these are not currently being used (or managed).  They could be useful
+//   if multiple gear ratios are possible or in other scenarios, in the future.
+//   These are handled in one of two ways, either through the PID controller or
+//   encoder.
+//   Use GetPIDController(), plus one of the following:
+//     *  GetP()/SetP()
+//     *  GetI()/SetI()
+//     *  GetD()/SetD()
+//     *  GetFF()/SetFF()
+//     *  GetIZone()/SetIZone()
+//     *  GetDFilter()/SetDFilter()
+//     *  GetOutputMin()/SetOutputRange()
+//     *  GetOutputMax()/SetOutputRange()
+//   Use GetEncoder()/GetAlternateEncoder(), plus one of the following:
+//     *  GetIMaxAccum()/SetIMaxAccum()
+//     *  GetSmartMotionMaxVelocity()/SetSmartMotionMaxVelocity()
+//     *  GetSmartMotionMaxAccel()/SetSmartMotionMaxAccel()
+//     *  GetSmartMotionMinOutputVelocity()/SetSmartMotionMinOutputVelocity()
+//     *  GetSmartMotionAllowedClosedLoopError()/SetSmartMotionAllowedClosedLoopError()
+//     *  GetSmartMotionAccelStrategy()/SetSmartMotionAccelStrategy()
 
 // These are the values expected following RestoreFactoryDefaults().  Note that
 // kIdleMode is 0 (not 1) from the factory, but since it persists across this
 // call, it is treated as having a default value of 1 in this code.  There is
 // no reason to specify parameters which are to be set to these default values,
-// as this will happen automatically.
-SmartMotorBase::ConfigMap configDefaults = {
+// as this will happen automatically.  These are listed to document the managed
+// configuration parameters, for SteConfig()/AddConfig().
+const SmartMotorBase::ConfigMap configDefaults = {
     // Version 1.5.2; all configuration parameters are current at this release.
     {"Firmware Version", uint{0x01050002}},
     {"kIdleMode", uint{1}},
@@ -284,12 +306,13 @@ SmartMotorBase::ConfigMap configDefaults = {
     {"kAltEncoderPositionFactor", double{1.0}},
     {"kVelocityConversionFactor", double{1.0}},
     {"kAltEncoderVelocityFactor", double{1.0}},
-    {"kP_0", double{1.0}},
-    {"kI_0", double{1.0}},
-    {"kD_0", double{1.0}},
-    {"kF_0", double{1.0}},
-    {"kIZone_0", double{1.0}},
-    {"kDFilter_0", double{1.0}},
+    {"kP_0", double{0.0}},
+    {"kI_0", double{0.0}},
+    {"kD_0", double{0.0}},
+    {"kF_0", double{0.0}},
+    {"kIZone_0", double{0.0}},
+    {"kIMaxAccum_0", double{0.0}},
+    {"kDFilter_0", double{0.0}},
     {"kOutputMin_0", double{-1.0}},
     {"kOutputMax_0", double{1.0}},
     {"kSmartMotionMaxVelocity_0", double{0.0}},
@@ -297,12 +320,12 @@ SmartMotorBase::ConfigMap configDefaults = {
     {"kSmartMotionMinVelOutput_0", double{0.0}},
     {"kSmartMotionAllowedClosedLoopError_0", double{0.0}},
     {"kSmartMotionAccelStrategy_0", double{0.0}},
-    {"kIMaxAccum_0", double{0.0}},
     {"kP_1", double{0.0}},
     {"kI_1", double{0.0}},
     {"kD_1", double{0.0}},
     {"kF_1", double{0.0}},
     {"kIZone_1", double{0.0}},
+    {"kIMaxAccum_1", double{0.0}},
     {"kDFilter_1", double{0.0}},
     {"kOutputMin_1", double{-1.0}},
     {"kOutputMax_1", double{1.0}},
@@ -311,5 +334,4 @@ SmartMotorBase::ConfigMap configDefaults = {
     {"kSmartMotionMinVelOutput_1", double{0.0}},
     {"kSmartMotionAllowedClosedLoopError_1", double{0.0}},
     {"kSmartMotionAccelStrategy_1", double{0.0}},
-    {"kIMaxAccum_1", double{0.0}},
 };
