@@ -237,7 +237,8 @@ namespace SparkMaxFactory
 // kVelocityConversionFactor
 // kAltEncoderVelocityFactor
 //   These are handled via either GetEncoder() or GetAlternateEncoder(), plus
-//   one of the following:
+//   one of the following (only one set of these applies, depending on if the
+//   controller is operating in Alternate Encoder Mode or not):
 //     *  GetAverageDepth()/SetAverageDepth()
 //     *  GetMeasurementPeriod()/SetMeasurementPeriod() [for SampleDelta]
 //     *  GetPositionConversionFactor()/SetPositionConversionFactor()
@@ -285,53 +286,57 @@ namespace SparkMaxFactory
 // call, it is treated as having a default value of 1 in this code.  There is
 // no reason to specify parameters which are to be set to these default values,
 // as this will happen automatically.  These are listed to document the managed
-// configuration parameters, for SteConfig()/AddConfig().
-const SmartMotorBase::ConfigMap configDefaults = {
+// configuration parameters, for SetConfig()/AddConfig().  This covers the name
+// used in this code, the type, and default value for each managed parameter.
+namespace SparkMaxFactory
+{
     // Version 1.5.2; all configuration parameters are current at this release.
-    {"Firmware Version", uint{0x01050002}},
-    {"kIdleMode", uint{1}},
-    {"kFollowerID", uint{0}},
-    {"kFollowerConfig", uint{0}},
-    {"kSoftLimitFwd", double{0.0}},
-    {"kSoftLimitRev", double{0.0}},
-    {"kRampRate", double{0.0}},
-    {"kClosedLoopRampRate", double{0.0}},
-    {"kCompensatedNominalVoltage", double{0.0}},
-    {"kAltEncoderInverted", bool{false}},
-    {"kEncoderAverageDepth", uint{64}},
-    {"kAltEncoderAverageDepth", uint{64}},
-    {"kEncoderSampleDelta", uint{200}},
-    {"kAltEncoderSampleDelta", uint{200}},
-    {"kPositionConversionFactor", double{1.0}},
-    {"kAltEncoderPositionFactor", double{1.0}},
-    {"kVelocityConversionFactor", double{1.0}},
-    {"kAltEncoderVelocityFactor", double{1.0}},
-    {"kP_0", double{0.0}},
-    {"kI_0", double{0.0}},
-    {"kD_0", double{0.0}},
-    {"kF_0", double{0.0}},
-    {"kIZone_0", double{0.0}},
-    {"kIMaxAccum_0", double{0.0}},
-    {"kDFilter_0", double{0.0}},
-    {"kOutputMin_0", double{-1.0}},
-    {"kOutputMax_0", double{1.0}},
-    {"kSmartMotionMaxVelocity_0", double{0.0}},
-    {"kSmartMotionMaxAccel_0", double{0.0}},
-    {"kSmartMotionMinVelOutput_0", double{0.0}},
-    {"kSmartMotionAllowedClosedLoopError_0", double{0.0}},
-    {"kSmartMotionAccelStrategy_0", double{0.0}},
-    {"kP_1", double{0.0}},
-    {"kI_1", double{0.0}},
-    {"kD_1", double{0.0}},
-    {"kF_1", double{0.0}},
-    {"kIZone_1", double{0.0}},
-    {"kIMaxAccum_1", double{0.0}},
-    {"kDFilter_1", double{0.0}},
-    {"kOutputMin_1", double{-1.0}},
-    {"kOutputMax_1", double{1.0}},
-    {"kSmartMotionMaxVelocity_1", double{0.0}},
-    {"kSmartMotionMaxAccel_1", double{0.0}},
-    {"kSmartMotionMinVelOutput_1", double{0.0}},
-    {"kSmartMotionAllowedClosedLoopError_1", double{0.0}},
-    {"kSmartMotionAccelStrategy_1", double{0.0}},
-};
+    const SmartMotorBase::ConfigMap configDefaults = {
+        {"Firmware Version", uint{0x01050002}},
+        {"kIdleMode", uint{1}},
+        {"kFollowerID", uint{0}},
+        {"kFollowerConfig", uint{0}},
+        {"kSoftLimitFwd", double{0.0}},
+        {"kSoftLimitRev", double{0.0}},
+        {"kRampRate", double{0.0}},
+        {"kClosedLoopRampRate", double{0.0}},
+        {"kCompensatedNominalVoltage", double{0.0}},
+        {"kAltEncoderInverted", bool{false}},
+        {"kEncoderAverageDepth", uint{64}},
+        {"kAltEncoderAverageDepth", uint{64}},
+        {"kEncoderSampleDelta", uint{200}},
+        {"kAltEncoderSampleDelta", uint{200}},
+        {"kPositionConversionFactor", double{1.0}},
+        {"kAltEncoderPositionFactor", double{1.0}},
+        {"kVelocityConversionFactor", double{1.0}},
+        {"kAltEncoderVelocityFactor", double{1.0}},
+        {"kP_0", double{0.0}},
+        {"kI_0", double{0.0}},
+        {"kD_0", double{0.0}},
+        {"kF_0", double{0.0}},
+        {"kIZone_0", double{0.0}},
+        {"kIMaxAccum_0", double{0.0}},
+        {"kDFilter_0", double{0.0}},
+        {"kOutputMin_0", double{-1.0}},
+        {"kOutputMax_0", double{1.0}},
+        {"kSmartMotionMaxVelocity_0", double{0.0}},
+        {"kSmartMotionMaxAccel_0", double{0.0}},
+        {"kSmartMotionMinVelOutput_0", double{0.0}},
+        {"kSmartMotionAllowedClosedLoopError_0", double{0.0}},
+        {"kSmartMotionAccelStrategy_0", double{0.0}},
+        {"kP_1", double{0.0}},
+        {"kI_1", double{0.0}},
+        {"kD_1", double{0.0}},
+        {"kF_1", double{0.0}},
+        {"kIZone_1", double{0.0}},
+        {"kIMaxAccum_1", double{0.0}},
+        {"kDFilter_1", double{0.0}},
+        {"kOutputMin_1", double{-1.0}},
+        {"kOutputMax_1", double{1.0}},
+        {"kSmartMotionMaxVelocity_1", double{0.0}},
+        {"kSmartMotionMaxAccel_1", double{0.0}},
+        {"kSmartMotionMinVelOutput_1", double{0.0}},
+        {"kSmartMotionAllowedClosedLoopError_1", double{0.0}},
+        {"kSmartMotionAccelStrategy_1", double{0.0}},
+    };
+}

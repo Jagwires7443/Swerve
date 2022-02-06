@@ -6,6 +6,8 @@
 
 FeederSubsystem::FeederSubsystem() noexcept
 {
+    return;
+
     DoSafeFeederMotors("ctor", [&]() -> void
                        {
         m_feederOneMotor = std::make_unique<ctre::phoenix::motorcontrol::can::WPI_VictorSPX>(

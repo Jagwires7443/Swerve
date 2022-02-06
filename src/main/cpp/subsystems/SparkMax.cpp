@@ -6,8 +6,10 @@
 #include <functional>
 #include <iomanip>
 #include <ios>
+#include <optional>
 #include <sstream>
 #include <string>
+#include <string_view>
 
 #include <rev/CANSparkMax.h>
 #include <rev/CANSparkMaxLowLevel.h>
@@ -174,112 +176,6 @@ namespace
 
         return faultInfo;
     }
-
-    // XXX
-    // using ConfigValue = std::variant<bool, uint, double>;
-    // using ConfigMap = std::map<std::string, ConfigValue>;
-
-    // Taken from <https://github.com/REVrobotics/SPARK-MAX-Documentation/blob/
-    // f4f60b3f1b889f2e3727c4140a2a5e9fd7936262/software-resources/
-    // configuration-parameters.md>.  This captures name, type, and default
-    // value.  See this link for descriptions, etc.  Values without any meaning
-    // in this context, or that are read-only, have been removed from the list.
-    // This inclues values that are reserved or placeholders, values only
-    // applicable to PWM control mode or use of an analog sensor, XXX
-    // No SmartCurrentLimit/SecondaryCurrentLimit (there is no get function) XXX
-    SmartMotorBase::ConfigMap configDefaults = {
-        {"kCanID", uint{0}},
-        {"kMotorType", uint{1}},  // 0 = Brushed, 1 = Brushless
-        {"kSensorType", uint{1}}, // 0 = No Sensor, 1 = Hall Sensor, 2 = Encoder
-        {"kIdleMode", uint{0}},   // 0 = Coast, 1 = Brake
-                                  // G/SetIdleMode()
-        {"kPolePairs", uint{7}},
-        {"kP_0", double{0}},
-        {"kI_0", double{0}},
-        {"kD_0", double{0}},
-        {"kF_0", double{0}},
-        {"kIZone_0", double{0}},
-        {"kDFilter_0", double{0}},
-        {"kOutputMin_0", double{-1}},
-        {"kOutputMax_0", double{1}},
-        {"kP_1", double{0}},
-        {"kI_1", double{0}},
-        {"kD_1", double{0}},
-        {"kF_1", double{0}},
-        {"kIZone_1", double{0}},
-        {"kDFilter_1", double{0}},
-        {"kOutputMin_1", double{-1}},
-        {"kOutputMax_1", double{1}},
-        {"kP_2", double{0}},
-        {"kI_2", double{0}},
-        {"kD_2", double{0}},
-        {"kF_2", double{0}},
-        {"kIZone_2", double{0}},
-        {"kDFilter_2", double{0}},
-        {"kOutputMin_2", double{-1}},
-        {"kOutputMax_2", double{1}},
-        {"kP_3", double{0}},
-        {"kI_3", double{0}},
-        {"kD_3", double{0}},
-        {"kF_3", double{0}},
-        {"kIZone_3", double{0}},
-        {"kDFilter_3", double{0}},
-        {"kOutputMin_3", double{-1}},
-        {"kOutputMax_3", double{1}},
-        {"kLimitSwitchFwdPolarity", bool{false}}, // false = Normally Open, true = Normally Closed
-        {"kLimitSwitchRevPolarity", bool{false}}, // false = Normally Open, true = Normally Closed
-        {"kHardLimitFwdEn", bool{true}},
-        {"kHardLimitRevEn", bool{true}},
-        {"kRampRate", double{0}}, // V/s
-        // G/SetClosedLoopRampRate
-        {"kFollowerID", uint{0}},
-        {"kFollowerConfig", uint{0}},
-        {"kEncoderCountsPerRev", uint{4096}},
-        {"kEncoderAverageDepth", uint{64}},
-        {"kEncoderSampleDelta", uint{200}},        // per 500us
-        {"kCompensatedNominalVoltage", double{0}}, // V
-        {"kSmartMotionMaxVelocity_0", double{0}},
-        {"kSmartMotionMaxAccel_0", double{0}},
-        {"kSmartMotionMinVelOutput_0", double{0}},
-        {"kSmartMotionAllowedClosedLoopError_0", double{0}},
-        {"kSmartMotionAccelStrategy_0", double{0}},
-        {"kSmartMotionMaxVelocity_1", double{0}},
-        {"kSmartMotionMaxAccel_1", double{0}},
-        {"kSmartMotionMinVelOutput_1", double{0}},
-        {"kSmartMotionAllowedClosedLoopError_1", double{0}},
-        {"kSmartMotionAccelStrategy_1", double{0}},
-        {"kSmartMotionMaxVelocity_2", double{0}},
-        {"kSmartMotionMaxAccel_2", double{0}},
-        {"kSmartMotionMinVelOutput_2", double{0}},
-        {"kSmartMotionAllowedClosedLoopError_2", double{0}},
-        {"kSmartMotionAccelStrategy_2", double{0}},
-        {"kSmartMotionMaxVelocity_3", double{0}},
-        {"kSmartMotionMaxAccel_3", double{0}},
-        {"kSmartMotionMinVelOutput_3", double{0}},
-        {"kSmartMotionAllowedClosedLoopError_3", double{0}},
-        {"kSmartMotionAccelStrategy_3", double{0}},
-        {"kIMaxAccum_0", double{0}},
-        {"kIMaxAccum_1", double{0}},
-        {"kIMaxAccum_2", double{0}},
-        {"kIMaxAccum_3", double{0}},
-        {"kPositionConversionFactor", double{1}},
-        {"kVelocityConversionFactor", double{1}},
-        {"kClosedLoopRampRate", double{0}}, // DC/sec?
-        // G/SetClosedLoopRampRate
-        {"kSoftLimitFwd", double{0}},
-        {"kSoftLimitRev", double{0}},
-        // G/SetSoftLimit()
-        {"kDataPortConfig", uint{0}},
-        {"kAltEncoderCountsPerRev", uint{4096}},
-        {"kAltEncoderAverageDepth", uint{64}},
-        {"kAltEncoderSampleDelta", uint{200}},
-        {"kAltEncoderInverted", bool{false}},
-        {"kAltEncoderPositionFactor", double{1}},
-        {"kAltEncoderVelocityFactor", double{1}},
-        {"Firmware Version", uint{0}}, // Read-only and not XXX
-        // Motor Inverted is not a config parameter, done on host XXX
-        // CAN Frame Periods and Timeout XXX
-    };
 }
 
 std::unique_ptr<SmartMotorBase> SparkMaxFactory::CreateSparkMax(const std::string_view name, const int canId, const bool inverted, const int encoderCounts) noexcept
@@ -548,8 +444,228 @@ void SparkMax::DoSafely(const char *const what, std::function<void()> work) noex
     }
 }
 
+// XXX
+// using ConfigValue = std::variant<bool, uint, double>;
+// using ConfigMap = std::map<std::string, ConfigValue>;
+
 bool SparkMax::VerifyConfig(const std::string_view key, const ConfigValue &value) noexcept
 {
+    const bool altMode = (encoderCounts_ != 0);
+    const auto kv = SparkMaxFactory::configDefaults.find(std::string(key));
+
+    if (kv == SparkMaxFactory::configDefaults.end())
+    {
+        // XXX coding error -- warn!
+
+        return false;
+    }
+
+    const ConfigValue &default_value = kv->second;
+    std::optional<ConfigValue> actual_value;
+
+    // In order to avoid having to switch on a string, obtain the index of the entry.
+    const auto ndx = std::distance(kv, SparkMaxFactory::configDefaults.begin());
+
+    DoSafely("Get config parameter", [&]() -> void
+             {
+        if (motor_ && encoder_ && controller_)
+        {
+    switch (ndx)
+    {
+    case 0: // Firmware Version
+        actual_value = uint{motor_->GetFirmwareVersion()};
+        break;
+    case 1: // kIdleMode
+        {
+            const rev::CANSparkMax::IdleMode tmp = motor_->GetIdleMode();
+
+            if (tmp == rev::CANSparkMax::IdleMode::kCoast)
+            {
+                actual_value = uint{0};
+            } else if (tmp == rev::CANSparkMax::IdleMode::kBrake)
+            {
+                actual_value = uint{1};
+            }
+        }
+        break;
+    case 2: // kFollowerID
+        {
+            if (motor_->IsFollower())
+            {
+            }
+            else
+            {
+                actual_value = uint{0};
+            }
+        }
+        break;
+    case 3: // kFollowerConfig
+        {
+            if (motor_->IsFollower())
+            {
+            }
+            else
+            {
+                actual_value = uint{0};
+            }
+        }
+        break;
+    case 4: // kSoftLimitFwd
+        actual_value = double{motor_->GetSoftLimit(rev::CANSparkMax::SoftLimitDirection::kForward)};
+        break;
+    case 5: // kSoftLimitRev
+        actual_value = double{motor_->GetSoftLimit(rev::CANSparkMax::SoftLimitDirection::kReverse)};
+        break;
+    case 6: // kRampRate
+        actual_value = double{motor_->GetOpenLoopRampRate()};
+        break;
+    case 7: // kClosedLoopRampRate
+        actual_value = double{motor_->GetClosedLoopRampRate()};
+        break;
+    case 8: // kCompensatedNominalVoltage
+        actual_value = double{motor_->GetVoltageCompensationNominalVoltage()};
+        break;
+    case 9: // kAltEncoderInverted
+        if (altMode)
+        {
+            actual_value = bool{encoder_->GetInverted()};
+        }
+        break;
+    case 10: // kEncoderAverageDepth
+        if (!altMode)
+        {
+            actual_value = uint{encoder_->GetAverageDepth()};
+        }
+        break;
+    case 11: // kAltEncoderAverageDepth
+        if (altMode)
+        {
+            actual_value = uint{encoder_->GetAverageDepth()};
+        }
+        break;
+    case 12: // kEncoderSampleDelta
+        if (!altMode)
+        {
+            actual_value = uint{encoder_->GetMeasurementPeriod()};
+        }
+        break;
+    case 13: // kAltEncoderSampleDelta
+        if (altMode)
+        {
+            actual_value = uint{encoder_->GetMeasurementPeriod()};
+        }
+        break;
+    case 14: // kPositionConversionFactor
+        if (!altMode)
+        {
+            actual_value = double{};
+        }
+        break;
+    case 15: // kAltEncoderPositionFactor
+        if (altMode)
+        {
+            actual_value = double{};
+        }
+        break;
+    case 16: // kVelocityConversionFactor
+        if (!altMode)
+        {
+            actual_value = double{};
+        }
+        break;
+    case 17: // kAltEncoderVelocityFactor
+        if (altMode)
+        {
+            actual_value = double{};
+        }
+        break;
+    case 18: // kP_0
+        actual_value = double{};
+        break;
+    case 19: // kI_0
+        actual_value = double{};
+        break;
+    case 20: // kD_0
+        actual_value = double{};
+        break;
+    case 21: // kF_0
+        actual_value = double{};
+        break;
+    case 22: // kIZone_0
+        actual_value = double{};
+        break;
+    case 23: // kIMaxAccum_0
+        actual_value = double{};
+        break;
+    case 24: // kDFilter_0
+        actual_value = double{};
+        break;
+    case 25: // kOutputMin_0
+        actual_value = double{};
+        break;
+    case 26: // kOutputMax_0
+        actual_value = double{};
+        break;
+    case 27: // kSmartMotionMaxVelocity_0
+        actual_value = double{};
+        break;
+    case 28: // kSmartMotionMaxAccel_0
+        actual_value = double{};
+        break;
+    case 29: // kSmartMotionMinVelOutput_0
+        actual_value = double{};
+        break;
+    case 30: // kSmartMotionAllowedClosedLoopError_0
+        actual_value = double{};
+        break;
+    case 31: // kSmartMotionAccelStrategy_0
+        actual_value = double{};
+        break;
+    case 32: // kP_1
+        actual_value = double{};
+        break;
+    case 33: // kI_1
+        actual_value = double{};
+        break;
+    case 34: // kD_1
+        actual_value = double{};
+        break;
+    case 35: // kF_1
+        actual_value = double{};
+        break;
+    case 36: // kIZone_1
+        actual_value = double{};
+        break;
+    case 37: // kIMaxAccum_1
+        actual_value = double{};
+        break;
+    case 38: // kDFilter_1
+        actual_value = double{};
+        break;
+    case 39: // kOutputMin_1
+        actual_value = double{};
+        break;
+    case 40: // kOutputMax_1
+        actual_value = double{};
+        break;
+    case 41: // kSmartMotionMaxVelocity_1
+        actual_value = double{};
+        break;
+    case 42: // kSmartMotionMaxAccel_1
+        actual_value = double{};
+        break;
+    case 43: // kSmartMotionMinVelOutput_1
+        actual_value = double{};
+        break;
+    case 44: // kSmartMotionAllowedClosedLoopError_1
+        actual_value = double{};
+        break;
+    case 45: // kSmartMotionAccelStrategy_1
+        actual_value = double{};
+        break;
+    }
+        } });
+
     return false;
 }
 

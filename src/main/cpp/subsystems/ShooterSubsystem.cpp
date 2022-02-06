@@ -6,6 +6,8 @@
 
 ShooterSubsystem::ShooterSubsystem() noexcept
 {
+    return;
+
     DoSafeShooterMotors("ctor", [&]() -> void
                         {
         m_shooterOneMotor = std::make_unique<rev::CANSparkMax>(
