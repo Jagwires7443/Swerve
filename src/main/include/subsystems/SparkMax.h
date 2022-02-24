@@ -38,13 +38,27 @@ namespace SparkMaxFactory
 //   by introducing some kind of "volatile" flag in the config information that
 //   would mean this had to be set reliably (there is no API to read this back,
 //   and it would be just as efficient to simply set it, rather than checking
-//   it periodically and reacting if it was found to be off).  For now there is
-//   no attempt to cover this, it is simply left at the default values.
+//   it periodically and reacting if it was found to be off).  These are useful
+//   settings to be able to manage, so it is worth trying to do so.  If CAN bus
+//   utilization is high, or if there needs to be more frequent adjustment by
+//   any follower, or perhaps some other scenarios, it makes sense to be able
+//   to control this setting.  The problem is power fail scenarios: to handle
+//   these, the "HasReset" fault is used to determine when to reapply these
+//   settings.  The roboRIO periodically recieves fault information in status
+//   frame 0, so it is very cheap to obtain current fault information from each
+//   Spark Max.  Other config parameters are maintained through the
+//   ConfigPeriodic() method.  Periodic frame periods (only) are maintained
+//   through the Periodic() method, which is very lightweight.  It is concerned
+//   with collecting status information, in order to be able to collect and
+//   summarize the history of any problems dealing with the given controller.
+//   The bottom line here is that these appear here as any other config
+//   parameter, but they are implemented in a very different way.  One of the
+//   things this code does is to hide these implementation details.
 
 // Control Frame Period (see SetControlFramePeriodMs)
 // CAN Timeout (see SetCANTimeout)
 //   These are managed on the roboRIO side of things.  There is no attempt to
-//   cover these, it is simply left at the default value.
+//   cover these, they are simply left at default values.
 
 // Now, the list of actual Spark Max configuaration parameters:
 
@@ -119,7 +133,13 @@ namespace SparkMaxFactory
 // them (since it will call this function, as part of persisting config
 // parametrs).  This applies to all parametrs below which show up only in
 // comments (and not in the list of managed parameters with their default
-// value).
+// value).  If there were a generic get/set arbitrary config parameter API, the
+// strategy would probably be to check everything.  As it stands, the idea is
+// to only check config parameters that are explicitly listed via SetConfig()
+// and AddConfig() and to seek to use RestoreFactoryDefaults() to set eveything
+// else to default values.  If it is important that a particular parameter be
+// set to the default value, listing it will result in it being checked.  The
+// intnet is that this should generally not be necessary.
 
 // kPolePairs
 //   This configuration parameter also has no set and get and would only change
@@ -142,7 +162,8 @@ namespace SparkMaxFactory
 //   (and it's probably a good idea to leave these alone manually).  If these
 //   are ever manually modified, this code will call RestoreFactoryDefaults()
 //   if config parameters are ever persisted, causing them to return to default
-//   values.  This code most likely should never attempt to manage these.
+//   values.  This code most likely should never attempt to manage these.  It
+//   might make sense to do so at some point, to support lowering the limits.
 
 // kEncoderCountsPerRev
 // kAltEncoderCountsPerRev
@@ -159,6 +180,9 @@ namespace SparkMaxFactory
 //   been set (based on the `encoderCount` parameter of SparkMax constructor)
 //   any time configuration parameters are saved.  To top it all off, the
 //   not-alternate encoder count likely only applies for a brushed motor.
+//   In alternate encoder mode, this parameter will be checked automatically,
+//   because it is tied up this the other settings involved in constructing a
+//   SparkMax.  This is done, even though it is not a managed config parameter.
 
 // kAnalogPositionConversion
 // kAnalogVelocityConversion
@@ -191,20 +215,61 @@ namespace SparkMaxFactory
 
 // kFollowerID
 // kFollowerConfig
-//   These are handled via IsFollower() and Follow().  This code treats
-//   followers as something to manage via config parameters, so they resume
-//   after any sort of controller power event.  The get and set are asymmetric,
-//   so the way things are handled is that the check simply treats the settings
-//   as non-default if IsFollow() returns true.  If they are non-default, it is
-//   assumed that they match any specified non-default value.  Therefore, it is
-//   possible to have problems changing from one non-default setting to another
-//   (including changing the CAN ID to follow).  To get around this, these will
-//   be updated any time config parameters are being updated and saved.  So, be
-//   sure to go through this process following any such change.
-//   Alternatively, the REV Hardware Client may be used to make such changes.
-//   See the Spark Max documentation to determine the proper values to specify.
+//   This one/two is a bit involved.  See
+//   <https://docs.wpilib.org/en/stable/docs/software/can-devices/can-addressing.html>.
+//
+//   If these are both zero (the default), this controller is not a follower.
+//   In code, these are handled via IsFollower() and Follow().  IsFollower() is
+//   the only way to get anything, and all it indicates is default or not.  For
+//   set, there are two forms of Follow(), but only the more general one is
+//   needed here (the one which takes a "struct" ExternalFollower", and other
+//   parameters).
+//
+//   To follow another Spark Max, kFollowerID is "0x02051800 | <other CAN ID>".
+//   More generally, kFollowerID is the value to match in the FRC CAN header.
+//   The 6 least-significant bits contain the CAN ID of the device to follow.
+//   The REV "Configuration Parameters" page (linked above) describes
+//   kFollowerConfig (although not super well).  The easiest way to arrive at
+//   the proper values for these settings is to start with either
+//   "kFollowerSparkMax" or "kFollowerPhoenix", from the "CANSparkMax.h" header
+//   file.  Then, use binary or (|) to mix in the CAN ID and inversion bit, the
+//   former into kFollowerID and the latter into kFollowerConfig (| 0x00004000)
+//   -- this can be done as part of specifying the contstant config parameters.
+//
+//   This code treats followers as something to manage via config parameters,
+//   so they resume after any sort of controller reset event.  With the
+//   asymmetry in get and set, things have to be handled very carefully.  And
+//   the Follow() function winds up taking some of the fields in the two config
+//   parameters as additional parameters, so everything is somewhat convoluted.
+//
+//   On the get side, the code checks all the config parameters specified via
+//   SetConfig()/GetConfig().  It makes three determinations; the first is if
+//   there was some problem getting the paramter to check.  This can happen for
+//   a few reasons, including listing an alternate encoder config parameter
+//   when the normal encoder applies (or the other way around).  The follower
+//   config is the only case where such a problem is expected in the absence of
+//   some type of user error or unexected behavior (and only when non-default).
+//   The remaining two checks are default/non-default, and matching the given
+//   value or not.  For follower config, any non-default config is assumed to
+//   be correct, when some non-default config has been specified.  So, if there
+//   is a mismatch between two non-default settings, it will not be reported.
+//   However, any non-default setting will be reapplied any time config
+//   parameters are persisted.  On the set side, any problem is either a user
+//   error or unexpected behavior, including for follower config.
 
-// Finally, the "normal" configuration parameters!  These work as one would
+//   The implication here is that it is possible to have problems updating from
+//   one non-default setting to another (including changing the CAN ID to
+//   follow).  Again, these settings will be updated any time config parameters
+//   are being persisted.  The difference is that there will be no notification
+//   that these changes needing to be persisted.  So, be sure to go through
+//   this process following any such change.  Alternatively, the REV Hardware
+//   Client may be used to make such changes, but this is problematic since the
+//   listed config parameters will need to be updated regardless.
+
+//   Finally, note that both parameters are set via a single call.  This causes
+//   some slight additional complexity, but things are already complicated.
+
+// At last, the "normal" configuration parameters!  These work as one would
 // expect, with means of getting and setting them.  They are fully managed by
 // this code.
 
@@ -238,11 +303,15 @@ namespace SparkMaxFactory
 // kAltEncoderVelocityFactor
 //   These are handled via either GetEncoder() or GetAlternateEncoder(), plus
 //   one of the following (only one set of these applies, depending on if the
-//   controller is operating in Alternate Encoder Mode or not):
+//   controller is operating in Alternate Encoder Mode or not -- this code does
+//   not ever attempt to use both encoders or to manage parameters for both):
 //     *  GetAverageDepth()/SetAverageDepth()
 //     *  GetMeasurementPeriod()/SetMeasurementPeriod() [for SampleDelta]
 //     *  GetPositionConversionFactor()/SetPositionConversionFactor()
 //     *  GetVelocityConversionFactor()/SetVelocityConversionFactor()
+//   Note that the last four of these (only two apply) may be handled in this
+//   class, rather than on the motor controller.  In this case, these are set
+//   to unity (the default) and then managed to ensure they remain there.
 
 // kP_#
 // kI_#
@@ -257,29 +326,29 @@ namespace SparkMaxFactory
 // kSmartMotionMaxAccel_#
 // kSmartMotionMinVelOutput_#
 // kSmartMotionAllowedClosedLoopError_#
-// kSmartMotionAccelStrategy_#
+// kSmartMotionAccelStrategy_#; kTrapezoidal = 0, kSCurve = 1
 //   These relate to closed-loop control.  The "_0" set is used for position,
 //   and the "_1" set is used for velocity.  There is also a "_2" and "_3" set,
 //   but these are not currently being used (or managed).  They could be useful
 //   if multiple gear ratios are possible or in other scenarios, in the future.
-//   These are handled in one of two ways, either through the PID controller or
-//   encoder.
-//   Use GetPIDController(), plus one of the following:
+//   These are handled via GetPIDController(), plus one of the following:
 //     *  GetP()/SetP()
 //     *  GetI()/SetI()
 //     *  GetD()/SetD()
 //     *  GetFF()/SetFF()
 //     *  GetIZone()/SetIZone()
+//     *  GetIMaxAccum()/SetIMaxAccum()
 //     *  GetDFilter()/SetDFilter()
 //     *  GetOutputMin()/SetOutputRange()
 //     *  GetOutputMax()/SetOutputRange()
-//   Use GetEncoder()/GetAlternateEncoder(), plus one of the following:
-//     *  GetIMaxAccum()/SetIMaxAccum()
 //     *  GetSmartMotionMaxVelocity()/SetSmartMotionMaxVelocity()
 //     *  GetSmartMotionMaxAccel()/SetSmartMotionMaxAccel()
 //     *  GetSmartMotionMinOutputVelocity()/SetSmartMotionMinOutputVelocity()
 //     *  GetSmartMotionAllowedClosedLoopError()/SetSmartMotionAllowedClosedLoopError()
 //     *  GetSmartMotionAccelStrategy()/SetSmartMotionAccelStrategy()
+// Note that kOutputMin_# and kOutputMax_# are linked by a common set function.
+// It's a good idea to specify both of these if specifying either, but the code
+// does handle this complication.
 
 // These are the values expected following RestoreFactoryDefaults().  Note that
 // kIdleMode is 0 (not 1) from the factory, but since it persists across this
@@ -338,5 +407,8 @@ namespace SparkMaxFactory
         {"kSmartMotionMinVelOutput_1", double{0.0}},
         {"kSmartMotionAllowedClosedLoopError_1", double{0.0}},
         {"kSmartMotionAccelStrategy_1", double{0.0}},
+        {"kStatus0", uint{10}}, // ms
+        {"kStatus1", uint{20}}, // ms
+        {"kStatus2", uint{50}}, // ms
     };
 }

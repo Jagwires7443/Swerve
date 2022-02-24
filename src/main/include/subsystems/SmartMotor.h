@@ -102,8 +102,17 @@ public:
     // manual configuration using vendor utilities and/or writing code to apply
     // configuration settings programatically.  Some settings (such as coast/
     // brake) are more dynamic and may be altered programmatically, but still
-    // have default settings managed via this config mechanism.
+    // have default settings managed via this config mechanism.  It is also
+    // anticipated that Disabled mode is where summary reporting of things such
+    // as cumulative faults, controller restart counts, config issues, etc. may
+    // be reported, as this runs after Autonomous and Teleop.  Test mode is the
+    // only place where it is appropriate to be very verbose at all, as console
+    // spew can cause issues and consumes resources.
     virtual void ConfigPeriodic() noexcept = 0;
+
+    // Lightweight function which manages any faults or recovery, particuarly
+    // detecting and handling controller restarts (reset or loss of power).
+    virtual void Periodic() noexcept = 0;
 
     virtual void ClearFaults() noexcept = 0;
 
@@ -204,6 +213,11 @@ public:
     void ConfigPeriodic() noexcept override
     {
         base_.ConfigPeriodic();
+    }
+
+    void Periodic() noexcept override
+    {
+        base_.Periodic();
     }
 
     void ClearFaults() noexcept override

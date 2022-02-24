@@ -1,3 +1,6 @@
+// XXX use count, instead of bool for cumulative counts, include reset count
+// XXX No throws, instead function simply increments error counter for later reporting
+
 #include "subsystems/SparkMax.h"
 
 #include <bitset>
@@ -18,6 +21,23 @@
 #include <rev/SparkMaxPIDController.h>
 
 #include <frc/shuffleboard/ShuffleboardWidget.h>
+
+// Spark Max is a smart motor controller, which communicates via the CAN bus.
+// There are periodic packets which flow both to and from this controller.  API
+// calls either piggyback on this ongoing exchange of information (in which
+// case they are fast and essentially free) or, they require a round-trip
+// packet exchange (in which case, they are slow and it is important to not
+// attempt too much of this type of exchange in the context of any single
+// periodic interval).  In general, the latter type of API call will return
+// a rev::REVLibError, while the former will not.
+// See <https://docs.revrobotics.com/sparkmax/operating-modes/control-interfaces>
+// for additional detail.  Note that faults are periodically reported, at a
+// high frequency (by default).  This may be leveraged in order to detect
+// problems, including situations in which the controller reboots.  This is
+// not an especially friendly interface, though it is functional.  One of the
+// main points of the SmartMotor and SparkMax classes is to encapsulate as much
+// of this complexity as possible, including robust error handling, offering an
+// API which is much easier to use correctly.
 
 namespace
 {
@@ -44,6 +64,8 @@ namespace
         void ApplyConfig(bool burn) noexcept override;
 
         void ConfigPeriodic() noexcept override;
+
+        void Periodic() noexcept override;
 
         void ClearFaults() noexcept override;
 
@@ -104,8 +126,16 @@ namespace
 
         bool configGood_ = false;
 
+        double outputRangeMin0_ = -1.0;
+        double outputRangeMax0_ = 1.0;
+        double outputRangeMin1_ = -1.0;
+        double outputRangeMax1_ = 1.0;
+        uint followerID_ = 0;
+        uint followerConfig_ = 0;
+
         void DoSafely(const char *const what, std::function<void()> work) noexcept;
-        bool VerifyConfig(const std::string_view key, const ConfigValue &value) noexcept;
+        bool AnyError(const rev::REVLibError returnCode) noexcept;
+        std::tuple<bool, bool, std::string> VerifyConfig(const std::string_view key, const ConfigValue &value) noexcept;
         void ApplyConfig(const std::string_view key, const ConfigValue &value) noexcept;
     };
 
@@ -215,7 +245,7 @@ SparkMax::SparkMax(const std::string_view name, const int canId, const bool inve
             throw std::runtime_error("controller_");
         }
 
-        if (controller_->SetFeedbackDevice(*encoder_) != rev::REVLibError::kOk)
+        if (AnyError(controller_->SetFeedbackDevice(*encoder_)))
         {
             throw std::runtime_error("SetFeedbackDevice()");
         } });
@@ -308,19 +338,16 @@ void SparkMax::ShuffleboardPeriodic() noexcept
     // Obtain raw data from CANSparkMax and set the output.
     DoSafely("ShuffleboardPeriodic()", [&]() -> void
              {
-        if (motor_)
-        {
-            temperature = motor_->GetMotorTemperature();
-            faults = motor_->GetFaults();
-            stickyFaults = motor_->GetStickyFaults();
-            voltage = motor_->GetBusVoltage();
-            current = motor_->GetOutputCurrent();
-            percent = motor_->GetAppliedOutput(); // Actual setting
-            speed = motor_->Get();                // Commanded setting
-        }
+        temperature = motor_->GetMotorTemperature();
+        faults = motor_->GetFaults();
+        stickyFaults = motor_->GetStickyFaults();
+        voltage = motor_->GetBusVoltage();
+        current = motor_->GetOutputCurrent();
+        percent = motor_->GetAppliedOutput(); // Actual setting
+        speed = motor_->Get();                // Commanded setting
 
 // XXX
-        if (motor_ && reset)
+        if (reset)
         {
             if (motor_->ClearFaults() != rev::REVLibError::kOk)
             {
@@ -328,20 +355,17 @@ void SparkMax::ShuffleboardPeriodic() noexcept
             }
         }
 
-        if (encoder_)
-        {
-            distance = encoder_->GetPosition();        // Rotations
-            velocity = encoder_->GetVelocity() / 60.0; // Rotations per second
+        distance = encoder_->GetPosition();        // Rotations
+        velocity = encoder_->GetVelocity() / 60.0; // Rotations per second
 
 // XXX
-            if (reset)
+        if (reset)
+        {
+            // Logic above ensures that `position` is now zero; reset the
+            // turning motor controller encoder to reflect this.
+            if (encoder_->SetPosition(0.0) != rev::REVLibError::kOk)
             {
-                // Logic above ensures that `position` is now zero; reset the
-                // turning motor controller encoder to reflect this.
-                if (encoder_->SetPosition(0.0) != rev::REVLibError::kOk)
-                {
-                    throw std::runtime_error("SetPosition()");
-                }
+                throw std::runtime_error("SetPosition()");
             }
         } });
 
@@ -361,22 +385,25 @@ void SparkMax::SetConfig(const ConfigMap config) noexcept {}
 
 void SparkMax::AddConfig(const ConfigMap config) noexcept {}
 
+// XXX If `encoderCount_` != 0, also verify GetCountsPerRevolution() on alt encoder, null pointers if off?
 bool SparkMax::CheckConfig() noexcept { return false; }
 
 void SparkMax::ApplyConfig(bool burn) noexcept {}
 
 void SparkMax::ConfigPeriodic() noexcept {}
 
+// Read faults/sticky faults, every N iterations clear, bump counters, etc. XXX
+// GetFaults(), GetStickyFaults(), ClearFaults()
+// Restore periodic frame periods as needed.  Also recreate pointer triple, first.
+void SparkMax::Periodic() noexcept {}
+
 void SparkMax::ClearFaults() noexcept
 {
     DoSafely("ClearFaults()", [&]() -> void
              {
-        if (motor_)
+        if (AnyError(motor_->ClearFaults()))
         {
-            if (motor_->ClearFaults() != rev::REVLibError::kOk)
-            {
-                throw std::runtime_error("ClearFaults()");
-            }
+            throw std::runtime_error("ClearFaults()");
         } });
 }
 
@@ -385,11 +412,7 @@ bool SparkMax::GetStatus() noexcept
     uint16_t faults = 0;
 
     DoSafely("GetStatus()", [&]() -> void
-             {
-                 if (motor_)
-                 {
-                     faults = motor_->GetFaults();
-                 } });
+             { faults = motor_->GetFaults(); });
 
     return motor_ && configGood_ && faults == 0;
 }
@@ -420,11 +443,76 @@ bool SparkMax::CheckVelocity(const double tolerance) noexcept { return false; }
 
 double SparkMax::GetVelocityRaw() noexcept { return 0.0; }
 
+bool SparkMax::AnyError(const rev::REVLibError returnCode) noexcept
+{
+    // XXX track errors
+    switch (returnCode)
+    {
+    case rev::REVLibError::kOk:
+        return false;
+    case rev::REVLibError::kError:
+        break;
+    case rev::REVLibError::kTimeout:
+        break;
+    case rev::REVLibError::kNotImplemented:
+        break;
+    case rev::REVLibError::kHALError:
+        break;
+    case rev::REVLibError::kCantFindFirmware:
+        break;
+    case rev::REVLibError::kFirmwareTooOld:
+        break;
+    case rev::REVLibError::kFirmwareTooNew:
+        break;
+    case rev::REVLibError::kParamInvalidID:
+        break;
+    case rev::REVLibError::kParamMismatchType:
+        break;
+    case rev::REVLibError::kParamAccessMode:
+        break;
+    case rev::REVLibError::kParamInvalid:
+        break;
+    case rev::REVLibError::kParamNotImplementedDeprecated:
+        break;
+    case rev::REVLibError::kFollowConfigMismatch:
+        break;
+    case rev::REVLibError::kInvalid:
+        break;
+    case rev::REVLibError::kSetpointOutOfRange:
+        break;
+    case rev::REVLibError::kUnknown:
+        break;
+    case rev::REVLibError::kCANDisconnected:
+        break;
+    case rev::REVLibError::kDuplicateCANId:
+        break;
+    case rev::REVLibError::kInvalidCANId:
+        break;
+    case rev::REVLibError::kSparkMaxDataPortAlreadyConfiguredDifferently:
+        break;
+    }
+
+    return true;
+}
+
 void SparkMax::DoSafely(const char *const what, std::function<void()> work) noexcept
 {
+    // XXX if any part of the triple is nullptr, check clock -- periodically attempt to reconstruct things!
+    // Also, periodically check HasReset fault and consider handling things in a similar way (possibly by
+    // nulling triple and coming here whenever) -- do this via a state machine?
+
     try
     {
-        work();
+        if (!motor_ || !encoder_ || !controller_)
+        {
+            motor_ = nullptr;
+            encoder_ = nullptr;
+            controller_ = nullptr;
+        }
+        else
+        {
+            work();
+        }
     }
     catch (const std::exception &e)
     {
@@ -442,40 +530,64 @@ void SparkMax::DoSafely(const char *const what, std::function<void()> work) noex
 
         std::printf("SparkMax[%i] %s %s unknown exception.\n", canId_, name_.c_str(), what);
     }
+
+    // XXX if anything is nullptr, arrange to periodically restore things
 }
 
 // XXX
-// using ConfigValue = std::variant<bool, uint, double>;
-// using ConfigMap = std::map<std::string, ConfigValue>;
 
-bool SparkMax::VerifyConfig(const std::string_view key, const ConfigValue &value) noexcept
+// Check a single configuration parameter against a specific value; returns
+// three pieces of information: 1) bool, value is positively verified; 2) bool,
+// value needs to be set following a call to RestoreFactoryDefaults(); 3)
+// string, text to report that may prompt going through procedure to burn
+// config parameters.  This information is used to build a list of parameters
+// to be used in the context of ApplyConfig(), to concatenate a string to
+// report the results of CheckConfig(), and to roll up to the result for this
+// latter function.
+std::tuple<bool, bool, std::string> SparkMax::VerifyConfig(const std::string_view key, const ConfigValue &value) noexcept
 {
-    const bool altMode = (encoderCounts_ != 0);
     const auto kv = SparkMaxFactory::configDefaults.find(std::string(key));
 
     if (kv == SparkMaxFactory::configDefaults.end())
     {
-        // XXX coding error -- warn!
-
-        return false;
+        return std::make_tuple(false, false, "Invalid");
     }
 
     const ConfigValue &default_value = kv->second;
+
+    // Have requested and default values.  Now, attempt to get current value.
     std::optional<ConfigValue> actual_value;
 
-    // In order to avoid having to switch on a string, obtain the index of the entry.
+    // In order to avoid switching on a string, obtain the index into defaults.
     const auto ndx = std::distance(kv, SparkMaxFactory::configDefaults.begin());
 
+    // Some settings only apply to one encoder type or the other.
+    const bool altMode = (encoderCounts_ != 0);
+
+    // Only true for a non-default follower (which cannot be verified).
+    bool follower = false;
+
+    // This will be displayed, in the event there is an issue with the setting.
+    std::string name = "Unknown";
+
+    // In general, these are slow (round-trip to the controller) API calls.
     DoSafely("Get config parameter", [&]() -> void
              {
-        if (motor_ && encoder_ && controller_)
-        {
     switch (ndx)
     {
     case 0: // Firmware Version
-        actual_value = uint{motor_->GetFirmwareVersion()};
+        name = "Firmware Version (";
+        {
+            const uint val = uint{motor_->GetFirmwareVersion()};
+            const std::string str = motor_->GetFirmwareString();
+
+            name += FirmwareInfo(val, str);
+            actual_value = val;
+        }
+        name += ")";
         break;
     case 1: // kIdleMode
+        name = "IdleMode";
         {
             const rev::CANSparkMax::IdleMode tmp = motor_->GetIdleMode();
 
@@ -489,186 +601,689 @@ bool SparkMax::VerifyConfig(const std::string_view key, const ConfigValue &value
         }
         break;
     case 2: // kFollowerID
+        name = "FollowerID";
+        if (motor_->IsFollower())
         {
-            if (motor_->IsFollower())
-            {
-            }
-            else
-            {
-                actual_value = uint{0};
-            }
+            follower = true;
+        }
+        else
+        {
+            actual_value = uint{0};
         }
         break;
     case 3: // kFollowerConfig
+        name = "FollowerConfig";
+        if (motor_->IsFollower())
         {
-            if (motor_->IsFollower())
-            {
-            }
-            else
-            {
-                actual_value = uint{0};
-            }
+            follower = true;
+        }
+        else
+        {
+            actual_value = uint{0};
         }
         break;
     case 4: // kSoftLimitFwd
+        name = "SoftLimitFwd";
         actual_value = double{motor_->GetSoftLimit(rev::CANSparkMax::SoftLimitDirection::kForward)};
         break;
     case 5: // kSoftLimitRev
+        name = "SoftLimitRev";
         actual_value = double{motor_->GetSoftLimit(rev::CANSparkMax::SoftLimitDirection::kReverse)};
         break;
     case 6: // kRampRate
+        name = "RampRate";
         actual_value = double{motor_->GetOpenLoopRampRate()};
         break;
     case 7: // kClosedLoopRampRate
+        name = "ClosedLoopRampRate";
         actual_value = double{motor_->GetClosedLoopRampRate()};
         break;
     case 8: // kCompensatedNominalVoltage
+        name = "CompensatedNominalVoltage";
         actual_value = double{motor_->GetVoltageCompensationNominalVoltage()};
         break;
     case 9: // kAltEncoderInverted
+        name = "AltEncoderInverted";
         if (altMode)
         {
             actual_value = bool{encoder_->GetInverted()};
         }
         break;
     case 10: // kEncoderAverageDepth
+        name = "EncoderAverageDepth";
         if (!altMode)
         {
             actual_value = uint{encoder_->GetAverageDepth()};
         }
         break;
     case 11: // kAltEncoderAverageDepth
+        name = "AltEncoderAverageDepth";
         if (altMode)
         {
             actual_value = uint{encoder_->GetAverageDepth()};
         }
         break;
     case 12: // kEncoderSampleDelta
+        name = "EncoderSampleDelta";
         if (!altMode)
         {
             actual_value = uint{encoder_->GetMeasurementPeriod()};
         }
         break;
     case 13: // kAltEncoderSampleDelta
+        name = "AltEncoderSampleDelta";
         if (altMode)
         {
             actual_value = uint{encoder_->GetMeasurementPeriod()};
         }
         break;
     case 14: // kPositionConversionFactor
+        name = "PositionConversionFactor";
         if (!altMode)
         {
-            actual_value = double{};
+            actual_value = double{encoder_->GetPositionConversionFactor()};
         }
         break;
     case 15: // kAltEncoderPositionFactor
+        name = "AltEncoderPositionFactor";
         if (altMode)
         {
-            actual_value = double{};
+            actual_value = double{encoder_->GetPositionConversionFactor()};
         }
         break;
     case 16: // kVelocityConversionFactor
+        name = "VelocityConversionFactor";
         if (!altMode)
         {
-            actual_value = double{};
+            actual_value = double{encoder_->GetVelocityConversionFactor()};
         }
         break;
     case 17: // kAltEncoderVelocityFactor
+        name = "AltEncoderVelocityFactor";
         if (altMode)
         {
-            actual_value = double{};
+            actual_value = double{encoder_->GetVelocityConversionFactor()};
         }
         break;
     case 18: // kP_0
-        actual_value = double{};
+        name = "P_0";
+        actual_value = double{controller_->GetP(0)};
         break;
     case 19: // kI_0
-        actual_value = double{};
+        name = "I_0";
+        actual_value = double{controller_->GetI(0)};
         break;
     case 20: // kD_0
-        actual_value = double{};
+        name = "D_0";
+        actual_value = double{controller_->GetD(0)};
         break;
     case 21: // kF_0
-        actual_value = double{};
+        name = "F_0";
+        actual_value = double{controller_->GetFF(0)};
         break;
     case 22: // kIZone_0
-        actual_value = double{};
+        name = "IZone_0";
+        actual_value = double{controller_->GetIZone(0)};
         break;
     case 23: // kIMaxAccum_0
-        actual_value = double{};
+        name = "IMaxAccum_0";
+        actual_value = double{controller_->GetIMaxAccum(0)};
         break;
     case 24: // kDFilter_0
-        actual_value = double{};
+        name = "DFilter_0";
+        actual_value = double{controller_->GetDFilter(0)};
         break;
     case 25: // kOutputMin_0
-        actual_value = double{};
+        name = "OutputMin_0";
+        outputRangeMin0_ = double{controller_->GetOutputMin(0)};
+        actual_value = outputRangeMin0_;
         break;
     case 26: // kOutputMax_0
-        actual_value = double{};
+        name = "OutputMax_0";
+        outputRangeMax0_ = double{controller_->GetOutputMax(0)};
+        actual_value = outputRangeMax0_;
         break;
     case 27: // kSmartMotionMaxVelocity_0
-        actual_value = double{};
+        name = "SmartMotionMaxVelocity_0";
+        actual_value = double{controller_->GetSmartMotionMaxVelocity(0)};
         break;
     case 28: // kSmartMotionMaxAccel_0
-        actual_value = double{};
+        name = "SmartMotionMaxAccel_0";
+        actual_value = double{controller_->GetSmartMotionMaxAccel(0)};
         break;
     case 29: // kSmartMotionMinVelOutput_0
-        actual_value = double{};
+        name = "SmartMotionMinVelOutput_0";
+        actual_value = double{controller_->GetSmartMotionMinOutputVelocity(0)};
         break;
     case 30: // kSmartMotionAllowedClosedLoopError_0
-        actual_value = double{};
+        name = "SmartMotionAllowedClosedLoopError_0";
+        actual_value = double{controller_->GetSmartMotionAllowedClosedLoopError(0)};
         break;
     case 31: // kSmartMotionAccelStrategy_0
-        actual_value = double{};
+        name = "SmartMotionAccelStrategy_0";
+        {
+            rev::SparkMaxPIDController::AccelStrategy tmp = controller_->GetSmartMotionAccelStrategy(0);
+
+            if (tmp == rev::SparkMaxPIDController::AccelStrategy::kTrapezoidal)
+            {
+                actual_value = uint{0};
+            }
+            else if (tmp == rev::SparkMaxPIDController::AccelStrategy::kSCurve)
+            {
+                actual_value = uint{1};
+            }
+        }
         break;
     case 32: // kP_1
-        actual_value = double{};
+        name = "P_1";
+        actual_value = double{controller_->GetP(1)};
         break;
     case 33: // kI_1
-        actual_value = double{};
+        name = "I_1";
+        actual_value = double{controller_->GetI(1)};
         break;
     case 34: // kD_1
-        actual_value = double{};
+        name = "D_1";
+        actual_value = double{controller_->GetD(1)};
         break;
     case 35: // kF_1
-        actual_value = double{};
+        name = "F_1";
+        actual_value = double{controller_->GetFF(1)};
         break;
     case 36: // kIZone_1
-        actual_value = double{};
+        name = "IZone_1";
+        actual_value = double{controller_->GetIZone(1)};
         break;
     case 37: // kIMaxAccum_1
-        actual_value = double{};
+        name = "IMaxAccum_1";
+        actual_value = double{controller_->GetIMaxAccum(1)};
         break;
     case 38: // kDFilter_1
-        actual_value = double{};
+        name = "DFilter_1";
+        actual_value = double{controller_->GetDFilter(1)};
         break;
     case 39: // kOutputMin_1
-        actual_value = double{};
+        name = "OutputMin_1";
+        outputRangeMin1_ = double{controller_->GetOutputMin(1)};
+        actual_value = outputRangeMin0_;
         break;
     case 40: // kOutputMax_1
-        actual_value = double{};
+        name = "OutputMax_1";
+        outputRangeMax1_ = double{controller_->GetOutputMax(1)};
+        actual_value = outputRangeMax0_;
         break;
     case 41: // kSmartMotionMaxVelocity_1
-        actual_value = double{};
+        name = "SmartMotionMaxVelocity_1";
+        actual_value = double{controller_->GetSmartMotionMaxVelocity(1)};
         break;
     case 42: // kSmartMotionMaxAccel_1
-        actual_value = double{};
+        name = "SmartMotionMaxAccel_1";
+        actual_value = double{controller_->GetSmartMotionMaxAccel(1)};
         break;
     case 43: // kSmartMotionMinVelOutput_1
-        actual_value = double{};
+        name = "SmartMotionMinVelOutput_1";
+        actual_value = double{controller_->GetSmartMotionMinOutputVelocity(1)};
         break;
     case 44: // kSmartMotionAllowedClosedLoopError_1
-        actual_value = double{};
+        name = "SmartMotionAllowedClosedLoopError_1";
+        actual_value = double{controller_->GetSmartMotionAllowedClosedLoopError(1)};
         break;
     case 45: // kSmartMotionAccelStrategy_1
-        actual_value = double{};
-        break;
-    }
-        } });
+        name = "SmartMotionAccelStrategy_1";
+        {
+            rev::SparkMaxPIDController::AccelStrategy tmp = controller_->GetSmartMotionAccelStrategy(1);
 
-    return false;
+            if (tmp == rev::SparkMaxPIDController::AccelStrategy::kTrapezoidal)
+            {
+                actual_value = uint{0};
+            }
+            else if (tmp == rev::SparkMaxPIDController::AccelStrategy::kSCurve)
+            {
+                actual_value = uint{1};
+            }
+        }
+        break;
+    // These are not real config parameters; just act as though they verified
+    // correctly.  There is no reason to set `name`, since it will never be
+    // needed.
+    case 46: // kStatus0
+    case 47: // kStatus1
+    case 48: // kStatus2
+        actual_value = value;
+        break;
+    } });
+
+    // Now, have the desired `value`, the `default_value`, and may have the
+    // `actual_value`.  Additionally, `name` contains text to display when it
+    // is appropriate to report a mismatch (or if a match cannot be verified,
+    // which should only occur for non-default follower ID or config -- in this
+    // case, `follower` will be true).
+
+    // Special case for follower config (only partially verified, so prompt
+    // string is not empty).
+    if (follower)
+    {
+        return std::make_tuple(true, true, name);
+    }
+
+    // Something unexpected has occurred, so maximize the likelihood of update.
+    if (!actual_value)
+    {
+        return std::make_tuple(false, true, name);
+    }
+
+    if (*actual_value == value)
+    {
+        name.clear();
+    }
+
+    return std::make_tuple(*actual_value == value, value != default_value, name);
 }
 
 void SparkMax::ApplyConfig(const std::string_view key, const ConfigValue &value) noexcept
 {
+    const auto kv = SparkMaxFactory::configDefaults.find(std::string(key));
+
+    if (kv == SparkMaxFactory::configDefaults.end())
+    {
+        // XXX coding error -- warn!
+
+        return;
+    }
+
+    // In order to avoid switching on a string, obtain the index into defaults.
+    const auto ndx = std::distance(kv, SparkMaxFactory::configDefaults.begin());
+
+    // Some settings only apply to one encoder type or the other.
+    const bool altMode = (encoderCounts_ != 0);
+
+    // This will be displayed, in the event there is an issue with the setting.
+    std::string name = "Unknown";
+
+    const bool *const pbool = std::get_if<bool>(&value);
+    const uint *const puint = std::get_if<uint>(&value);
+    const double *const pdouble = std::get_if<double>(&value);
+
+    // In general, these are slow (round-trip to the controller) API calls.
+    DoSafely("Set config parameter", [&]() -> void
+             {
+    switch (ndx)
+    {
+    case 0: // Firmware Version -- This cannot be set here.
+        name = "Firmware Version";
+        break;
+    case 1: // kIdleMode
+        name = "IdleMode";
+        if (puint && *puint <= 1) {
+            const rev::CANSparkMax::IdleMode tmp = (*puint == 0 ? rev::CANSparkMax::IdleMode::kCoast : rev::CANSparkMax::IdleMode::kBrake);
+
+            if (motor_->SetIdleMode(tmp) == rev::REVLibError::kOk)
+            {
+                name.clear();
+            }
+        }
+        break;
+    // XXX neme from here
+    case 2: // kFollowerID
+        if (puint)
+        {
+            followerID_ = *puint;
+
+            const rev::CANSparkMax::ExternalFollower tmp{(int)followerID_, (int)followerConfig_};
+            const int deviceID = followerID_ & 0x3f;
+            const bool invert = (followerConfig_ & 0x00040000) != 0;
+
+            if (followerConfig_ != 0)
+            {
+                if (motor_->Follow(tmp, deviceID, invert) != rev::REVLibError::kOk)
+                {
+                    // XXX
+                }
+            }
+        }
+        break;
+    case 3: // kFollowerConfig
+        if (puint)
+        {
+            followerConfig_ = *puint;
+
+            const rev::CANSparkMax::ExternalFollower tmp{(int)followerID_, (int)followerConfig_};
+            const int deviceID = followerID_ & 0x3f;
+            const bool invert = (followerConfig_ & 0x00040000) != 0;
+
+            if (followerID_ != 0)
+            {
+                if (motor_->Follow(tmp, deviceID, invert) != rev::REVLibError::kOk)
+                {
+                    // XXX
+                }
+            }
+        }
+        break;
+    case 4: // kSoftLimitFwd
+        if (pdouble)
+        {
+            if (motor_->SetSoftLimit(rev::CANSparkMax::SoftLimitDirection::kForward, *pdouble) != rev::REVLibError::kOk)
+            {
+                // XXX
+            }
+        }
+        break;
+    case 5: // kSoftLimitRev
+        if (pdouble)
+        {
+            if (motor_->SetSoftLimit(rev::CANSparkMax::SoftLimitDirection::kReverse, *pdouble) != rev::REVLibError::kOk)
+            {
+                // XXX
+            }
+        }
+        break;
+    case 6: // kRampRate
+        if (pdouble)
+        {
+            if (motor_->SetOpenLoopRampRate(*pdouble) != rev::REVLibError::kOk)
+            {
+                // XXX
+            }
+        }
+        break;
+    case 7: // kClosedLoopRampRate
+        if (pdouble)
+        {
+            if (motor_->SetClosedLoopRampRate(*pdouble) != rev::REVLibError::kOk)
+            {
+                // XXX
+            }
+        }
+        break;
+    case 8: // kCompensatedNominalVoltage
+        if (pdouble)
+        {
+            if (*pdouble == 0.0)
+            {
+                if (motor_->DisableVoltageCompensation() != rev::REVLibError::kOk)
+                {
+                    // XXX
+                }
+            }
+            else
+            {
+                if (motor_->EnableVoltageCompensation(*pdouble) != rev::REVLibError::kOk)
+                {
+                    // XXX
+                }
+            }
+        }
+        break;
+    case 9: // kAltEncoderInverted
+        if (pbool && altMode)
+        {
+            if (encoder_->SetInverted(*pbool) != rev::REVLibError::kOk)
+            {
+                // XXX
+            }
+        }
+        break;
+    case 10: // kEncoderAverageDepth
+        if (puint && !altMode)
+        {
+            if (encoder_->SetAverageDepth(*puint) != rev::REVLibError::kOk)
+            {
+                // XXX
+            }
+        }
+        break;
+    case 11: // kAltEncoderAverageDepth
+        if (puint && altMode)
+        {
+            if (encoder_->SetAverageDepth(*puint) != rev::REVLibError::kOk)
+            {
+                // XXX
+            }
+        }
+        break;
+    case 12: // kEncoderSampleDelta
+        if (puint && !altMode)
+        {
+            if (encoder_->SetMeasurementPeriod(*puint) != rev::REVLibError::kOk)
+            {
+                // XXX
+            }
+        }
+        break;
+    case 13: // kAltEncoderSampleDelta
+        if (puint && altMode)
+        {
+            if (encoder_->SetMeasurementPeriod(*puint) != rev::REVLibError::kOk)
+            {
+                // XXX
+            }
+        }
+        break;
+    case 14: // kPositionConversionFactor
+        if (pdouble && !altMode)
+        {
+            if (encoder_->SetPositionConversionFactor(*pdouble) != rev::REVLibError::kOk)
+            {
+                // XXX
+            }
+        }
+        break;
+    case 15: // kAltEncoderPositionFactor
+        if (pdouble && altMode)
+        {
+            if (encoder_->SetPositionConversionFactor(*pdouble) != rev::REVLibError::kOk)
+            {
+                // XXX
+            }
+        }
+        break;
+    case 16: // kVelocityConversionFactor
+        if (pdouble && !altMode)
+        {
+            if (encoder_->SetVelocityConversionFactor(*pdouble) != rev::REVLibError::kOk)
+            {
+                // XXX
+            }
+        }
+        break;
+    case 17: // kAltEncoderVelocityFactor
+        if (pdouble && altMode)
+        {
+            if (encoder_->SetVelocityConversionFactor(*pdouble) != rev::REVLibError::kOk)
+            {
+                // XXX
+            }
+        }
+        break;
+    case 18: // kP_0
+        if (pdouble)
+        {
+            if (controller_->SetP(*pdouble, 0) != rev::REVLibError::kOk)
+            {
+                // XXX
+            }
+        }
+        break;
+    case 19: // kI_0
+        if (pdouble)
+        {
+            if (controller_->SetI(*pdouble, 0) != rev::REVLibError::kOk)
+            {
+                // XXX
+            }
+        }
+        break;
+    case 20: // kD_0
+        if (pdouble)
+        {
+            if (controller_->SetD(*pdouble, 0) != rev::REVLibError::kOk)
+            {
+                // XXX
+            }
+        }
+        break;
+    case 21: // kF_0
+        if (pdouble)
+        {
+            if (controller_->SetFF(*pdouble, 0) != rev::REVLibError::kOk)
+            {
+                // XXX
+            }
+        }
+        break;
+    case 22: // kIZone_0
+        if (pdouble)
+        {
+            if (controller_->SetIZone(*pdouble, 0) != rev::REVLibError::kOk)
+            {
+                // XXX
+            }
+        }
+        break;
+    case 23: // kIMaxAccum_0
+        if (pdouble)
+        {
+            if (controller_->SetIMaxAccum(*pdouble, 0) != rev::REVLibError::kOk)
+            {
+                // XXX
+            }
+        }
+        break;
+    case 24: // kDFilter_0
+        if (pdouble)
+        {
+            if (controller_->SetDFilter(*pdouble, 0) != rev::REVLibError::kOk)
+            {
+                // XXX
+            }
+        }
+        break;
+    case 25: // kOutputMin_0
+        if (pdouble)
+        {
+            outputRangeMin0_ = *pdouble;
+            if (controller_->SetOutputRange(outputRangeMin0_, outputRangeMax0_, 0) != rev::REVLibError::kOk)
+            {
+                // XXX
+            }
+        }
+        break;
+    case 26: // kOutputMax_0
+        if (pdouble)
+        {
+            outputRangeMax0_ = *pdouble;
+            if (controller_->SetOutputRange(outputRangeMin0_, outputRangeMax0_, 0) != rev::REVLibError::kOk)
+            {
+                // XXX
+            }
+        }
+        break;
+    case 27: // kSmartMotionMaxVelocity_0
+        if (pdouble)
+        {
+            if (controller_->SetSmartMotionMaxVelocity(*pdouble, 0) != rev::REVLibError::kOk)
+            {
+                // XXX
+            }
+        }
+        break;
+    case 28: // kSmartMotionMaxAccel_0
+        if (pdouble)
+        {
+            if (controller_->SetSmartMotionMaxAccel(*pdouble, 0) != rev::REVLibError::kOk)
+            {
+                // XXX
+            }
+        }
+        break;
+    case 29: // kSmartMotionMinVelOutput_0
+        if (pdouble)
+        {
+            if (controller_->SetSmartMotionMinOutputVelocity(*pdouble, 0) != rev::REVLibError::kOk)
+            {
+                // XXX
+            }
+        }
+        break;
+    case 30: // kSmartMotionAllowedClosedLoopError_0
+        if (pdouble)
+        {
+            if (controller_->SetSmartMotionAllowedClosedLoopError(*pdouble, 0) != rev::REVLibError::kOk)
+            {
+                // XXX
+            }
+        }
+        break;
+    case 31: // kSmartMotionAccelStrategy_0
+        if (puint && *puint <= 1)
+        {
+            const rev::SparkMaxPIDController::AccelStrategy tmp = (*puint == 0 ? rev::SparkMaxPIDController::AccelStrategy::kTrapezoidal : rev::SparkMaxPIDController::AccelStrategy::kSCurve);
+
+            if (controller_->SetSmartMotionAccelStrategy(tmp) != rev::REVLibError::kOk)
+            {
+                // XXX
+            }
+        }
+        break;
+/*
+    case 32: // kP_1
+        actual_value = double{controller_->GetP(1)};
+        break;
+    case 33: // kI_1
+        actual_value = double{controller_->GetI(1)};
+        break;
+    case 34: // kD_1
+        actual_value = double{controller_->GetD(1)};
+        break;
+    case 35: // kF_1
+        actual_value = double{controller_->GetFF(1)};
+        break;
+    case 36: // kIZone_1
+        actual_value = double{controller_->GetIZone(1)};
+        break;
+    case 37: // kIMaxAccum_1
+        actual_value = double{controller_->GetIMaxAccum(1)};
+        break;
+    case 38: // kDFilter_1
+        actual_value = double{controller_->GetDFilter(1)};
+        break;
+    case 39: // kOutputMin_1
+        actual_value = double{controller_->GetOutputMin(1)};
+        break;
+    case 40: // kOutputMax_1
+        actual_value = double{controller_->GetOutputMax(1)};
+        break;
+    case 41: // kSmartMotionMaxVelocity_1
+        actual_value = double{controller_->GetSmartMotionMaxVelocity(1)};
+        break;
+    case 42: // kSmartMotionMaxAccel_1
+        actual_value = double{controller_->GetSmartMotionMaxAccel(1)};
+        break;
+    case 43: // kSmartMotionMinVelOutput_1
+        actual_value = double{controller_->GetSmartMotionMinOutputVelocity(1)};
+        break;
+    case 44: // kSmartMotionAllowedClosedLoopError_1
+        actual_value = double{controller_->GetSmartMotionAllowedClosedLoopError(1)};
+        break;
+    case 45: // kSmartMotionAccelStrategy_1
+        {
+            rev::SparkMaxPIDController::AccelStrategy tmp = controller_->GetSmartMotionAccelStrategy(1);
+
+            if (tmp == rev::SparkMaxPIDController::AccelStrategy::kTrapezoidal)
+            {
+                actual_value = uint{0};
+            }
+            else if (tmp == rev::SparkMaxPIDController::AccelStrategy::kSCurve)
+            {
+                actual_value = uint{1};
+            }
+        }
+        break;
+ */
+    case 46: // kStatus0
+    case 47: // kStatus1
+    case 48: // kStatus2
+        break;
+    } });
 }
