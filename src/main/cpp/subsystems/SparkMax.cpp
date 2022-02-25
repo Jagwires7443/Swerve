@@ -575,7 +575,7 @@ std::tuple<bool, bool, std::string> SparkMax::VerifyConfig(const std::string_vie
              {
     switch (ndx)
     {
-    case 0: // Firmware Version
+    case 0:
         name = "Firmware Version (";
         {
             const uint val = uint{motor_->GetFirmwareVersion()};
@@ -586,7 +586,7 @@ std::tuple<bool, bool, std::string> SparkMax::VerifyConfig(const std::string_vie
         }
         name += ")";
         break;
-    case 1: // kIdleMode
+    case 1:
         name = "IdleMode";
         {
             const rev::CANSparkMax::IdleMode tmp = motor_->GetIdleMode();
@@ -600,7 +600,7 @@ std::tuple<bool, bool, std::string> SparkMax::VerifyConfig(const std::string_vie
             }
         }
         break;
-    case 2: // kFollowerID
+    case 2:
         name = "FollowerID";
         if (motor_->IsFollower())
         {
@@ -611,7 +611,7 @@ std::tuple<bool, bool, std::string> SparkMax::VerifyConfig(const std::string_vie
             actual_value = uint{0};
         }
         break;
-    case 3: // kFollowerConfig
+    case 3:
         name = "FollowerConfig";
         if (motor_->IsFollower())
         {
@@ -622,144 +622,144 @@ std::tuple<bool, bool, std::string> SparkMax::VerifyConfig(const std::string_vie
             actual_value = uint{0};
         }
         break;
-    case 4: // kSoftLimitFwd
+    case 4:
         name = "SoftLimitFwd";
         actual_value = double{motor_->GetSoftLimit(rev::CANSparkMax::SoftLimitDirection::kForward)};
         break;
-    case 5: // kSoftLimitRev
+    case 5:
         name = "SoftLimitRev";
         actual_value = double{motor_->GetSoftLimit(rev::CANSparkMax::SoftLimitDirection::kReverse)};
         break;
-    case 6: // kRampRate
+    case 6:
         name = "RampRate";
         actual_value = double{motor_->GetOpenLoopRampRate()};
         break;
-    case 7: // kClosedLoopRampRate
+    case 7:
         name = "ClosedLoopRampRate";
         actual_value = double{motor_->GetClosedLoopRampRate()};
         break;
-    case 8: // kCompensatedNominalVoltage
+    case 8:
         name = "CompensatedNominalVoltage";
         actual_value = double{motor_->GetVoltageCompensationNominalVoltage()};
         break;
-    case 9: // kAltEncoderInverted
+    case 9:
         name = "AltEncoderInverted";
         if (altMode)
         {
             actual_value = bool{encoder_->GetInverted()};
         }
         break;
-    case 10: // kEncoderAverageDepth
+    case 10:
         name = "EncoderAverageDepth";
         if (!altMode)
         {
             actual_value = uint{encoder_->GetAverageDepth()};
         }
         break;
-    case 11: // kAltEncoderAverageDepth
+    case 11:
         name = "AltEncoderAverageDepth";
         if (altMode)
         {
             actual_value = uint{encoder_->GetAverageDepth()};
         }
         break;
-    case 12: // kEncoderSampleDelta
+    case 12:
         name = "EncoderSampleDelta";
         if (!altMode)
         {
             actual_value = uint{encoder_->GetMeasurementPeriod()};
         }
         break;
-    case 13: // kAltEncoderSampleDelta
+    case 13:
         name = "AltEncoderSampleDelta";
         if (altMode)
         {
             actual_value = uint{encoder_->GetMeasurementPeriod()};
         }
         break;
-    case 14: // kPositionConversionFactor
+    case 14:
         name = "PositionConversionFactor";
         if (!altMode)
         {
             actual_value = double{encoder_->GetPositionConversionFactor()};
         }
         break;
-    case 15: // kAltEncoderPositionFactor
+    case 15:
         name = "AltEncoderPositionFactor";
         if (altMode)
         {
             actual_value = double{encoder_->GetPositionConversionFactor()};
         }
         break;
-    case 16: // kVelocityConversionFactor
+    case 16:
         name = "VelocityConversionFactor";
         if (!altMode)
         {
             actual_value = double{encoder_->GetVelocityConversionFactor()};
         }
         break;
-    case 17: // kAltEncoderVelocityFactor
+    case 17:
         name = "AltEncoderVelocityFactor";
         if (altMode)
         {
             actual_value = double{encoder_->GetVelocityConversionFactor()};
         }
         break;
-    case 18: // kP_0
+    case 18:
         name = "P_0";
         actual_value = double{controller_->GetP(0)};
         break;
-    case 19: // kI_0
+    case 19:
         name = "I_0";
         actual_value = double{controller_->GetI(0)};
         break;
-    case 20: // kD_0
+    case 20:
         name = "D_0";
         actual_value = double{controller_->GetD(0)};
         break;
-    case 21: // kF_0
+    case 21:
         name = "F_0";
         actual_value = double{controller_->GetFF(0)};
         break;
-    case 22: // kIZone_0
+    case 22:
         name = "IZone_0";
         actual_value = double{controller_->GetIZone(0)};
         break;
-    case 23: // kIMaxAccum_0
+    case 23:
         name = "IMaxAccum_0";
         actual_value = double{controller_->GetIMaxAccum(0)};
         break;
-    case 24: // kDFilter_0
+    case 24:
         name = "DFilter_0";
         actual_value = double{controller_->GetDFilter(0)};
         break;
-    case 25: // kOutputMin_0
+    case 25:
         name = "OutputMin_0";
         outputRangeMin0_ = double{controller_->GetOutputMin(0)};
         actual_value = outputRangeMin0_;
         break;
-    case 26: // kOutputMax_0
+    case 26:
         name = "OutputMax_0";
         outputRangeMax0_ = double{controller_->GetOutputMax(0)};
         actual_value = outputRangeMax0_;
         break;
-    case 27: // kSmartMotionMaxVelocity_0
+    case 27:
         name = "SmartMotionMaxVelocity_0";
         actual_value = double{controller_->GetSmartMotionMaxVelocity(0)};
         break;
-    case 28: // kSmartMotionMaxAccel_0
+    case 28:
         name = "SmartMotionMaxAccel_0";
         actual_value = double{controller_->GetSmartMotionMaxAccel(0)};
         break;
-    case 29: // kSmartMotionMinVelOutput_0
+    case 29:
         name = "SmartMotionMinVelOutput_0";
         actual_value = double{controller_->GetSmartMotionMinOutputVelocity(0)};
         break;
-    case 30: // kSmartMotionAllowedClosedLoopError_0
+    case 30:
         name = "SmartMotionAllowedClosedLoopError_0";
         actual_value = double{controller_->GetSmartMotionAllowedClosedLoopError(0)};
         break;
-    case 31: // kSmartMotionAccelStrategy_0
+    case 31:
         name = "SmartMotionAccelStrategy_0";
         {
             rev::SparkMaxPIDController::AccelStrategy tmp = controller_->GetSmartMotionAccelStrategy(0);
@@ -774,61 +774,61 @@ std::tuple<bool, bool, std::string> SparkMax::VerifyConfig(const std::string_vie
             }
         }
         break;
-    case 32: // kP_1
+    case 32:
         name = "P_1";
         actual_value = double{controller_->GetP(1)};
         break;
-    case 33: // kI_1
+    case 33:
         name = "I_1";
         actual_value = double{controller_->GetI(1)};
         break;
-    case 34: // kD_1
+    case 34:
         name = "D_1";
         actual_value = double{controller_->GetD(1)};
         break;
-    case 35: // kF_1
+    case 35:
         name = "F_1";
         actual_value = double{controller_->GetFF(1)};
         break;
-    case 36: // kIZone_1
+    case 36:
         name = "IZone_1";
         actual_value = double{controller_->GetIZone(1)};
         break;
-    case 37: // kIMaxAccum_1
+    case 37:
         name = "IMaxAccum_1";
         actual_value = double{controller_->GetIMaxAccum(1)};
         break;
-    case 38: // kDFilter_1
+    case 38:
         name = "DFilter_1";
         actual_value = double{controller_->GetDFilter(1)};
         break;
-    case 39: // kOutputMin_1
+    case 39:
         name = "OutputMin_1";
         outputRangeMin1_ = double{controller_->GetOutputMin(1)};
         actual_value = outputRangeMin0_;
         break;
-    case 40: // kOutputMax_1
+    case 40:
         name = "OutputMax_1";
         outputRangeMax1_ = double{controller_->GetOutputMax(1)};
         actual_value = outputRangeMax0_;
         break;
-    case 41: // kSmartMotionMaxVelocity_1
+    case 41:
         name = "SmartMotionMaxVelocity_1";
         actual_value = double{controller_->GetSmartMotionMaxVelocity(1)};
         break;
-    case 42: // kSmartMotionMaxAccel_1
+    case 42:
         name = "SmartMotionMaxAccel_1";
         actual_value = double{controller_->GetSmartMotionMaxAccel(1)};
         break;
-    case 43: // kSmartMotionMinVelOutput_1
+    case 43:
         name = "SmartMotionMinVelOutput_1";
         actual_value = double{controller_->GetSmartMotionMinOutputVelocity(1)};
         break;
-    case 44: // kSmartMotionAllowedClosedLoopError_1
+    case 44:
         name = "SmartMotionAllowedClosedLoopError_1";
         actual_value = double{controller_->GetSmartMotionAllowedClosedLoopError(1)};
         break;
-    case 45: // kSmartMotionAccelStrategy_1
+    case 45:
         name = "SmartMotionAccelStrategy_1";
         {
             rev::SparkMaxPIDController::AccelStrategy tmp = controller_->GetSmartMotionAccelStrategy(1);
@@ -909,22 +909,23 @@ void SparkMax::ApplyConfig(const std::string_view key, const ConfigValue &value)
              {
     switch (ndx)
     {
-    case 0: // Firmware Version -- This cannot be set here.
+    case 0:
         name = "Firmware Version";
+        // This cannot be set here.
         break;
-    case 1: // kIdleMode
+    case 1:
         name = "IdleMode";
         if (puint && *puint <= 1) {
             const rev::CANSparkMax::IdleMode tmp = (*puint == 0 ? rev::CANSparkMax::IdleMode::kCoast : rev::CANSparkMax::IdleMode::kBrake);
 
-            if (motor_->SetIdleMode(tmp) == rev::REVLibError::kOk)
+            if (!AnyError(motor_->SetIdleMode(tmp)))
             {
                 name.clear();
             }
         }
         break;
-    // XXX neme from here
-    case 2: // kFollowerID
+    case 2:
+        name = "FollowerID";
         if (puint)
         {
             followerID_ = *puint;
@@ -935,14 +936,15 @@ void SparkMax::ApplyConfig(const std::string_view key, const ConfigValue &value)
 
             if (followerConfig_ != 0)
             {
-                if (motor_->Follow(tmp, deviceID, invert) != rev::REVLibError::kOk)
+                if (!AnyError(motor_->Follow(tmp, deviceID, invert)))
                 {
-                    // XXX
+                    name.clear();
                 }
             }
         }
         break;
-    case 3: // kFollowerConfig
+    case 3:
+        name = "FollowerConfig";
         if (puint)
         {
             followerConfig_ = *puint;
@@ -953,334 +955,451 @@ void SparkMax::ApplyConfig(const std::string_view key, const ConfigValue &value)
 
             if (followerID_ != 0)
             {
-                if (motor_->Follow(tmp, deviceID, invert) != rev::REVLibError::kOk)
+                if (!AnyError(motor_->Follow(tmp, deviceID, invert)))
                 {
-                    // XXX
+                    name.clear();
                 }
             }
         }
         break;
-    case 4: // kSoftLimitFwd
+    case 4:
+        name = "SoftLimitFwd";
         if (pdouble)
         {
-            if (motor_->SetSoftLimit(rev::CANSparkMax::SoftLimitDirection::kForward, *pdouble) != rev::REVLibError::kOk)
+            if (!AnyError(motor_->SetSoftLimit(rev::CANSparkMax::SoftLimitDirection::kForward, *pdouble)))
             {
-                // XXX
+                name.clear();
             }
         }
         break;
-    case 5: // kSoftLimitRev
+    case 5:
+        name = "SoftLimitRev";
         if (pdouble)
         {
-            if (motor_->SetSoftLimit(rev::CANSparkMax::SoftLimitDirection::kReverse, *pdouble) != rev::REVLibError::kOk)
+            if (!AnyError(motor_->SetSoftLimit(rev::CANSparkMax::SoftLimitDirection::kReverse, *pdouble)))
             {
-                // XXX
+                name.clear();
             }
         }
         break;
-    case 6: // kRampRate
+    case 6:
+        name = "RampRate";
         if (pdouble)
         {
-            if (motor_->SetOpenLoopRampRate(*pdouble) != rev::REVLibError::kOk)
+            if (!AnyError(motor_->SetOpenLoopRampRate(*pdouble)))
             {
-                // XXX
+                name.clear();
             }
         }
         break;
-    case 7: // kClosedLoopRampRate
+    case 7:
+        name = "ClosedLoopRampRate";
         if (pdouble)
         {
-            if (motor_->SetClosedLoopRampRate(*pdouble) != rev::REVLibError::kOk)
+            if (!AnyError(motor_->SetClosedLoopRampRate(*pdouble)))
             {
-                // XXX
+                name.clear();
             }
         }
         break;
-    case 8: // kCompensatedNominalVoltage
+    case 8:
+        name = "CompensatedNominalVoltage";
         if (pdouble)
         {
             if (*pdouble == 0.0)
             {
-                if (motor_->DisableVoltageCompensation() != rev::REVLibError::kOk)
+                if (!AnyError(motor_->DisableVoltageCompensation()))
                 {
-                    // XXX
+                    name.clear();
                 }
             }
             else
             {
-                if (motor_->EnableVoltageCompensation(*pdouble) != rev::REVLibError::kOk)
+                if (!AnyError(motor_->EnableVoltageCompensation(*pdouble)))
                 {
-                    // XXX
+                    name.clear();
                 }
             }
         }
         break;
-    case 9: // kAltEncoderInverted
+    case 9:
+        name = "AltEncoderInverted";
         if (pbool && altMode)
         {
-            if (encoder_->SetInverted(*pbool) != rev::REVLibError::kOk)
+            if (!AnyError(encoder_->SetInverted(*pbool)))
             {
-                // XXX
+                name.clear();
             }
         }
         break;
-    case 10: // kEncoderAverageDepth
+    case 10:
+        name = "EncoderAverageDepth";
         if (puint && !altMode)
         {
-            if (encoder_->SetAverageDepth(*puint) != rev::REVLibError::kOk)
+            if (!AnyError(encoder_->SetAverageDepth(*puint)))
             {
-                // XXX
+                name.clear();
             }
         }
         break;
-    case 11: // kAltEncoderAverageDepth
+    case 11:
+        name = "AltEncoderAverageDepth";
         if (puint && altMode)
         {
-            if (encoder_->SetAverageDepth(*puint) != rev::REVLibError::kOk)
+            if (!AnyError(encoder_->SetAverageDepth(*puint)))
             {
-                // XXX
+                name.clear();
             }
         }
         break;
-    case 12: // kEncoderSampleDelta
+    case 12:
+        name = "EncoderSampleDelta";
         if (puint && !altMode)
         {
-            if (encoder_->SetMeasurementPeriod(*puint) != rev::REVLibError::kOk)
+            if (!AnyError(encoder_->SetMeasurementPeriod(*puint)))
             {
-                // XXX
+                name.clear();
             }
         }
         break;
-    case 13: // kAltEncoderSampleDelta
+    case 13:
+        name = "AltEncoderSampleDelta";
         if (puint && altMode)
         {
-            if (encoder_->SetMeasurementPeriod(*puint) != rev::REVLibError::kOk)
+            if (!AnyError(encoder_->SetMeasurementPeriod(*puint)))
             {
-                // XXX
+                name.clear();
             }
         }
         break;
-    case 14: // kPositionConversionFactor
+    case 14:
+        name = "PositionConversionFactor";
         if (pdouble && !altMode)
         {
-            if (encoder_->SetPositionConversionFactor(*pdouble) != rev::REVLibError::kOk)
+            if (!AnyError(encoder_->SetPositionConversionFactor(*pdouble)))
             {
-                // XXX
+                name.clear();
             }
         }
         break;
-    case 15: // kAltEncoderPositionFactor
+    case 15:
+        name = "AltEncoderPositionFactor";
         if (pdouble && altMode)
         {
-            if (encoder_->SetPositionConversionFactor(*pdouble) != rev::REVLibError::kOk)
+            if (!AnyError(encoder_->SetPositionConversionFactor(*pdouble)))
             {
-                // XXX
+                name.clear();
             }
         }
         break;
-    case 16: // kVelocityConversionFactor
+    case 16:
+        name = "VelocityConversionFactor";
         if (pdouble && !altMode)
         {
-            if (encoder_->SetVelocityConversionFactor(*pdouble) != rev::REVLibError::kOk)
+            if (!AnyError(encoder_->SetVelocityConversionFactor(*pdouble)))
             {
-                // XXX
+                name.clear();
             }
         }
         break;
-    case 17: // kAltEncoderVelocityFactor
+    case 17:
+        name = "AltEncoderVelocityFactor";
         if (pdouble && altMode)
         {
-            if (encoder_->SetVelocityConversionFactor(*pdouble) != rev::REVLibError::kOk)
+            if (!AnyError(encoder_->SetVelocityConversionFactor(*pdouble)))
             {
-                // XXX
+                name.clear();
             }
         }
         break;
-    case 18: // kP_0
+    case 18:
+        name = "P_0";
         if (pdouble)
         {
-            if (controller_->SetP(*pdouble, 0) != rev::REVLibError::kOk)
+            if (!AnyError(controller_->SetP(*pdouble, 0)))
             {
-                // XXX
+                name.clear();
             }
         }
         break;
-    case 19: // kI_0
+    case 19:
+        name = "I_0";
         if (pdouble)
         {
-            if (controller_->SetI(*pdouble, 0) != rev::REVLibError::kOk)
+            if (!AnyError(controller_->SetI(*pdouble, 0)))
             {
-                // XXX
+                name.clear();
             }
         }
         break;
-    case 20: // kD_0
+    case 20:
+        name = "D_0";
         if (pdouble)
         {
-            if (controller_->SetD(*pdouble, 0) != rev::REVLibError::kOk)
+            if (!AnyError(controller_->SetD(*pdouble, 0)))
             {
-                // XXX
+                name.clear();
             }
         }
         break;
-    case 21: // kF_0
+    case 21:
+        name = "F_0";
         if (pdouble)
         {
-            if (controller_->SetFF(*pdouble, 0) != rev::REVLibError::kOk)
+            if (!AnyError(controller_->SetFF(*pdouble, 0)))
             {
-                // XXX
+                name.clear();
             }
         }
         break;
-    case 22: // kIZone_0
+    case 22:
+        name = "IZone_0";
         if (pdouble)
         {
-            if (controller_->SetIZone(*pdouble, 0) != rev::REVLibError::kOk)
+            if (!AnyError(controller_->SetIZone(*pdouble, 0)))
             {
-                // XXX
+                name.clear();
             }
         }
         break;
-    case 23: // kIMaxAccum_0
+    case 23:
+        name = "IMaxAccum_0";
         if (pdouble)
         {
-            if (controller_->SetIMaxAccum(*pdouble, 0) != rev::REVLibError::kOk)
+            if (!AnyError(controller_->SetIMaxAccum(*pdouble, 0)))
             {
-                // XXX
+                name.clear();
             }
         }
         break;
-    case 24: // kDFilter_0
+    case 24:
+        name = "DFilter_0";
         if (pdouble)
         {
-            if (controller_->SetDFilter(*pdouble, 0) != rev::REVLibError::kOk)
+            if (!AnyError(controller_->SetDFilter(*pdouble, 0)))
             {
-                // XXX
+                name.clear();
             }
         }
         break;
-    case 25: // kOutputMin_0
+    case 25:
+        name = "OutputMin_0";
         if (pdouble)
         {
             outputRangeMin0_ = *pdouble;
-            if (controller_->SetOutputRange(outputRangeMin0_, outputRangeMax0_, 0) != rev::REVLibError::kOk)
+            if (!AnyError(controller_->SetOutputRange(outputRangeMin0_, outputRangeMax0_, 0)))
             {
-                // XXX
+                name.clear();
             }
         }
         break;
-    case 26: // kOutputMax_0
+    case 26:
+        name = "OutputMax_0";
         if (pdouble)
         {
             outputRangeMax0_ = *pdouble;
-            if (controller_->SetOutputRange(outputRangeMin0_, outputRangeMax0_, 0) != rev::REVLibError::kOk)
+            if (!AnyError(controller_->SetOutputRange(outputRangeMin0_, outputRangeMax0_, 0)))
             {
-                // XXX
+                name.clear();
             }
         }
         break;
-    case 27: // kSmartMotionMaxVelocity_0
+    case 27:
+        name = "SmartMotionMaxVelocity_0";
         if (pdouble)
         {
-            if (controller_->SetSmartMotionMaxVelocity(*pdouble, 0) != rev::REVLibError::kOk)
+            if (!AnyError(controller_->SetSmartMotionMaxVelocity(*pdouble, 0)))
             {
-                // XXX
+                name.clear();
             }
         }
         break;
-    case 28: // kSmartMotionMaxAccel_0
+    case 28:
+        name = "SmartMotionMaxAccel_0";
         if (pdouble)
         {
-            if (controller_->SetSmartMotionMaxAccel(*pdouble, 0) != rev::REVLibError::kOk)
+            if (!AnyError(controller_->SetSmartMotionMaxAccel(*pdouble, 0)))
             {
-                // XXX
+                name.clear();
             }
         }
         break;
-    case 29: // kSmartMotionMinVelOutput_0
+    case 29:
+        name = "SmartMotionMinVelOutput_0";
         if (pdouble)
         {
-            if (controller_->SetSmartMotionMinOutputVelocity(*pdouble, 0) != rev::REVLibError::kOk)
+            if (!AnyError(controller_->SetSmartMotionMinOutputVelocity(*pdouble, 0)))
             {
-                // XXX
+                name.clear();
             }
         }
         break;
-    case 30: // kSmartMotionAllowedClosedLoopError_0
+    case 30:
+        name = "SmartMotionAllowedClosedLoopError_0";
         if (pdouble)
         {
-            if (controller_->SetSmartMotionAllowedClosedLoopError(*pdouble, 0) != rev::REVLibError::kOk)
+            if (!AnyError(controller_->SetSmartMotionAllowedClosedLoopError(*pdouble, 0)))
             {
-                // XXX
+                name.clear();
             }
         }
         break;
-    case 31: // kSmartMotionAccelStrategy_0
+    case 31:
+        name = "SmartMotionAccelStrategy_0";
         if (puint && *puint <= 1)
         {
             const rev::SparkMaxPIDController::AccelStrategy tmp = (*puint == 0 ? rev::SparkMaxPIDController::AccelStrategy::kTrapezoidal : rev::SparkMaxPIDController::AccelStrategy::kSCurve);
 
-            if (controller_->SetSmartMotionAccelStrategy(tmp) != rev::REVLibError::kOk)
+            if (!AnyError(controller_->SetSmartMotionAccelStrategy(tmp, 0)))
             {
-                // XXX
+                name.clear();
             }
         }
         break;
-/*
-    case 32: // kP_1
-        actual_value = double{controller_->GetP(1)};
-        break;
-    case 33: // kI_1
-        actual_value = double{controller_->GetI(1)};
-        break;
-    case 34: // kD_1
-        actual_value = double{controller_->GetD(1)};
-        break;
-    case 35: // kF_1
-        actual_value = double{controller_->GetFF(1)};
-        break;
-    case 36: // kIZone_1
-        actual_value = double{controller_->GetIZone(1)};
-        break;
-    case 37: // kIMaxAccum_1
-        actual_value = double{controller_->GetIMaxAccum(1)};
-        break;
-    case 38: // kDFilter_1
-        actual_value = double{controller_->GetDFilter(1)};
-        break;
-    case 39: // kOutputMin_1
-        actual_value = double{controller_->GetOutputMin(1)};
-        break;
-    case 40: // kOutputMax_1
-        actual_value = double{controller_->GetOutputMax(1)};
-        break;
-    case 41: // kSmartMotionMaxVelocity_1
-        actual_value = double{controller_->GetSmartMotionMaxVelocity(1)};
-        break;
-    case 42: // kSmartMotionMaxAccel_1
-        actual_value = double{controller_->GetSmartMotionMaxAccel(1)};
-        break;
-    case 43: // kSmartMotionMinVelOutput_1
-        actual_value = double{controller_->GetSmartMotionMinOutputVelocity(1)};
-        break;
-    case 44: // kSmartMotionAllowedClosedLoopError_1
-        actual_value = double{controller_->GetSmartMotionAllowedClosedLoopError(1)};
-        break;
-    case 45: // kSmartMotionAccelStrategy_1
+    case 32:
+        name = "P_1";
+        if (pdouble)
         {
-            rev::SparkMaxPIDController::AccelStrategy tmp = controller_->GetSmartMotionAccelStrategy(1);
-
-            if (tmp == rev::SparkMaxPIDController::AccelStrategy::kTrapezoidal)
+            if (!AnyError(controller_->SetP(*pdouble, 1)))
             {
-                actual_value = uint{0};
-            }
-            else if (tmp == rev::SparkMaxPIDController::AccelStrategy::kSCurve)
-            {
-                actual_value = uint{1};
+                name.clear();
             }
         }
         break;
- */
+    case 33:
+        name = "I_1";
+        if (pdouble)
+        {
+            if (!AnyError(controller_->SetI(*pdouble, 1)))
+            {
+                name.clear();
+            }
+        }
+        break;
+    case 34:
+        name = "D_1";
+        if (pdouble)
+        {
+            if (!AnyError(controller_->SetD(*pdouble, 1)))
+            {
+                name.clear();
+            }
+        }
+        break;
+    case 35:
+        name = "F_1";
+        if (pdouble)
+        {
+            if (!AnyError(controller_->SetFF(*pdouble, 1)))
+            {
+                name.clear();
+            }
+        }
+        break;
+    case 36:
+        name = "IZone_1";
+        if (pdouble)
+        {
+            if (!AnyError(controller_->SetIZone(*pdouble, 1)))
+            {
+                name.clear();
+            }
+        }
+        break;
+    case 37:
+        name = "IMaxAccum_1";
+        if (pdouble)
+        {
+            if (!AnyError(controller_->SetIMaxAccum(*pdouble, 1)))
+            {
+                name.clear();
+            }
+        }
+        break;
+    case 38:
+        name = "DFilter_1";
+        if (pdouble)
+        {
+            if (!AnyError(controller_->SetDFilter(*pdouble, 1)))
+            {
+                name.clear();
+            }
+        }
+        break;
+    case 39:
+        name = "OutputMin_1";
+        if (pdouble)
+        {
+            outputRangeMin0_ = *pdouble;
+            if (!AnyError(controller_->SetOutputRange(outputRangeMin0_, outputRangeMax0_, 1)))
+            {
+                name.clear();
+            }
+        }
+        break;
+    case 40:
+        name = "OutputMax_1";
+        if (pdouble)
+        {
+            outputRangeMax0_ = *pdouble;
+            if (!AnyError(controller_->SetOutputRange(outputRangeMin0_, outputRangeMax0_, 1)))
+            {
+                name.clear();
+            }
+        }
+        break;
+    case 41:
+        name = "SmartMotionMaxVelocity_1";
+        if (pdouble)
+        {
+            if (!AnyError(controller_->SetSmartMotionMaxVelocity(*pdouble, 1)))
+            {
+                name.clear();
+            }
+        }
+        break;
+    case 42:
+        name = "SmartMotionMaxAccel_1";
+        if (pdouble)
+        {
+            if (!AnyError(controller_->SetSmartMotionMaxAccel(*pdouble, 1)))
+            {
+                name.clear();
+            }
+        }
+        break;
+    case 43:
+        name = "SmartMotionMinVelOutput_1";
+        if (pdouble)
+        {
+            if (!AnyError(controller_->SetSmartMotionMinOutputVelocity(*pdouble, 1)))
+            {
+                name.clear();
+            }
+        }
+        break;
+    case 44:
+        name = "SmartMotionAllowedClosedLoopError_1";
+        if (pdouble)
+        {
+            if (!AnyError(controller_->SetSmartMotionAllowedClosedLoopError(*pdouble, 1)))
+            {
+                name.clear();
+            }
+        }
+        break;
+    case 45:
+        name = "SmartMotionAccelStrategy_1";
+        if (puint && *puint <= 1)
+        {
+            const rev::SparkMaxPIDController::AccelStrategy tmp = (*puint == 0 ? rev::SparkMaxPIDController::AccelStrategy::kTrapezoidal : rev::SparkMaxPIDController::AccelStrategy::kSCurve);
+
+            if (!AnyError(controller_->SetSmartMotionAccelStrategy(tmp, 1)))
+            {
+                name.clear();
+            }
+        }
+        break;
     case 46: // kStatus0
     case 47: // kStatus1
     case 48: // kStatus2
