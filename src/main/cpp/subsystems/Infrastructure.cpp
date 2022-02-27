@@ -9,7 +9,8 @@ InfrastructureSubsystem::InfrastructureSubsystem() noexcept
     ph_ = std::make_unique<frc::Compressor>(1, frc::PneumaticsModuleType::REVPH);
 
     pdh_->ClearStickyFaults();
-    ph_->EnableAnalog(80_psi, 100_psi);
+    // ph_->EnableAnalog(80_psi, 100_psi);
+    ph_->Disable();
 }
 
 void InfrastructureSubsystem::Periodic() noexcept {}

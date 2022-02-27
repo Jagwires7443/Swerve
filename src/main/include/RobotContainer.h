@@ -12,6 +12,7 @@
 #include "commands/TestModeCommands.h"
 #include "subsystems/DriveSubsystem.h"
 #include "subsystems/FeederSubsystem.h"
+#include "subsystems/Infrastructure.h"
 #include "subsystems/ShooterSubsystem.h"
 
 #include <memory>
@@ -48,6 +49,7 @@ private:
   // The robot's subsystems and commands are defined here...
   DriveSubsystem m_driveSubsystem;
   FeederSubsystem m_feederSubsystem;
+  InfrastructureSubsystem m_infrastructureSubsystem;
   ShooterSubsystem m_shooterSubsystem;
 
   std::unique_ptr<frc2::RunCommand> m_driveCommand;

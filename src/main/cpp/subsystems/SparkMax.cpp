@@ -100,17 +100,22 @@ namespace
         double GetVelocityRaw() noexcept override;
 
     private:
+        // Parameters supplied though ctor.
         const std::string name_;
         const int canId_;
         const bool inverted_;
         const int encoderCounts_;
 
+        // Underlying REV object holders.
         std::unique_ptr<rev::CANSparkMax> motor_;
         std::unique_ptr<rev::RelativeEncoder> encoder_;
         std::unique_ptr<rev::SparkMaxPIDController> controller_;
 
+        // Configuration Parameters, set via SetConfig() and AddConfig().
         ConfigMap config_;
 
+        // Shuffleboard UI elements, used by ShuffleboardCreate() and
+        // ShuffleboardPeriodic() only.
         frc::SimpleWidget *temperatureUI_ = nullptr;
         frc::SimpleWidget *statusUI_ = nullptr;
         frc::SimpleWidget *faultsUI_ = nullptr;
@@ -124,11 +129,10 @@ namespace
         frc::SimpleWidget *controlUI_ = nullptr;
         frc::SimpleWidget *resetUI_ = nullptr;
 
+        // Shuffleboard UI control element mechanism.
         double previousControl_ = 0.0;
         std::function<void(double)> controlF_ = nullptr;
         std::function<void()> resetF_ = nullptr;
-
-        bool configGood_ = false;
 
         double outputRangeMin0_ = std::get<double>(SparkMaxFactory::configDefaults.at("kOutputMin_0"));
         double outputRangeMax0_ = std::get<double>(SparkMaxFactory::configDefaults.at("kOutputMax_0"));
@@ -141,6 +145,8 @@ namespace
         uint smartCurrentStallLimit_ = std::get<uint>(SparkMaxFactory::configDefaults.at("kSmartCurrentStallLimit"));
         uint smartCurrentFreeLimit_ = std::get<uint>(SparkMaxFactory::configDefaults.at("kSmartCurrentFreeLimit"));
         uint smartCurrentConfig_ = std::get<uint>(SparkMaxFactory::configDefaults.at("kSmartCurrentConfig"));
+
+        bool configGood_ = false;
 
         void DoSafely(const char *const what, std::function<void()> work) noexcept;
         bool AnyError(const rev::REVLibError returnCode) noexcept;
@@ -224,6 +230,7 @@ std::unique_ptr<SmartMotorBase> SparkMaxFactory::CreateSparkMax(const std::strin
 
 SparkMax::SparkMax(const std::string_view name, const int canId, const bool inverted, const int encoderCounts) noexcept : name_{name}, canId_{canId}, inverted_{inverted}, encoderCounts_{encoderCounts}
 {
+    // By design, this minimizes interaction with the motor controller.
     DoSafely("ctor", [&]() -> void
              {
         motor_ = std::make_unique<rev::CANSparkMax>(canId_, rev::CANSparkMaxLowLevel::MotorType::kBrushless);
@@ -258,8 +265,6 @@ SparkMax::SparkMax(const std::string_view name, const int canId, const bool inve
         {
             throw std::runtime_error("SetFeedbackDevice()");
         } });
-
-    ClearFaults();
 }
 
 void SparkMax::ShuffleboardCreate(frc::ShuffleboardContainer &container,
@@ -355,28 +360,18 @@ void SparkMax::ShuffleboardPeriodic() noexcept
         percent = motor_->GetAppliedOutput(); // Actual setting
         speed = motor_->Get();                // Commanded setting
 
-// XXX
-        if (reset)
-        {
-            if (motor_->ClearFaults() != rev::REVLibError::kOk)
-            {
-                throw std::runtime_error("ClearFaults()");
-            }
-        }
-
         distance = encoder_->GetPosition();        // Rotations
         velocity = encoder_->GetVelocity() / 60.0; // Rotations per second
+        // The following semicolon is necessary to avoid mangling by the code
+        // formatter.
+        ; });
 
-// XXX
-        if (reset)
-        {
-            // Logic above ensures that `position` is now zero; reset the
-            // turning motor controller encoder to reflect this.
-            if (encoder_->SetPosition(0.0) != rev::REVLibError::kOk)
-            {
-                throw std::runtime_error("SetPosition()");
-            }
-        } });
+    if (reset)
+    {
+        // Logic above ensures that `position` is now zero; reset the
+        // turning motor encoder to reflect this.
+        SpecifyPosition(0.0);
+    }
 
     temperatureUI_->GetEntry().SetDouble(temperature);
     statusUI_->GetEntry().SetBoolean(motor_ && configGood_ && faults == 0);
@@ -403,9 +398,25 @@ void SparkMax::ShuffleboardPeriodic() noexcept
 // of any/all prior calls to SetConfig() and/or AddConfig().  Note that the
 // state maintained via Periodic() is also important in this context.
 
-// XXX If `encoderCount_` != 0, also verify GetCountsPerRevolution() on alt encoder, null pointers if off?
 // XXX uint32 encoder_->GetCountsPerRevolution();
-bool SparkMax::CheckConfig() noexcept { return false; }
+
+// start (X = check, Y = apply (X + Y), Z = apply and burn (X + Y + Z))
+// Y: block out normal operations which could affect config
+// Z: block out all normal operations
+// Z: RestoreFactoryDefaults()
+// Z: redo ctor logic
+// X: if encoderCount_ != 0 (alt encoder), verify GetCountsPerRevolution() matches
+// loop over parameters
+//     X: check one param
+//     Y: update one param
+// X: update string and status value
+// Y: update apply string
+// Z: BurnFlash()
+
+bool SparkMax::CheckConfig() noexcept
+{
+    return configGood_;
+}
 
 void SparkMax::ApplyConfig(bool burn) noexcept {}
 
@@ -441,13 +452,19 @@ bool SparkMax::GetStatus() noexcept
 
 void SparkMax::SetIdleMode(const SmartMotorBase::IdleMode mode) noexcept {}
 
-SmartMotorBase::IdleMode SparkMax::GetIdleMode() noexcept { return SmartMotorBase::IdleMode::kCoast; }
+SmartMotorBase::IdleMode SparkMax::GetIdleMode() noexcept
+{
+    return SmartMotorBase::IdleMode::kCoast;
+}
 
 void SparkMax::Stop() noexcept {}
 
 void SparkMax::Set(const double percent) noexcept {}
 
-double SparkMax::Get() noexcept { return 0.0; }
+double SparkMax::Get() noexcept
+{
+    return 0.0;
+}
 
 void SparkMax::SetVoltage(const units::volt_t voltage) noexcept {}
 
@@ -457,15 +474,27 @@ void SparkMax::SpecifyPosition(const double position) noexcept {}
 
 void SparkMax::SeekPosition(const double position) noexcept {}
 
-bool SparkMax::CheckPosition(const double tolerance) noexcept { return false; }
+bool SparkMax::CheckPosition(const double tolerance) noexcept
+{
+    return false;
+}
 
-double SparkMax::GetPositionRaw() noexcept { return 0.0; }
+double SparkMax::GetPositionRaw() noexcept
+{
+    return 0.0;
+}
 
 void SparkMax::SeekVelocity(const double velocity) noexcept {}
 
-bool SparkMax::CheckVelocity(const double tolerance) noexcept { return false; }
+bool SparkMax::CheckVelocity(const double tolerance) noexcept
+{
+    return false;
+}
 
-double SparkMax::GetVelocityRaw() noexcept { return 0.0; }
+double SparkMax::GetVelocityRaw() noexcept
+{
+    return 0.0;
+}
 
 bool SparkMax::AnyError(const rev::REVLibError returnCode) noexcept
 {
