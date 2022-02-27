@@ -10,6 +10,7 @@
 #include <frc/shuffleboard/ShuffleboardContainer.h>
 #include <units/angle.h>
 #include <units/base.h>
+#include <units/current.h>
 #include <units/length.h>
 #include <units/time.h>
 #include <units/voltage.h>
@@ -136,6 +137,8 @@ public:
 
     virtual void SetVoltage(const units::volt_t voltage) noexcept = 0;
 
+    virtual void SetCurrent(const units::ampere_t current) noexcept = 0;
+
     // Used to establish zero position.
     virtual void SpecifyPosition(const double position) noexcept = 0;
 
@@ -258,6 +261,11 @@ public:
     void SetVoltage(const units::volt_t voltage) noexcept override
     {
         base_.SetVoltage(voltage);
+    }
+
+    void SetCurrent(const units::ampere_t current) noexcept override
+    {
+        base_.SetCurrent(current);
     }
 
     void SpecifyPosition(const double position) noexcept override

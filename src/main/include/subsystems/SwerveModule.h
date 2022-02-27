@@ -29,14 +29,8 @@
 //   *Drive and Turning Controllers*
 //     * kCanID -- Unique ID for each SPARK MAX
 //     * kMotorType/kSensorType -- BRUSHLESS/HALL_EFFECT
-//
-//   *Drive Controller*
-//     * kDataPortConfig -- 0 (Default Mode, Not Used)
-//     * kIdleMode -- IDLE_COAST
-//
-//   *Turning Controller*
-//     * kDataPortConfig -- 1 (Alternate Encoder Mode)
 //     * kIdleMode -- IDLE_BRAKE
+//     * kDataPortConfig -- 0 (Default Mode, Not Used)
 // Manually configuring and saving these is the first step in commissioning a
 // robot.  The second step is ensuring all the inversion constants are correct.
 

@@ -149,22 +149,6 @@ namespace SparkMaxFactory
 //   this parameter, it will probably be made a persistent setting and be
 //   managed via the REV Hardware Client (same as with Motor Type).
 
-// kCurrentChop
-// kCurrentChopCycles
-// kSmartCurrentStallLimit
-// kSmartCurrentFreeLimit
-// kSmartCurrentConfig
-//   Right now, this code does not attempt to manage these settings.  For two
-//   of these (kCurrentChop and kSmartCurrentStallLimit), there is no get.  So,
-//   it would be difficult to manage these, short of periodically setting them.
-//   These limits are set high, and REV cautions against bypassing protection
-//   they provide.  So, this code intentionally does not attempt managing these
-//   (and it's probably a good idea to leave these alone manually).  If these
-//   are ever manually modified, this code will call RestoreFactoryDefaults()
-//   if config parameters are ever persisted, causing them to return to default
-//   values.  This code most likely should never attempt to manage these.  It
-//   might make sense to do so at some point, to support lowering the limits.
-
 // kEncoderCountsPerRev
 // kAltEncoderCountsPerRev
 //   This is handled via either GetEncoder() or GetAlternateEncoder(), plus
@@ -313,6 +297,22 @@ namespace SparkMaxFactory
 //   class, rather than on the motor controller.  In this case, these are set
 //   to unity (the default) and then managed to ensure they remain there.
 
+// kCurrentChop
+// kCurrentChopCycles
+// kSmartCurrentStallLimit
+// kSmartCurrentFreeLimit
+// kSmartCurrentConfig
+//   Managing these settings is problematic.  To start, there is no get.  So,
+//   it would be difficult to manage these, short of just setting them in a
+//   pathologic manner.  These settings are quite high by default, so raising
+//   them is not needed.  But lowering them could make sense, especially when
+//   controlling a NEO 550.  REV (rightly) cautions against bypassing the
+//   protection these setting may provide, and provides data to help in working
+//   out appropriate limits.  Also, on the set side, a single function sets
+//   multiple config parameters.  This is all similar to issues discussed for
+//   follower configuration.  Note that using closed-loop current control may
+//   be an alternative to changing these defaults.
+
 // kP_#
 // kI_#
 // kD_#
@@ -379,6 +379,11 @@ namespace SparkMaxFactory
         {"kAltEncoderPositionFactor", double{1.0}},
         {"kVelocityConversionFactor", double{1.0}},
         {"kAltEncoderVelocityFactor", double{1.0}},
+        {"kCurrentChop", double{115.0}}, // Amps
+        {"kCurrentChopCycles", uint{0}},
+        {"kSmartCurrentStallLimit", uint{80}}, // Amps
+        {"kSmartCurrentFreeLimit", uint{20}},  // Amps
+        {"kSmartCurrentConfig", uint{10000}},  // RPM
         {"kP_0", double{0.0}},
         {"kI_0", double{0.0}},
         {"kD_0", double{0.0}},
