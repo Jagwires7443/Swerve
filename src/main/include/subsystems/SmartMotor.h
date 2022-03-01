@@ -44,19 +44,18 @@ public:
     // mode).  Provides basic control of motor and sends telemetry of all major
     // parameters.  Alternatively, this might be specified using wpi::Sendable.
 
-    // If supplied, control() will be called from ShuffleboardPeriodic() once
-    // each time the "control" user interface element has a new value (starting
-    // from zero and between -1.0 and 1.0, inclusive); if supplied, reset()
-    // will be called any time the "reset" user interface element is clicked.
+    // If supplied, control() will be called from Periodic() once each time the
+    // "control" user interface element has a new value (starting from zero and
+    // between -1.0 and 1.0, inclusive).  If supplied, reset() will be called
+    // from Periodic() each time the "reset" user interface element is clicked.
 
     // A typical usage would be to call this from TestInit() and then to call
-    // ShuffleboardPeriodic() each time TestPeriodic() runs.  The display panel
-    // occupies 20x6 tiles in Shuffleboard.
+    // Periodic() each time TestPeriodic() runs.  Periodic() will only do extra
+    // work to update Shuffleboard if ShuffleboardCreate() has been called.
+    // The display panel occupies 20x6 tiles in Shuffleboard.
     virtual void ShuffleboardCreate(frc::ShuffleboardContainer &container,
                                     std::function<void(double)> control = nullptr,
                                     std::function<void()> reset = nullptr) noexcept = 0;
-
-    virtual void ShuffleboardPeriodic() noexcept = 0;
 
     using ConfigValue = std::variant<bool, uint, double>;
     using ConfigMap = std::map<std::string, ConfigValue>;
@@ -74,45 +73,56 @@ public:
 
     virtual void AddConfig(const ConfigMap config) noexcept = 0;
 
-    // Report status of last complete check of config information, or false, if
-    // there has been no such complete check.
-    virtual bool CheckConfig() noexcept = 0;
+    // Report status of last complete check of config information.  This call
+    // initiates such a check -- the actual reporting happens via GetStatus()
+    // -- which will include the results of the last check, if any such check
+    // has completed (or run far enough to find a problem).
+    virtual void CheckConfig() noexcept = 0;
 
-    // Initiate saving of current config information; this causes CheckConfig()
+    // Initiate saving of current config information; this causes GetStatus()
     // to report false until this has completed and read back for verification.
+    // In other words, ApplyConfig() is a proper superset of CheckConfig().
     virtual void ApplyConfig(bool burn) noexcept = 0;
 
     // Because reading or writing require round-trip CAN messaging, it can be
     // slow, particuarly when a lot of this is required.  Additionally, it is
     // important to be able to manage CAN bus bandwidth by spreading such
     // messaging in time.  Therefore, configuration work happens in the
-    // background, in small increments.  This is done, in part, by handling
-    // messaging here.  Additionally, because there may be many devices being
+    // background, in small increments.  This is done by performing messaging
+    // in Periodic().  Additionally, because there may be many devices being
     // configured, the CAN ID may be used to further spread thinga out.  This
     // may involve apportioning messaging based on where the given CAN ID falls
     // within the address space of CAN IDs (6 bits; may have a shorter period).
 
-    // This should probably be used in DisabledPeriodic() and TestPeriodic(),
-    // with Disabled being used to check and apply configuration, and Test also
-    // being used to "burn" (permanently save) configuration.  Ideally, the
-    // correct configuration is permanently saved so that it comes back after
-    // any power outage.  But this type of update should only be done under
-    // manual control.  This is where Test mode comes in.  Disabled mode runs
-    // before Autonomous or Teleop, so it is used to provide some coverage in
-    // case settings have not been permanently saved.  All of this replaces
-    // manual configuration using vendor utilities and/or writing code to apply
-    // configuration settings programatically.  Some settings (such as coast/
-    // brake) are more dynamic and may be altered programmatically, but still
-    // have default settings managed via this config mechanism.  It is also
-    // anticipated that Disabled mode is where summary reporting of things such
-    // as cumulative faults, controller restart counts, config issues, etc. may
-    // be reported, as this runs after Autonomous and Teleop.  Test mode is the
-    // only place where it is appropriate to be very verbose at all, as console
-    // spew can cause issues and consumes resources.
-    virtual void ConfigPeriodic() noexcept = 0;
+    // To keep Periodic() lightweight, management of config parameters is meant
+    // to be done only following a call to CheckConfig() or ApplyConfig().  And
+    // such calls are generally meant to be done in either Disabled (init) or
+    // Test (init and interactive -- burning should only be done at interactive
+    // and explicit request).  Since apply includes a post-application check,
+    // one reasonable usage is to call ApplyConfig(false) from DisabledInit()
+    // and to use ApplyConfig() from TestPeriodic(), in respose to user actions
+    // such as updating PID parameters or activating some "burn" control.
+
+    // Ideally, the desired configuration is permanently saved so that it comes
+    // up after any power outage.  Again, any permanent update ("burn") used to
+    // set this up should only be done under manual control.  This is where
+    // Test mode comes in.  Disabled mode normally runs before Autonomous and
+    // Teleop, so it may be used to provide some coverage in case settings have
+    // not been permanently saved.  All of this replaces manual configuration
+    // via vendor utilities and/or writing code to apply configuration settings
+    // programatically.  Some settings (such as coast/brake) are more dynamic
+    // and may be altered programmatically, but still have default settings
+    // managed via this config mechanism.  It is also anticipated that Disabled
+    // mode is where summary reporting of things such as cumulative faults,
+    // controller restart counts, config issues, etc. will be done, as this
+    // normally runs after Autonomous and Teleop.  Test mode is the only mode
+    // where it is appropriate to be very verbose at all, as console spew can
+    // cause issues and consumes resources.
 
     // Lightweight function which manages any faults or recovery, particuarly
     // detecting and handling controller restarts (reset or loss of power).
+    // It also will do work to update Shuffleboard, and/or to manage config
+    // parameters, but only when this has been requested (via other API calls).
     virtual void Periodic() noexcept = 0;
 
     virtual void ClearFaults() noexcept = 0;
@@ -188,11 +198,6 @@ public:
         base_.ShuffleboardCreate(container, control, reset);
     }
 
-    void ShuffleboardPeriodic() noexcept override
-    {
-        base_.ShuffleboardPeriodic();
-    }
-
     void SetConfig(const ConfigMap config) noexcept override
     {
         base_.SetConfig(config);
@@ -203,19 +208,14 @@ public:
         base_.AddConfig(config);
     }
 
-    bool CheckConfig() noexcept override
+    void CheckConfig() noexcept override
     {
-        return base_.CheckConfig();
+        base_.CheckConfig();
     }
 
     void ApplyConfig(bool burn) noexcept override
     {
         base_.ApplyConfig(burn);
-    }
-
-    void ConfigPeriodic() noexcept override
-    {
-        base_.ConfigPeriodic();
     }
 
     void Periodic() noexcept override

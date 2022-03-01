@@ -53,17 +53,13 @@ namespace
                                 std::function<void(double)> control = nullptr,
                                 std::function<void()> reset = nullptr) noexcept override;
 
-        void ShuffleboardPeriodic() noexcept override;
-
         void SetConfig(const ConfigMap config) noexcept override { config_ = config; }
 
         void AddConfig(const ConfigMap config) noexcept override { config_.merge(ConfigMap(config)); }
 
-        bool CheckConfig() noexcept override;
+        void CheckConfig() noexcept override;
 
         void ApplyConfig(bool burn) noexcept override;
-
-        void ConfigPeriodic() noexcept override;
 
         void Periodic() noexcept override;
 
@@ -134,6 +130,7 @@ namespace
         std::function<void(double)> controlF_ = nullptr;
         std::function<void()> resetF_ = nullptr;
 
+        // Config parameters which are not individually settable.
         double outputRangeMin0_ = std::get<double>(SparkMaxFactory::configDefaults.at("kOutputMin_0"));
         double outputRangeMax0_ = std::get<double>(SparkMaxFactory::configDefaults.at("kOutputMax_0"));
         double outputRangeMin1_ = std::get<double>(SparkMaxFactory::configDefaults.at("kOutputMin_1"));
@@ -147,7 +144,10 @@ namespace
         uint smartCurrentConfig_ = std::get<uint>(SparkMaxFactory::configDefaults.at("kSmartCurrentConfig"));
 
         bool configGood_ = false;
+        bool configPush_ = false;
+        bool configBurn_ = false;
 
+        void ShuffleboardPeriodic() noexcept;
         void DoSafely(const char *const what, std::function<void()> work) noexcept;
         bool AnyError(const rev::REVLibError returnCode) noexcept;
         std::tuple<bool, bool, std::string> VerifyConfig(const std::string_view key, const ConfigValue &value) noexcept;
@@ -261,7 +261,8 @@ SparkMax::SparkMax(const std::string_view name, const int canId, const bool inve
             throw std::runtime_error("controller_");
         }
 
-        if (AnyError(controller_->SetFeedbackDevice(*encoder_)))
+        // XXX do this as part of Periodic(), since it is not persisted.
+        if (encoderCounts_ != 0 && AnyError(controller_->SetFeedbackDevice(*encoder_)))
         {
             throw std::runtime_error("SetFeedbackDevice()");
         } });
@@ -323,6 +324,7 @@ void SparkMax::ShuffleboardPeriodic() noexcept
         controlUI_->GetEntry().SetDouble(0.0);
         control = 0.0;
 
+        // Note that "SpecifyPosition(0.0);" is called below.
         if (resetF_)
         {
             resetF_();
@@ -401,31 +403,52 @@ void SparkMax::ShuffleboardPeriodic() noexcept
 // XXX uint32 encoder_->GetCountsPerRevolution();
 
 // start (X = check, Y = apply (X + Y), Z = apply and burn (X + Y + Z))
-// Y: block out normal operations which could affect config
-// Z: block out all normal operations
-// Z: RestoreFactoryDefaults()
-// Z: redo ctor logic
-// X: if encoderCount_ != 0 (alt encoder), verify GetCountsPerRevolution() matches
-// loop over parameters
+// Y: block out normal operations which could affect config, block out Z
+// Z: block out all normal operations, Y has no effect
+// Z: 1) RestoreFactoryDefaults()
+// Z: 2) redo ctor logic?
+// X: 3) if encoderCount_ != 0 (alt encoder), verify GetCountsPerRevolution() matches
+// 4) loop over parameters
 //     X: check one param
-//     Y: update one param
+//     Y: update one param, as needed
 // X: update string and status value
 // Y: update apply string
-// Z: BurnFlash()
+// Z: 5) BurnFlash()
 
-bool SparkMax::CheckConfig() noexcept
+void SparkMax::ApplyConfig(bool burn) noexcept
 {
-    return configGood_;
+    if (configBurn_)
+    {
+        return;
+    }
+
+    if (burn)
+    {
+        configPush_ = false;
+        configBurn_ = true;
+        // XXX other state machine init
+
+        return;
+    }
+
+    if (configPush_)
+    {
+        return;
+    }
+
+    configPush_ = true;
+    // XXX other state machine init
 }
-
-void SparkMax::ApplyConfig(bool burn) noexcept {}
-
-void SparkMax::ConfigPeriodic() noexcept {}
 
 // Read faults/sticky faults, every N iterations clear, bump counters, etc. XXX
 // GetFaults(), GetStickyFaults(), ClearFaults()
 // Restore periodic frame periods as needed.  Also recreate pointer triple, first.
 // XXX Takes over ctor, clearing of errors.
+// If reset:
+//     kStatus0
+//     kStatus1
+//     kStatus2
+//     SetFeedbackDevice()
 void SparkMax::Periodic() noexcept {}
 
 // XXX this is just reset of state maintained via Periodic()
@@ -588,6 +611,7 @@ void SparkMax::DoSafely(const char *const what, std::function<void()> work) noex
 }
 
 // XXX
+void SparkMax::CheckConfig() noexcept {}
 
 // Check a single configuration parameter against a specific value; returns
 // three pieces of information: 1) bool, value is positively verified; 2) bool,
