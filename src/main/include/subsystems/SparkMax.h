@@ -24,15 +24,6 @@ namespace SparkMaxFactory
 // follows but, first, here is a list of settings which do not have
 // any configuration parameter:
 
-// Motor Inverted (see GetInverted / SetInverted)
-//   This is managed on the roboRIO side of things.  SmartMotor handles this by
-//   passing a Boolean through the constructor.
-
-// Firmware Version (see GetFirmwareVersion / GetFirmwareString)
-//   This is read-only and only changes when the firmware has been manually
-//   updated.  This is checked, and there is a psuedo config parameter to
-//   specify the expected value.
-
 // Periodic Frame Periods (see SetPeriodicFramePeriod)
 //   This is set on the SPARK MAX, but not persistently.  It could be handled
 //   by introducing some kind of "volatile" flag in the config information that
@@ -59,6 +50,15 @@ namespace SparkMaxFactory
 // CAN Timeout (see SetCANTimeout)
 //   These are managed on the roboRIO side of things.  There is no attempt to
 //   cover these, they are simply left at default values.
+
+// Motor Inverted (see GetInverted / SetInverted)
+//   This is managed on the roboRIO side of things.  SmartMotor handles this by
+//   passing a Boolean through the constructor.
+
+// Firmware Version (see GetFirmwareVersion / GetFirmwareString)
+//   This is read-only and only changes when the firmware has been manually
+//   updated.  This is checked, and there is a psuedo config parameter to
+//   specify the expected value.
 
 // Now, the list of actual Spark Max configuaration parameters:
 
@@ -361,6 +361,9 @@ namespace SparkMaxFactory
 {
     // Version 1.5.2; all configuration parameters are current at this release.
     const SmartMotorBase::ConfigMap configDefaults = {
+        {"kStatus0", uint{10}}, // ms
+        {"kStatus1", uint{20}}, // ms
+        {"kStatus2", uint{50}}, // ms
         {"Firmware Version", uint{0x01050002}},
         {"kIdleMode", uint{1}},
         {"kFollowerID", uint{0}},
@@ -412,8 +415,5 @@ namespace SparkMaxFactory
         {"kSmartMotionMinVelOutput_1", double{0.0}},
         {"kSmartMotionAllowedClosedLoopError_1", double{0.0}},
         {"kSmartMotionAccelStrategy_1", double{0.0}},
-        {"kStatus0", uint{10}}, // ms
-        {"kStatus1", uint{20}}, // ms
-        {"kStatus2", uint{50}}, // ms
     };
 }
