@@ -51,17 +51,44 @@ namespace
         SparkMax(const SparkMax &) = delete;
         SparkMax &operator=(const SparkMax &) = delete;
 
-        void SetConfig(const ConfigMap config) noexcept override { config_ = config; }
+#if 0
+        void ConfigIndex() noexcept
+        {
+            for (const auto &elem : SparkMaxFactory::configDefaults)
+            {
+                const auto kv = SparkMaxFactory::configDefaults.find(elem.first);
+
+                const auto ndx = std::distance(kv, SparkMaxFactory::configDefaults.end());
+
+                std::printf("Index: %s = %i\n", elem.first.c_str(), ndx);
+            }
+        }
+#endif
+
+        void SetConfig(const ConfigMap config) noexcept override
+        {
+            config_ = config;
+        }
 
         void AddConfig(const ConfigMap config) noexcept override { config_.merge(ConfigMap(config)); }
 
         void CheckConfig() noexcept override
         {
+            if (configLock_)
+            {
+                return;
+            }
+
             configRead_ = true;
         }
 
         void ApplyConfig(bool burn) noexcept override
         {
+            if (configLock_)
+            {
+                return;
+            }
+
             if (burn)
             {
                 configBurn_ = false;
@@ -151,11 +178,11 @@ namespace
         ConfigMap config_;
 
         bool configReboot_ = true;
+        bool configGood_ = false;
+        bool configLock_ = false;
         bool configRead_ = false;
         bool configPush_ = false;
         bool configBurn_ = false;
-        bool configGood_ = false;
-        bool configLock_ = false;
 
         // Config parameters which are not individually settable.
         double outputRangeMin0_ = std::get<double>(SparkMaxFactory::configDefaults.at("kOutputMin_0"));
@@ -178,9 +205,12 @@ namespace
         int iteration_ = 0;
         uint sequence_ = 0;
 
+        double position_ = 0.0;
+        double velocity_ = 0.0;
+
         void ShuffleboardPeriodic() noexcept;
         void ConfigPeriodic() noexcept;
-        void DoSafely(const char *const what, std::function<void()> work) noexcept;
+        void DoSafely(const char *const what, std::function<void()> work, const bool check = true) noexcept;
         bool AnyError(const rev::REVLibError returnCode) noexcept;
         std::tuple<bool, bool, std::string> VerifyConfig(const std::string_view key, const ConfigValue &value) noexcept;
         std::string ApplyConfig(const std::string_view key, const ConfigValue &value) noexcept;
@@ -346,7 +376,7 @@ void SparkMax::ShuffleboardPeriodic() noexcept
     double velocity = 0.0;
 
     // Obtain raw data from CANSparkMax and set the output.
-    DoSafely("ShuffleboardPeriodic()", [&]() -> void
+    DoSafely("ShuffleboardPeriodic", [&]() -> void
              {
         temperature = motor_->GetMotorTemperature();
         faults = motor_->GetFaults();
@@ -370,7 +400,7 @@ void SparkMax::ShuffleboardPeriodic() noexcept
     }
 
     temperatureUI_->GetEntry().SetDouble(temperature);
-    statusUI_->GetEntry().SetBoolean(motor_ && configGood_ && faults == 0);
+    statusUI_->GetEntry().SetBoolean(motor_ && encoder_ && controller_ && configGood_ && faults == 0);
     faultsUI_->GetEntry().SetString(FaultInfo(faults));
     stickyFaultsUI_->GetEntry().SetString(FaultInfo(stickyFaults));
     voltageUI_->GetEntry().SetDouble(voltage);
@@ -394,8 +424,7 @@ void SparkMax::ShuffleboardPeriodic() noexcept
 // of any/all prior calls to SetConfig() and/or AddConfig().  Note that the
 // state maintained via Periodic() is also important in this context.
 
-// XXX uint32 encoder_->GetCountsPerRevolution();
-
+// XXX
 // start (X = check, Y = apply (X + Y), Z = apply and burn (X + Y + Z))
 // Y: block out normal operations which could affect config, block out Z
 // Z: block out all normal operations, Y has no effect
@@ -424,11 +453,16 @@ void SparkMax::Periodic() noexcept
     // collected from periodic status frames.  To capture any transient events,
     // GetStickyFaults() is used instead of GetFaults().  There is no
     // expectation that fault information is instataeously accurate, it is only
-    // used for reporting and to detect any motor controller reboots.
-    const std::bitset<16> faultBits(motor_->GetStickyFaults());
-
-    // Make things extra sticky.  This is cleared by ClearFaults().
-    faultBits_ |= faultBits;
+    // used for reporting and to detect any motor controller reboots.  Make
+    // things extra sticky using bitwise OR.  This is cleared by ClearFaults().
+    DoSafely(
+        "GetStickyFaults", [&]() -> void
+        {
+            if (motor_)
+            {
+                faultBits_ |= std::bitset<16>(motor_->GetStickyFaults());
+            } },
+        false);
 
     // In microseconds.  At 50Hz, this will nominally tick by increments of 20.
     // The object here is too only continue at a rate of around 3Hz, and to
@@ -464,16 +498,18 @@ void SparkMax::ConfigPeriodic() noexcept
     // First stage of state machine; this has to be there before going further.
     if (!motor_)
     {
-        DoSafely("motor_", [&]() -> void
-                 {
+        DoSafely(
+            "motor_", [&]() -> void
+            {
             motor_ = std::make_unique<rev::CANSparkMax>(canId_, rev::CANSparkMaxLowLevel::MotorType::kBrushless);
             if (!motor_)
             {
                 throw std::runtime_error("motor_");
-            } });
+            }
 
-        // Does not get sent to the motor controller, done locally.
-        motor_->SetInverted(inverted_);
+            // Does not get sent to the motor controller, done locally.
+            motor_->SetInverted(inverted_); },
+            false);
 
         return;
     }
@@ -482,8 +518,9 @@ void SparkMax::ConfigPeriodic() noexcept
     // give it a stage to cover worst case.
     if (!encoder_)
     {
-        DoSafely("encoder_", [&]() -> void
-                 {
+        DoSafely(
+            "encoder_", [&]() -> void
+            {
             if (encoderCounts_ == 0)
             {
                 encoder_ = std::make_unique<rev::SparkMaxRelativeEncoder>(motor_->GetEncoder());
@@ -495,7 +532,8 @@ void SparkMax::ConfigPeriodic() noexcept
             if (!encoder_)
             {
                 throw std::runtime_error("encoder_");
-            } });
+            } },
+            false);
 
         return;
     }
@@ -503,25 +541,29 @@ void SparkMax::ConfigPeriodic() noexcept
     // Third stage of state machine, similar to prior stages.  Always fast?
     if (!controller_)
     {
-        DoSafely("controller_", [&]() -> void
-                 {
+        DoSafely(
+            "controller_", [&]() -> void
+            {
             controller_ = std::make_unique<rev::SparkMaxPIDController>(motor_->GetPIDController());
             if (!controller_)
             {
                 throw std::runtime_error("controller_");
-            } });
+            } },
+            false);
 
         return;
     }
 
     // This is the only reliable way to extract the reset status; again, safe
     // and "free".  Start the post reset state machine.
-    if (motor_->GetStickyFault(rev::CANSparkMax::FaultID::kHasReset))
-    {
-        configReboot_ = true;
-        configGood_ = false;
-        sequence_ = 0;
-    }
+    DoSafely("GetStickyFault", [&]() -> void
+             {
+        if (motor_->GetStickyFault(rev::CANSparkMax::FaultID::kHasReset))
+        {
+            configReboot_ = true;
+            configGood_ = false;
+            sequence_ = 0;
+        } });
 
     if (configReboot_)
     {
@@ -550,13 +592,15 @@ void SparkMax::ConfigPeriodic() noexcept
         switch (sequence_)
         {
         case 0:
-            DoSafely("ClearFaults()", [&]() -> void
+            // First, clear the fault, so progress can be made.
+            DoSafely("ClearFaults", [&]() -> void
                      {
                 if (AnyError(motor_->ClearFaults()))
                     {
                         return;
                     } });
 
+            // Next state depends on type of encoder.
             if (encoderCounts_ != 0)
             {
                 sequence_ = 1;
@@ -568,6 +612,7 @@ void SparkMax::ConfigPeriodic() noexcept
 
             return;
         case 1:
+            // For alternate encoder, need to set it up as feedback source.
             DoSafely("SetFeedbackDevice", [&]() -> void
                      {
                 if (AnyError(controller_->SetFeedbackDevice(*encoder_)))
@@ -579,9 +624,10 @@ void SparkMax::ConfigPeriodic() noexcept
 
             return;
         case 2:
+            // For alternate encoder, check counts per revolution is correct.
             DoSafely("GetCountsPerRevolution", [&]() -> void
                      {
-                if (encoderCounts_ <= 0 || static_cast<uint32_t>(encoderCounts_) != encoder_->GetCountsPerRevolution())
+                if (encoderCounts_ < 0 || static_cast<uint32_t>(encoderCounts_) != encoder_->GetCountsPerRevolution())
                 {
                     throw std::runtime_error("GetCountsPerRevolution()");
                 } });
@@ -590,6 +636,7 @@ void SparkMax::ConfigPeriodic() noexcept
 
             return;
         case 3:
+            // Restore volatile state: status frame 0 period.
             if (periodicFramePeriod("kStatus0", status0_))
             {
                 sequence_ = 4;
@@ -597,6 +644,7 @@ void SparkMax::ConfigPeriodic() noexcept
 
             return;
         case 4:
+            // Restore volatile state: status frame 1 period.
             if (periodicFramePeriod("kStatus1", status1_))
             {
                 sequence_ = 5;
@@ -604,9 +652,10 @@ void SparkMax::ConfigPeriodic() noexcept
 
             return;
         case 5:
+            // Restore volatile state: status frame 2 period.
             if (periodicFramePeriod("kStatus2", status2_))
             {
-                configReboot_ = true;
+                configReboot_ = false;
                 configGood_ = true;
                 sequence_ = 0;
             }
@@ -630,50 +679,131 @@ void SparkMax::SetIdleMode(const SmartMotorBase::IdleMode mode) noexcept
     {
         return;
     }
+
+    rev::CANSparkMax::IdleMode tmp = mode == SmartMotorBase::IdleMode::kBrake ? rev::CANSparkMax::IdleMode::kBrake : rev::CANSparkMax::IdleMode::kCoast;
+
+    DoSafely("SetIdleMode", [&]() -> void
+             { motor_->SetIdleMode(tmp); });
 }
 
 SmartMotorBase::IdleMode SparkMax::GetIdleMode() noexcept
 {
-    return SmartMotorBase::IdleMode::kCoast;
+    rev::CANSparkMax::IdleMode mode = motor_->GetIdleMode();
+
+    DoSafely("GetIdleMode", [&]() -> void
+             { mode = motor_->GetIdleMode(); });
+
+    return mode == rev::CANSparkMax::IdleMode::kBrake ? SmartMotorBase::IdleMode::kBrake : SmartMotorBase::IdleMode::kCoast;
 }
 
-void SparkMax::Stop() noexcept {}
+void SparkMax::Stop() noexcept
+{
+    position_ = 0.0;
+    velocity_ = 0.0;
 
-void SparkMax::Set(const double percent) noexcept {}
+    DoSafely("Stop", [&]() -> void
+             { motor_->StopMotor(); });
+}
+
+void SparkMax::Set(const double percent) noexcept
+{
+    position_ = 0.0;
+    velocity_ = 0.0;
+
+    DoSafely("Set", [&]() -> void
+             { motor_->Set(percent); });
+}
 
 double SparkMax::Get() noexcept
 {
-    return 0.0;
+    double result = 0.0;
+
+    DoSafely("Get", [&]() -> void
+             { result = motor_->Get(); });
+
+    return result;
 }
 
-void SparkMax::SetVoltage(const units::volt_t voltage) noexcept {}
+// This is based on voltage compensation, rather than feedback.
+void SparkMax::SetVoltage(const units::volt_t voltage) noexcept
+{
+    position_ = 0.0;
+    velocity_ = 0.0;
 
-void SparkMax::SetCurrent(const units::ampere_t current) noexcept {}
+    DoSafely("SetVoltage", [&]() -> void
+             { motor_->SetVoltage(voltage); });
+}
 
-void SparkMax::SpecifyPosition(const double position) noexcept {}
+// Note that current control uses PID parameter set 0, which is normally used
+// for position.  It is unlikely both current and position control would be
+// used with the same mechanism, so this is OK.  Any error is tracked, but is
+// not propagated from this context (similar to Set).
+void SparkMax::SetCurrent(const units::ampere_t current) noexcept
+{
+    position_ = 0.0;
+    velocity_ = 0.0;
 
-void SparkMax::SeekPosition(const double position) noexcept {}
+    DoSafely("SetCurrent", [&]() -> void
+             { (void)AnyError(controller_->SetReference(current.to<double>(), rev::CANSparkMax::ControlType::kCurrent, 0)); });
+}
+
+// Note that any error is tracked, but is not propagated from this context.
+void SparkMax::SpecifyPosition(const double position) noexcept
+{
+    DoSafely("SpecifyPosition", [&]() -> void
+             { (void)AnyError(encoder_->SetPosition(position)); });
+}
+
+void SparkMax::SeekPosition(const double position) noexcept
+{
+    position_ = position;
+    velocity_ = 0.0;
+
+    DoSafely("SeekPosition", [&]() -> void
+             { (void)AnyError(controller_->SetReference(position, rev::CANSparkMax::ControlType::kSmartMotion, 0)); });
+}
 
 bool SparkMax::CheckPosition(const double tolerance) noexcept
 {
-    return false;
+    double error = GetPositionRaw() - position_;
+
+    return error >= -tolerance && error < tolerance;
 }
 
 double SparkMax::GetPositionRaw() noexcept
 {
-    return 0.0;
+    double result = 0.0;
+
+    DoSafely("GetPosition", [&]() -> void
+             { result = encoder_->GetPosition(); });
+
+    return result;
 }
 
-void SparkMax::SeekVelocity(const double velocity) noexcept {}
+void SparkMax::SeekVelocity(const double velocity) noexcept
+{
+    position_ = 0.0;
+    velocity_ = velocity;
+
+    DoSafely("SeekVelocity", [&]() -> void
+             { (void)AnyError(controller_->SetReference(velocity, rev::CANSparkMax::ControlType::kSmartVelocity, 0)); });
+}
 
 bool SparkMax::CheckVelocity(const double tolerance) noexcept
 {
-    return false;
+    double error = GetVelocityRaw() - velocity_;
+
+    return error >= -tolerance && error < tolerance;
 }
 
 double SparkMax::GetVelocityRaw() noexcept
 {
-    return 0.0;
+    double result = 0.0;
+
+    DoSafely("GetVelocity", [&]() -> void
+             { result = encoder_->GetVelocity(); });
+
+    return result;
 }
 
 bool SparkMax::AnyError(const rev::REVLibError returnCode) noexcept
@@ -728,15 +858,11 @@ bool SparkMax::AnyError(const rev::REVLibError returnCode) noexcept
     return true;
 }
 
-void SparkMax::DoSafely(const char *const what, std::function<void()> work) noexcept
+void SparkMax::DoSafely(const char *const what, std::function<void()> work, const bool check) noexcept
 {
-    // XXX if any part of the triple is nullptr, check clock -- periodically attempt to reconstruct things!
-    // Also, periodically check HasReset fault and consider handling things in a similar way (possibly by
-    // nulling triple and coming here whenever) -- do this via a state machine?
-
     try
     {
-        if (!motor_ || !encoder_ || !controller_)
+        if (check && (!motor_ || !encoder_ || !controller_))
         {
             motor_ = nullptr;
             encoder_ = nullptr;
@@ -766,8 +892,6 @@ void SparkMax::DoSafely(const char *const what, std::function<void()> work) noex
 
         std::printf("SparkMax[%i] %s %s unknown exception.\n", canId_, name_.c_str(), what);
     }
-
-    // XXX if anything is nullptr, arrange to periodically restore things
 }
 
 // Check a single configuration parameter against a specific value; returns
@@ -793,7 +917,9 @@ std::tuple<bool, bool, std::string> SparkMax::VerifyConfig(const std::string_vie
     std::optional<ConfigValue> actual_value;
 
     // In order to avoid switching on a string, obtain the index into defaults.
-    const auto ndx = std::distance(kv, SparkMaxFactory::configDefaults.begin());
+    // The complication here is that maps are sorted, so the indices are not in
+    // an easy-to-maintain order.
+    const auto ndx = std::distance(kv, SparkMaxFactory::configDefaults.end());
 
     // Some settings only apply to one encoder type or the other.
     const bool altMode = (encoderCounts_ != 0);
@@ -812,19 +938,19 @@ std::tuple<bool, bool, std::string> SparkMax::VerifyConfig(const std::string_vie
     // These first three are not real config parameters; just act as though
     // they verified correctly.  Periodic() is responsible for setting these,
     // and there is no way to verify them.
-    case 0: // kStatus0
+    case 4:
         name = "Status0";
         actual_value = uint{status0_};
         break;
-    case 1: // kStatus1
+    case 3:
         name = "Status1";
         actual_value = uint{status1_};
         break;
-    case 2: // kStatus2
+    case 2:
         name = "Status2";
         actual_value = uint{status2_};
         break;
-    case 3:
+    case 58:
         name = "Firmware Version (";
         {
             const uint val = uint{motor_->GetFirmwareVersion()};
@@ -835,7 +961,7 @@ std::tuple<bool, bool, std::string> SparkMax::VerifyConfig(const std::string_vie
         }
         name += ")";
         break;
-    case 4:
+    case 30:
         name = "IdleMode";
         {
             const rev::CANSparkMax::IdleMode tmp = motor_->GetIdleMode();
@@ -849,7 +975,11 @@ std::tuple<bool, bool, std::string> SparkMax::VerifyConfig(const std::string_vie
             }
         }
         break;
-    case 5:
+    // kLimitSwitchFwdPolarity = 29
+    // kLimitSwitchRevPolarity = 28
+    // kHardLimitFwdEn = 38
+    // kHardLimitRevEn = 37
+    case 39:
         name = "FollowerID";
         if (motor_->IsFollower())
         {
@@ -860,7 +990,7 @@ std::tuple<bool, bool, std::string> SparkMax::VerifyConfig(const std::string_vie
             actual_value = uint{0};
         }
         break;
-    case 6:
+    case 40:
         name = "FollowerConfig";
         if (motor_->IsFollower())
         {
@@ -871,164 +1001,164 @@ std::tuple<bool, bool, std::string> SparkMax::VerifyConfig(const std::string_vie
             actual_value = uint{0};
         }
         break;
-    case 7:
+    case 6:
         name = "SoftLimitFwd";
         actual_value = double{motor_->GetSoftLimit(rev::CANSparkMax::SoftLimitDirection::kForward)};
         break;
-    case 8:
+    case 5:
         name = "SoftLimitRev";
         actual_value = double{motor_->GetSoftLimit(rev::CANSparkMax::SoftLimitDirection::kReverse)};
         break;
-    case 9:
+    case 20:
         name = "RampRate";
         actual_value = double{motor_->GetOpenLoopRampRate()};
         break;
-    case 10:
+    case 52:
         name = "ClosedLoopRampRate";
         actual_value = double{motor_->GetClosedLoopRampRate()};
         break;
-    case 11:
+    case 51:
         name = "CompensatedNominalVoltage";
         actual_value = double{motor_->GetVoltageCompensationNominalVoltage()};
         break;
-    case 12:
+    case 56:
         name = "AltEncoderInverted";
         if (altMode)
         {
             actual_value = bool{encoder_->GetInverted()};
         }
         break;
-    case 13:
+    case 44:
         name = "EncoderAverageDepth";
         if (!altMode)
         {
             actual_value = uint{encoder_->GetAverageDepth()};
         }
         break;
-    case 14:
+    case 57:
         name = "AltEncoderAverageDepth";
         if (altMode)
         {
             actual_value = uint{encoder_->GetAverageDepth()};
         }
         break;
-    case 15:
+    case 43:
         name = "EncoderSampleDelta";
         if (!altMode)
         {
             actual_value = uint{encoder_->GetMeasurementPeriod()};
         }
         break;
-    case 16:
+    case 54:
         name = "AltEncoderSampleDelta";
         if (altMode)
         {
             actual_value = uint{encoder_->GetMeasurementPeriod()};
         }
         break;
-    case 17:
+    case 21:
         name = "PositionConversionFactor";
         if (!altMode)
         {
             actual_value = double{encoder_->GetPositionConversionFactor()};
         }
         break;
-    case 18:
+    case 55:
         name = "AltEncoderPositionFactor";
         if (altMode)
         {
             actual_value = double{encoder_->GetPositionConversionFactor()};
         }
         break;
-    case 19:
+    case 1:
         name = "VelocityConversionFactor";
         if (!altMode)
         {
             actual_value = double{encoder_->GetVelocityConversionFactor()};
         }
         break;
-    case 20:
+    case 53:
         name = "AltEncoderVelocityFactor";
         if (altMode)
         {
             actual_value = double{encoder_->GetVelocityConversionFactor()};
         }
         break;
-    case 21:
+    case 50:
         name = "kCurrentChop";
         follower = true;
         break;
-    case 22:
+    case 49:
         name = "kCurrentChopCycles";
         follower = true;
         break;
-    case 23:
+    case 17:
         name = "kSmartCurrentStallLimit";
         follower = true;
         break;
-    case 24:
+    case 18:
         name = "kSmartCurrentFreeLimit";
         follower = true;
         break;
-    case 25:
+    case 19:
         name = "kSmartCurrentConfig";
         follower = true;
         break;
-    case 26:
+    case 23:
         name = "P_0";
         actual_value = double{controller_->GetP(0)};
         break;
-    case 27:
+    case 32:
         name = "I_0";
         actual_value = double{controller_->GetI(0)};
         break;
-    case 28:
+    case 46:
         name = "D_0";
         actual_value = double{controller_->GetD(0)};
         break;
-    case 29:
+    case 42:
         name = "F_0";
         actual_value = double{controller_->GetFF(0)};
         break;
-    case 30:
+    case 34:
         name = "IZone_0";
         actual_value = double{controller_->GetIZone(0)};
         break;
-    case 31:
+    case 36:
         name = "IMaxAccum_0";
         actual_value = double{controller_->GetIMaxAccum(0)};
         break;
-    case 32:
+    case 48:
         name = "DFilter_0";
         actual_value = double{controller_->GetDFilter(0)};
         break;
-    case 33:
+    case 25:
         name = "OutputMin_0";
         outputRangeMin0_ = double{controller_->GetOutputMin(0)};
         actual_value = outputRangeMin0_;
         break;
-    case 34:
+    case 27:
         name = "OutputMax_0";
         outputRangeMax0_ = double{controller_->GetOutputMax(0)};
         actual_value = outputRangeMax0_;
         break;
-    case 35:
+    case 10:
         name = "SmartMotionMaxVelocity_0";
         actual_value = double{controller_->GetSmartMotionMaxVelocity(0)};
         break;
-    case 36:
+    case 12:
         name = "SmartMotionMaxAccel_0";
         actual_value = double{controller_->GetSmartMotionMaxAccel(0)};
         break;
-    case 37:
+    case 8:
         name = "SmartMotionMinVelOutput_0";
         actual_value = double{controller_->GetSmartMotionMinOutputVelocity(0)};
         break;
-    case 38:
+    case 14:
         name = "SmartMotionAllowedClosedLoopError_0";
         actual_value = double{controller_->GetSmartMotionAllowedClosedLoopError(0)};
         break;
-    case 39:
+    case 16:
         name = "SmartMotionAccelStrategy_0";
         {
             rev::SparkMaxPIDController::AccelStrategy tmp = controller_->GetSmartMotionAccelStrategy(0);
@@ -1043,61 +1173,61 @@ std::tuple<bool, bool, std::string> SparkMax::VerifyConfig(const std::string_vie
             }
         }
         break;
-    case 40:
+    case 22:
         name = "P_1";
         actual_value = double{controller_->GetP(1)};
         break;
-    case 41:
+    case 31:
         name = "I_1";
         actual_value = double{controller_->GetI(1)};
         break;
-    case 42:
+    case 45:
         name = "D_1";
         actual_value = double{controller_->GetD(1)};
         break;
-    case 43:
+    case 41:
         name = "F_1";
         actual_value = double{controller_->GetFF(1)};
         break;
-    case 44:
+    case 33:
         name = "IZone_1";
         actual_value = double{controller_->GetIZone(1)};
         break;
-    case 45:
+    case 35:
         name = "IMaxAccum_1";
         actual_value = double{controller_->GetIMaxAccum(1)};
         break;
-    case 46:
+    case 47:
         name = "DFilter_1";
         actual_value = double{controller_->GetDFilter(1)};
         break;
-    case 47:
+    case 24:
         name = "OutputMin_1";
         outputRangeMin1_ = double{controller_->GetOutputMin(1)};
         actual_value = outputRangeMin0_;
         break;
-    case 48:
+    case 26:
         name = "OutputMax_1";
         outputRangeMax1_ = double{controller_->GetOutputMax(1)};
         actual_value = outputRangeMax0_;
         break;
-    case 49:
+    case 9:
         name = "SmartMotionMaxVelocity_1";
         actual_value = double{controller_->GetSmartMotionMaxVelocity(1)};
         break;
-    case 50:
+    case 11:
         name = "SmartMotionMaxAccel_1";
         actual_value = double{controller_->GetSmartMotionMaxAccel(1)};
         break;
-    case 51:
+    case 7:
         name = "SmartMotionMinVelOutput_1";
         actual_value = double{controller_->GetSmartMotionMinOutputVelocity(1)};
         break;
-    case 52:
+    case 13:
         name = "SmartMotionAllowedClosedLoopError_1";
         actual_value = double{controller_->GetSmartMotionAllowedClosedLoopError(1)};
         break;
-    case 53:
+    case 15:
         name = "SmartMotionAccelStrategy_1";
         {
             rev::SparkMaxPIDController::AccelStrategy tmp = controller_->GetSmartMotionAccelStrategy(1);
@@ -1151,7 +1281,9 @@ std::string SparkMax::ApplyConfig(const std::string_view key, const ConfigValue 
     }
 
     // In order to avoid switching on a string, obtain the index into defaults.
-    const auto ndx = std::distance(kv, SparkMaxFactory::configDefaults.begin());
+    // The complication here is that maps are sorted, so the indices are not in
+    // an easy-to-maintain order.
+    const auto ndx = std::distance(kv, SparkMaxFactory::configDefaults.end());
 
     // Some settings only apply to one encoder type or the other.
     const bool altMode = (encoderCounts_ != 0);
@@ -1170,7 +1302,7 @@ std::string SparkMax::ApplyConfig(const std::string_view key, const ConfigValue 
     {
     // These first three are not real config parameters; store them so they may
     // be applied after any motor controller reboot.
-    case 0: // kStatus0
+    case 4:
         name = "Status0";
         if (puint)
         {
@@ -1181,7 +1313,7 @@ std::string SparkMax::ApplyConfig(const std::string_view key, const ConfigValue 
             }
         }
         break;
-    case 1: // kStatus1
+    case 3:
         name = "Status1";
         if (puint)
         {
@@ -1192,7 +1324,7 @@ std::string SparkMax::ApplyConfig(const std::string_view key, const ConfigValue 
             }
         }
         break;
-    case 2: // kStatus2
+    case 2:
         name = "Status2";
         if (puint)
         {
@@ -1203,11 +1335,11 @@ std::string SparkMax::ApplyConfig(const std::string_view key, const ConfigValue 
             }
         }
         break;
-    case 3:
+    case 58:
         name = "Firmware Version";
         // This cannot be set here.
         break;
-    case 4:
+    case 30:
         name = "IdleMode";
         if (puint && *puint <= 1)
         {
@@ -1219,7 +1351,11 @@ std::string SparkMax::ApplyConfig(const std::string_view key, const ConfigValue 
             }
         }
         break;
-    case 5:
+    // kLimitSwitchFwdPolarity = 29
+    // kLimitSwitchRevPolarity = 28
+    // kHardLimitFwdEn = 38
+    // kHardLimitRevEn = 37
+    case 39:
         name = "FollowerID";
         if (puint)
         {
@@ -1238,7 +1374,7 @@ std::string SparkMax::ApplyConfig(const std::string_view key, const ConfigValue 
             }
         }
         break;
-    case 6:
+    case 40:
         name = "FollowerConfig";
         if (puint)
         {
@@ -1257,7 +1393,7 @@ std::string SparkMax::ApplyConfig(const std::string_view key, const ConfigValue 
             }
         }
         break;
-    case 7:
+    case 6:
         name = "SoftLimitFwd";
         if (pdouble)
         {
@@ -1267,7 +1403,7 @@ std::string SparkMax::ApplyConfig(const std::string_view key, const ConfigValue 
             }
         }
         break;
-    case 8:
+    case 5:
         name = "SoftLimitRev";
         if (pdouble)
         {
@@ -1277,7 +1413,7 @@ std::string SparkMax::ApplyConfig(const std::string_view key, const ConfigValue 
             }
         }
         break;
-    case 9:
+    case 20:
         name = "RampRate";
         if (pdouble)
         {
@@ -1287,7 +1423,7 @@ std::string SparkMax::ApplyConfig(const std::string_view key, const ConfigValue 
             }
         }
         break;
-    case 10:
+    case 52:
         name = "ClosedLoopRampRate";
         if (pdouble)
         {
@@ -1297,7 +1433,7 @@ std::string SparkMax::ApplyConfig(const std::string_view key, const ConfigValue 
             }
         }
         break;
-    case 11:
+    case 51:
         name = "CompensatedNominalVoltage";
         if (pdouble)
         {
@@ -1317,7 +1453,7 @@ std::string SparkMax::ApplyConfig(const std::string_view key, const ConfigValue 
             }
         }
         break;
-    case 12:
+    case 56:
         name = "AltEncoderInverted";
         if (pbool && altMode)
         {
@@ -1327,7 +1463,7 @@ std::string SparkMax::ApplyConfig(const std::string_view key, const ConfigValue 
             }
         }
         break;
-    case 13:
+    case 44:
         name = "EncoderAverageDepth";
         if (puint && !altMode)
         {
@@ -1337,7 +1473,7 @@ std::string SparkMax::ApplyConfig(const std::string_view key, const ConfigValue 
             }
         }
         break;
-    case 14:
+    case 57:
         name = "AltEncoderAverageDepth";
         if (puint && altMode)
         {
@@ -1347,7 +1483,7 @@ std::string SparkMax::ApplyConfig(const std::string_view key, const ConfigValue 
             }
         }
         break;
-    case 15:
+    case 43:
         name = "EncoderSampleDelta";
         if (puint && !altMode)
         {
@@ -1357,7 +1493,7 @@ std::string SparkMax::ApplyConfig(const std::string_view key, const ConfigValue 
             }
         }
         break;
-    case 16:
+    case 54:
         name = "AltEncoderSampleDelta";
         if (puint && altMode)
         {
@@ -1367,7 +1503,7 @@ std::string SparkMax::ApplyConfig(const std::string_view key, const ConfigValue 
             }
         }
         break;
-    case 17:
+    case 21:
         name = "PositionConversionFactor";
         if (pdouble && !altMode)
         {
@@ -1377,7 +1513,7 @@ std::string SparkMax::ApplyConfig(const std::string_view key, const ConfigValue 
             }
         }
         break;
-    case 18:
+    case 55:
         name = "AltEncoderPositionFactor";
         if (pdouble && altMode)
         {
@@ -1387,7 +1523,7 @@ std::string SparkMax::ApplyConfig(const std::string_view key, const ConfigValue 
             }
         }
         break;
-    case 19:
+    case 1:
         name = "VelocityConversionFactor";
         if (pdouble && !altMode)
         {
@@ -1397,7 +1533,7 @@ std::string SparkMax::ApplyConfig(const std::string_view key, const ConfigValue 
             }
         }
         break;
-    case 20:
+    case 53:
         name = "AltEncoderVelocityFactor";
         if (pdouble && altMode)
         {
@@ -1407,7 +1543,7 @@ std::string SparkMax::ApplyConfig(const std::string_view key, const ConfigValue 
             }
         }
         break;
-    case 21:
+    case 50:
         name = "kCurrentChop";
         if (pdouble)
         {
@@ -1418,7 +1554,7 @@ std::string SparkMax::ApplyConfig(const std::string_view key, const ConfigValue 
             }
         }
         break;
-    case 22:
+    case 49:
         name = "kCurrentChopCycles";
         if (puint)
         {
@@ -1429,7 +1565,7 @@ std::string SparkMax::ApplyConfig(const std::string_view key, const ConfigValue 
             }
         }
         break;
-    case 23:
+    case 17:
         name = "kSmartCurrentStallLimit";
         if (puint)
         {
@@ -1440,7 +1576,7 @@ std::string SparkMax::ApplyConfig(const std::string_view key, const ConfigValue 
             }
         }
         break;
-    case 24:
+    case 18:
         name = "kSmartCurrentFreeLimit";
         if (puint)
         {
@@ -1451,7 +1587,7 @@ std::string SparkMax::ApplyConfig(const std::string_view key, const ConfigValue 
             }
         }
         break;
-    case 25:
+    case 19:
         name = "kSmartCurrentConfig";
         if (puint)
         {
@@ -1462,7 +1598,7 @@ std::string SparkMax::ApplyConfig(const std::string_view key, const ConfigValue 
             }
         }
         break;
-    case 26:
+    case 23:
         name = "P_0";
         if (pdouble)
         {
@@ -1472,7 +1608,7 @@ std::string SparkMax::ApplyConfig(const std::string_view key, const ConfigValue 
             }
         }
         break;
-    case 27:
+    case 32:
         name = "I_0";
         if (pdouble)
         {
@@ -1482,7 +1618,7 @@ std::string SparkMax::ApplyConfig(const std::string_view key, const ConfigValue 
             }
         }
         break;
-    case 28:
+    case 46:
         name = "D_0";
         if (pdouble)
         {
@@ -1492,7 +1628,7 @@ std::string SparkMax::ApplyConfig(const std::string_view key, const ConfigValue 
             }
         }
         break;
-    case 29:
+    case 42:
         name = "F_0";
         if (pdouble)
         {
@@ -1502,7 +1638,7 @@ std::string SparkMax::ApplyConfig(const std::string_view key, const ConfigValue 
             }
         }
         break;
-    case 30:
+    case 34:
         name = "IZone_0";
         if (pdouble)
         {
@@ -1512,7 +1648,7 @@ std::string SparkMax::ApplyConfig(const std::string_view key, const ConfigValue 
             }
         }
         break;
-    case 31:
+    case 36:
         name = "IMaxAccum_0";
         if (pdouble)
         {
@@ -1522,7 +1658,7 @@ std::string SparkMax::ApplyConfig(const std::string_view key, const ConfigValue 
             }
         }
         break;
-    case 32:
+    case 48:
         name = "DFilter_0";
         if (pdouble)
         {
@@ -1532,7 +1668,7 @@ std::string SparkMax::ApplyConfig(const std::string_view key, const ConfigValue 
             }
         }
         break;
-    case 33:
+    case 25:
         name = "OutputMin_0";
         if (pdouble)
         {
@@ -1543,7 +1679,7 @@ std::string SparkMax::ApplyConfig(const std::string_view key, const ConfigValue 
             }
         }
         break;
-    case 34:
+    case 27:
         name = "OutputMax_0";
         if (pdouble)
         {
@@ -1554,7 +1690,7 @@ std::string SparkMax::ApplyConfig(const std::string_view key, const ConfigValue 
             }
         }
         break;
-    case 35:
+    case 10:
         name = "SmartMotionMaxVelocity_0";
         if (pdouble)
         {
@@ -1564,7 +1700,7 @@ std::string SparkMax::ApplyConfig(const std::string_view key, const ConfigValue 
             }
         }
         break;
-    case 36:
+    case 12:
         name = "SmartMotionMaxAccel_0";
         if (pdouble)
         {
@@ -1574,7 +1710,7 @@ std::string SparkMax::ApplyConfig(const std::string_view key, const ConfigValue 
             }
         }
         break;
-    case 37:
+    case 8:
         name = "SmartMotionMinVelOutput_0";
         if (pdouble)
         {
@@ -1584,7 +1720,7 @@ std::string SparkMax::ApplyConfig(const std::string_view key, const ConfigValue 
             }
         }
         break;
-    case 38:
+    case 14:
         name = "SmartMotionAllowedClosedLoopError_0";
         if (pdouble)
         {
@@ -1594,7 +1730,7 @@ std::string SparkMax::ApplyConfig(const std::string_view key, const ConfigValue 
             }
         }
         break;
-    case 39:
+    case 16:
         name = "SmartMotionAccelStrategy_0";
         if (puint && *puint <= 1)
         {
@@ -1606,7 +1742,7 @@ std::string SparkMax::ApplyConfig(const std::string_view key, const ConfigValue 
             }
         }
         break;
-    case 40:
+    case 22:
         name = "P_1";
         if (pdouble)
         {
@@ -1616,7 +1752,7 @@ std::string SparkMax::ApplyConfig(const std::string_view key, const ConfigValue 
             }
         }
         break;
-    case 41:
+    case 31:
         name = "I_1";
         if (pdouble)
         {
@@ -1626,7 +1762,7 @@ std::string SparkMax::ApplyConfig(const std::string_view key, const ConfigValue 
             }
         }
         break;
-    case 42:
+    case 45:
         name = "D_1";
         if (pdouble)
         {
@@ -1636,7 +1772,7 @@ std::string SparkMax::ApplyConfig(const std::string_view key, const ConfigValue 
             }
         }
         break;
-    case 43:
+    case 41:
         name = "F_1";
         if (pdouble)
         {
@@ -1646,7 +1782,7 @@ std::string SparkMax::ApplyConfig(const std::string_view key, const ConfigValue 
             }
         }
         break;
-    case 44:
+    case 33:
         name = "IZone_1";
         if (pdouble)
         {
@@ -1656,7 +1792,7 @@ std::string SparkMax::ApplyConfig(const std::string_view key, const ConfigValue 
             }
         }
         break;
-    case 45:
+    case 35:
         name = "IMaxAccum_1";
         if (pdouble)
         {
@@ -1666,7 +1802,7 @@ std::string SparkMax::ApplyConfig(const std::string_view key, const ConfigValue 
             }
         }
         break;
-    case 46:
+    case 47:
         name = "DFilter_1";
         if (pdouble)
         {
@@ -1676,7 +1812,7 @@ std::string SparkMax::ApplyConfig(const std::string_view key, const ConfigValue 
             }
         }
         break;
-    case 47:
+    case 24:
         name = "OutputMin_1";
         if (pdouble)
         {
@@ -1687,7 +1823,7 @@ std::string SparkMax::ApplyConfig(const std::string_view key, const ConfigValue 
             }
         }
         break;
-    case 48:
+    case 26:
         name = "OutputMax_1";
         if (pdouble)
         {
@@ -1698,7 +1834,7 @@ std::string SparkMax::ApplyConfig(const std::string_view key, const ConfigValue 
             }
         }
         break;
-    case 49:
+    case 9:
         name = "SmartMotionMaxVelocity_1";
         if (pdouble)
         {
@@ -1708,7 +1844,7 @@ std::string SparkMax::ApplyConfig(const std::string_view key, const ConfigValue 
             }
         }
         break;
-    case 50:
+    case 11:
         name = "SmartMotionMaxAccel_1";
         if (pdouble)
         {
@@ -1718,7 +1854,7 @@ std::string SparkMax::ApplyConfig(const std::string_view key, const ConfigValue 
             }
         }
         break;
-    case 51:
+    case 7:
         name = "SmartMotionMinVelOutput_1";
         if (pdouble)
         {
@@ -1728,7 +1864,7 @@ std::string SparkMax::ApplyConfig(const std::string_view key, const ConfigValue 
             }
         }
         break;
-    case 52:
+    case 13:
         name = "SmartMotionAllowedClosedLoopError_1";
         if (pdouble)
         {
@@ -1738,7 +1874,7 @@ std::string SparkMax::ApplyConfig(const std::string_view key, const ConfigValue 
             }
         }
         break;
-    case 53:
+    case 15:
         name = "SmartMotionAccelStrategy_1";
         if (puint && *puint <= 1)
         {

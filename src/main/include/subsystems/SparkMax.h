@@ -190,12 +190,15 @@ namespace SparkMaxFactory
 // kHardLimitFwdEn
 // kHardLimitRevEn
 //   Limit switches (hard limits) only work when not in Alternate Encoder Mode.
-//   There are similar issues with get (none) and set (side effect of calling
-//   GetForwardLimitSwitch() or GetReverseLimitSwitch()) as with analog
-//   feedback.  Although it may make sense to add support in the future, this
-//   code does not attempt to manage these settings right now.  The point about
-//   these settings returning to default values applies (as for analog feedback
-//   above).
+//   For polarity, there are similar issues with get (none) and set (side
+//   effect of calling GetForwardLimitSwitch() or GetReverseLimitSwitch()) as
+//   with analog feedback.  Enable get and set are via SparkMaxLimitSwitch.  By
+//   definition, there isn't much code to handle a hard limit switch, leaving
+//   this mainly to configuration.  It may be useful to be able to report the
+//   status, and to enable/disable the limits.  Although it may make sense to
+//   add support in the future, this code does not currently manage these
+//   settings.  The point about settings returning to default values applies to
+//   hard limit switches (as for analog feedback related parameters above).
 
 // kFollowerID
 // kFollowerConfig
@@ -360,12 +363,20 @@ namespace SparkMaxFactory
 namespace SparkMaxFactory
 {
     // Version 1.5.2; all configuration parameters are current at this release.
+    // **** DO NOT ALTER THIS LIST WITHOUT UNDERSTANDING THE IMPLICATIONS! ****
+    // In particular, std::map is sorted, so the order here is meaningless.
+    // The way forward (better readability/maintainability) is a constexpr map.
     const SmartMotorBase::ConfigMap configDefaults = {
-        {"kStatus0", uint{10}}, // ms
-        {"kStatus1", uint{20}}, // ms
-        {"kStatus2", uint{50}}, // ms
-        {"Firmware Version", uint{0x01050002}},
+        {"kStatus0", uint{10}},                 // ms
+        {"kStatus1", uint{20}},                 // ms
+        {"kStatus2", uint{50}},                 // ms
+        {"Firmware Version", uint{0x01050012}}, // XXX
+                                                //        {"Firmware Version", uint{0x01050002}},
         {"kIdleMode", uint{1}},
+        {"kLimitSwitchFwdPolarity", bool{false}}, // XXX
+        {"kLimitSwitchRevPolarity", bool{false}}, // XXX
+        {"kHardLimitFwdEn", bool{false}},         // XXX
+        {"kHardLimitRevEn", bool{false}},         // XXX
         {"kFollowerID", uint{0}},
         {"kFollowerConfig", uint{0}},
         {"kSoftLimitFwd", double{0.0}},
