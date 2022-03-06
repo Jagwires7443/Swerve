@@ -68,6 +68,7 @@ namespace
         void SetConfig(const ConfigMap config) noexcept override
         {
             config_ = config;
+            // XXX merge in {"kIdleMode", uint{1}}
         }
 
         void AddConfig(const ConfigMap config) noexcept override { config_.merge(ConfigMap(config)); }
@@ -176,6 +177,9 @@ namespace
 
         // Configuration Parameters, set via SetConfig() and AddConfig().
         ConfigMap config_;
+        ConfigMap updateConfig_;
+        std::string configReporting_;
+        std::string updateConfigReporting_;
 
         bool configReboot_ = true;
         bool configGood_ = false;
@@ -233,7 +237,6 @@ namespace
 
         std::string firmwareInfo;
 
-        firmwareInfo += " FW(";
         firmwareInfo += firmwareVersionHex.str();
         firmwareInfo += "/";
         firmwareInfo += std::to_string(firmwareFieldMajor.to_ulong());
@@ -243,7 +246,7 @@ namespace
         firmwareInfo += std::to_string(firmwareFieldBuild.to_ulong());
         firmwareInfo += "/\"";
         firmwareInfo += firmwareString;
-        firmwareInfo += "\")";
+        firmwareInfo += "\"";
 
         return firmwareInfo;
     }
@@ -670,7 +673,67 @@ void SparkMax::ConfigPeriodic() noexcept
     }
 
     // At this point, handle managed config parameters.
-    configGood_ = false;
+    if (!configLock_)
+    {
+        configGood_ = true;
+        configLock_ = true;
+        sequence_ = 0;
+        updateConfig_.clear();
+        updateConfigReporting_.clear();
+    }
+
+    if (sequence_ < config_.size())
+    {
+        auto it = config_.begin();
+        std::advance(it, sequence_);
+
+        // If false, first result indicates config is bad (read) or needs to be
+        // applied (push).  If true, second result indicates config needs to be
+        // applied (burn).  Third result is for reporting.
+        const std::tuple<bool, bool, std::string> verify = VerifyConfig(it->first, it->second);
+
+        if (!std::get<0>(verify))
+        {
+            configGood_ = false;
+
+            if (!configBurn_)
+            {
+                updateConfig_[it->first] = it->second;
+            }
+        }
+
+        if (configBurn_ && std::get<1>(verify))
+        {
+            updateConfig_[it->first] = it->second;
+        }
+
+        if (!std::get<2>(verify).empty())
+        {
+            if (!updateConfigReporting_.empty())
+            {
+                updateConfigReporting_ += " ";
+            }
+
+            updateConfigReporting_ += std::get<2>(verify);
+        }
+
+        sequence_++;
+
+        return;
+    }
+
+    if (updateConfigReporting_ != configReporting_)
+    {
+        configReporting_ = updateConfigReporting_;
+
+        if (!configReporting_.empty())
+        {
+            std::printf("SparkMax[%i] %s config: %s.\n", canId_, name_.c_str(), configReporting_.c_str());
+        }
+    }
+
+    configLock_ = false;
+    sequence_ = 0;
 }
 
 void SparkMax::SetIdleMode(const SmartMotorBase::IdleMode mode) noexcept
@@ -680,7 +743,7 @@ void SparkMax::SetIdleMode(const SmartMotorBase::IdleMode mode) noexcept
         return;
     }
 
-    rev::CANSparkMax::IdleMode tmp = mode == SmartMotorBase::IdleMode::kBrake ? rev::CANSparkMax::IdleMode::kBrake : rev::CANSparkMax::IdleMode::kCoast;
+    const rev::CANSparkMax::IdleMode tmp = (mode == SmartMotorBase::IdleMode::kBrake) ? rev::CANSparkMax::IdleMode::kBrake : rev::CANSparkMax::IdleMode::kCoast;
 
     DoSafely("SetIdleMode", [&]() -> void
              { motor_->SetIdleMode(tmp); });
@@ -786,7 +849,7 @@ void SparkMax::SeekVelocity(const double velocity) noexcept
     velocity_ = velocity;
 
     DoSafely("SeekVelocity", [&]() -> void
-             { (void)AnyError(controller_->SetReference(velocity, rev::CANSparkMax::ControlType::kSmartVelocity, 0)); });
+             { (void)AnyError(controller_->SetReference(velocity, rev::CANSparkMax::ControlType::kSmartVelocity, 1)); });
 }
 
 bool SparkMax::CheckVelocity(const double tolerance) noexcept
@@ -911,7 +974,7 @@ std::tuple<bool, bool, std::string> SparkMax::VerifyConfig(const std::string_vie
         return std::make_tuple(false, false, "Invalid");
     }
 
-    const ConfigValue &default_value = kv->second;
+    ConfigValue default_value = kv->second;
 
     // Have requested and default values.  Now, attempt to get current value.
     std::optional<ConfigValue> actual_value;
@@ -964,7 +1027,7 @@ std::tuple<bool, bool, std::string> SparkMax::VerifyConfig(const std::string_vie
     case 30:
         name = "IdleMode";
         {
-            const rev::CANSparkMax::IdleMode tmp = motor_->GetIdleMode();
+            const rev::CANSparkMax::IdleMode tmp{motor_->GetIdleMode()};
 
             if (tmp == rev::CANSparkMax::IdleMode::kCoast)
             {
@@ -972,6 +1035,9 @@ std::tuple<bool, bool, std::string> SparkMax::VerifyConfig(const std::string_vie
             } else if (tmp == rev::CANSparkMax::IdleMode::kBrake)
             {
                 actual_value = uint{1};
+
+                // Force update for non-standard default.
+                default_value = uint{0};
             }
         }
         break;
@@ -1161,7 +1227,7 @@ std::tuple<bool, bool, std::string> SparkMax::VerifyConfig(const std::string_vie
     case 16:
         name = "SmartMotionAccelStrategy_0";
         {
-            rev::SparkMaxPIDController::AccelStrategy tmp = controller_->GetSmartMotionAccelStrategy(0);
+            const rev::SparkMaxPIDController::AccelStrategy tmp{controller_->GetSmartMotionAccelStrategy(0)};
 
             if (tmp == rev::SparkMaxPIDController::AccelStrategy::kTrapezoidal)
             {
@@ -1230,7 +1296,7 @@ std::tuple<bool, bool, std::string> SparkMax::VerifyConfig(const std::string_vie
     case 15:
         name = "SmartMotionAccelStrategy_1";
         {
-            rev::SparkMaxPIDController::AccelStrategy tmp = controller_->GetSmartMotionAccelStrategy(1);
+            const rev::SparkMaxPIDController::AccelStrategy tmp{controller_->GetSmartMotionAccelStrategy(1)};
 
             if (tmp == rev::SparkMaxPIDController::AccelStrategy::kTrapezoidal)
             {

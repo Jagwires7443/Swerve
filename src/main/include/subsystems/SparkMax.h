@@ -367,11 +367,10 @@ namespace SparkMaxFactory
     // In particular, std::map is sorted, so the order here is meaningless.
     // The way forward (better readability/maintainability) is a constexpr map.
     const SmartMotorBase::ConfigMap configDefaults = {
-        {"kStatus0", uint{10}},                 // ms
-        {"kStatus1", uint{20}},                 // ms
-        {"kStatus2", uint{50}},                 // ms
-        {"Firmware Version", uint{0x01050012}}, // XXX
-                                                //        {"Firmware Version", uint{0x01050002}},
+        {"kStatus0", uint{10}}, // ms
+        {"kStatus1", uint{20}}, // ms
+        {"kStatus2", uint{50}}, // ms
+        {"Firmware Version", uint{0x01050002}},
         {"kIdleMode", uint{1}},
         {"kLimitSwitchFwdPolarity", bool{false}}, // XXX
         {"kLimitSwitchRevPolarity", bool{false}}, // XXX
@@ -387,8 +386,8 @@ namespace SparkMaxFactory
         {"kAltEncoderInverted", bool{false}},
         {"kEncoderAverageDepth", uint{64}},
         {"kAltEncoderAverageDepth", uint{64}},
-        {"kEncoderSampleDelta", uint{200}},
-        {"kAltEncoderSampleDelta", uint{200}},
+        {"kEncoderSampleDelta", uint{100}}, // Actual default differs from doc.
+        {"kAltEncoderSampleDelta", uint{100}},
         {"kPositionConversionFactor", double{1.0}},
         {"kAltEncoderPositionFactor", double{1.0}},
         {"kVelocityConversionFactor", double{1.0}},
@@ -411,7 +410,7 @@ namespace SparkMaxFactory
         {"kSmartMotionMaxAccel_0", double{0.0}},
         {"kSmartMotionMinVelOutput_0", double{0.0}},
         {"kSmartMotionAllowedClosedLoopError_0", double{0.0}},
-        {"kSmartMotionAccelStrategy_0", double{0.0}},
+        {"kSmartMotionAccelStrategy_0", uint{0}}, // Doc says this is double.
         {"kP_1", double{0.0}},
         {"kI_1", double{0.0}},
         {"kD_1", double{0.0}},
@@ -425,6 +424,6 @@ namespace SparkMaxFactory
         {"kSmartMotionMaxAccel_1", double{0.0}},
         {"kSmartMotionMinVelOutput_1", double{0.0}},
         {"kSmartMotionAllowedClosedLoopError_1", double{0.0}},
-        {"kSmartMotionAccelStrategy_1", double{0.0}},
+        {"kSmartMotionAccelStrategy_1", uint{0}},
     };
 }
