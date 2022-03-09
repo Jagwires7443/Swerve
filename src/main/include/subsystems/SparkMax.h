@@ -38,7 +38,7 @@ namespace SparkMaxFactory
 //   settings.  The roboRIO periodically recieves fault information in status
 //   frame 0, so it is very cheap to obtain current fault information from each
 //   Spark Max.  Other config parameters are maintained through the
-//   ConfigPeriodic() method.  Periodic frame periods (only) are maintained
+//   [Config]Periodic() method.  Periodic frame periods (only) are maintained
 //   through the Periodic() method, which is very lightweight.  It is concerned
 //   with collecting status information, in order to be able to collect and
 //   summarize the history of any problems dealing with the given controller.
@@ -139,7 +139,13 @@ namespace SparkMaxFactory
 // and AddConfig() and to seek to use RestoreFactoryDefaults() to set eveything
 // else to default values.  If it is important that a particular parameter be
 // set to the default value, listing it will result in it being checked.  The
-// intnet is that this should generally not be necessary.
+// intent is that this should generally not be necessary.
+
+// "Firmware Version" and "kIdleMode" are always checked, regardless of any
+// SetConfig()/AddConfig() listings.  This is because the former is something
+// which is only read, but which is important to highlight, while the latter is
+// defaulted different from the factory default and so needs to be checked to
+// ensure the desired default is persisted.
 
 // kPolePairs
 //   This configuration parameter also has no set and get and would only change
@@ -185,8 +191,8 @@ namespace SparkMaxFactory
 //   time RestoreFactoryDefaults() is called (during saving of updated config
 //   parameters).
 
-// kLimitSwitchFwdPolarity
-// kLimitSwitchRevPolarity
+// kLimitSwitchFwdPolarity: Forward; 0 = Normally Open, 1 = Normally Closed
+// kLimitSwitchRevPolarity: Reverse; 0 = Normally Open, 1 = Normally Closed
 // kHardLimitFwdEn
 // kHardLimitRevEn
 //   Limit switches (hard limits) only work when not in Alternate Encoder Mode.
@@ -195,10 +201,10 @@ namespace SparkMaxFactory
 //   with analog feedback.  Enable get and set are via SparkMaxLimitSwitch.  By
 //   definition, there isn't much code to handle a hard limit switch, leaving
 //   this mainly to configuration.  It may be useful to be able to report the
-//   status, and to enable/disable the limits.  Although it may make sense to
-//   add support in the future, this code does not currently manage these
-//   settings.  The point about settings returning to default values applies to
-//   hard limit switches (as for analog feedback related parameters above).
+//   status, and to enable/disable the limits.  Changing the polarity via
+//   config is fully supported, but the polarity is not a dynamic setting and
+//   applying changes to these settings (forward/reverse polarity) only takes
+//   effect once these settings have been "burned".
 
 // kFollowerID
 // kFollowerConfig
@@ -372,10 +378,10 @@ namespace SparkMaxFactory
         {"kStatus2", uint{50}}, // ms
         {"Firmware Version", uint{0x01050002}},
         {"kIdleMode", uint{1}},
-        {"kLimitSwitchFwdPolarity", bool{false}}, // XXX
-        {"kLimitSwitchRevPolarity", bool{false}}, // XXX
-        {"kHardLimitFwdEn", bool{false}},         // XXX
-        {"kHardLimitRevEn", bool{false}},         // XXX
+        {"kLimitSwitchFwdPolarity", uint{0}},
+        {"kLimitSwitchRevPolarity", uint{0}},
+        {"kHardLimitFwdEn", bool{true}},
+        {"kHardLimitRevEn", bool{true}},
         {"kFollowerID", uint{0}},
         {"kFollowerConfig", uint{0}},
         {"kSoftLimitFwd", double{0.0}},

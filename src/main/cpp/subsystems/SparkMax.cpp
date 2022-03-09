@@ -8,6 +8,7 @@
 #include <functional>
 #include <iomanip>
 #include <ios>
+#include <iterator>
 #include <optional>
 #include <sstream>
 #include <string>
@@ -18,6 +19,7 @@
 #include <rev/CANSparkMaxLowLevel.h>
 #include <rev/RelativeEncoder.h>
 #include <rev/REVLibError.h>
+#include <rev/SparkMaxLimitSwitch.h>
 #include <rev/SparkMaxPIDController.h>
 
 #include <frc/RobotController.h>
@@ -161,6 +163,11 @@ namespace
         std::unique_ptr<rev::RelativeEncoder> encoder_;
         std::unique_ptr<rev::SparkMaxPIDController> controller_;
 
+        // REV object holders, only used when not using an external
+        // ("alternate") encoder.
+        std::unique_ptr<rev::SparkMaxLimitSwitch> forward_;
+        std::unique_ptr<rev::SparkMaxLimitSwitch> reverse_;
+
         // Shuffleboard UI elements, used by ShuffleboardCreate() and
         // ShuffleboardPeriodic() only.
         bool shuffleboard_ = false;
@@ -188,13 +195,6 @@ namespace
         std::string configReporting_;
         std::string updateConfigReporting_;
 
-        bool configReboot_ = true;
-        bool configGood_ = false;
-        bool configLock_ = false;
-        bool configRead_ = false;
-        bool configPush_ = false;
-        bool configBurn_ = false;
-
         // Config parameters which are not individually settable.
         double outputRangeMin0_ = std::get<double>(SparkMaxFactory::configDefaults.at("kOutputMin_0"));
         double outputRangeMax0_ = std::get<double>(SparkMaxFactory::configDefaults.at("kOutputMax_0"));
@@ -211,10 +211,22 @@ namespace
         uint status1_ = std::get<uint>(SparkMaxFactory::configDefaults.at("kStatus1"));
         uint status2_ = std::get<uint>(SparkMaxFactory::configDefaults.at("kStatus2"));
 
-        std::bitset<16> faultBits_;
+        // The next two data members are used to implement pacing of the config
+        // state machines.
         uint64_t FPGATime_ = frc::RobotController::GetFPGATime();
         int iteration_ = 0;
+
+        // The inner state config machine uses motor_, encoder_, and controller_ XXX
         uint sequence_ = 0;
+        bool configReboot_ = true;
+
+        std::bitset<16> faultBits_;
+        bool configGood_ = false;
+
+        bool configLock_ = false;
+        bool configRead_ = false;
+        bool configPush_ = false;
+        bool configBurn_ = false;
 
         double position_ = 0.0;
         double velocity_ = 0.0;
@@ -460,21 +472,6 @@ void SparkMax::Periodic() noexcept
         ShuffleboardPeriodic();
     }
 
-    // This call should be safe and "free", in that it only reports information
-    // collected from periodic status frames.  To capture any transient events,
-    // GetStickyFaults() is used instead of GetFaults().  There is no
-    // expectation that fault information is instataeously accurate, it is only
-    // used for reporting and to detect any motor controller reboots.  Make
-    // things extra sticky using bitwise OR.  This is cleared by ClearFaults().
-    DoSafely(
-        "GetStickyFaults", [&]() -> void
-        {
-            if (motor_)
-            {
-                faultBits_ |= std::bitset<16>(motor_->GetStickyFaults());
-            } },
-        false);
-
     // In microseconds.  At 50Hz, this will nominally tick by increments of 20.
     // The object here is too only continue at a rate of around 3Hz, and to
     // spread things around so that the aggregate work of all motor controllers
@@ -494,7 +491,20 @@ void SparkMax::Periodic() noexcept
     FPGATime_ = FPGATime;
     iteration_ = canId_ % 16;
 
-    // XXX Keep counters from faultBits (not underscore), these persist and are reported...
+    // This call should be safe and "free", in that it only reports information
+    // collected from periodic status frames.  To capture any transient events,
+    // GetStickyFaults() is used instead of GetFaults().  There is no
+    // expectation that fault information is instataeously accurate, it is only
+    // used for reporting and to detect any motor controller reboots.  Make
+    // things extra sticky using bitwise OR.  This is cleared by ClearFaults().
+    // This could lead to overcounting, but errors are cleared fairly quickly
+    // and it's not terrible to draw extra attention to any problems.
+    if (motor_)
+    {
+        faultBits_ |= std::bitset<16>(motor_->GetStickyFaults());
+    }
+
+    // XXX Keep counters from faultBits (no underscore), these persist and are reported...
 
     ConfigPeriodic();
 }
@@ -510,8 +520,9 @@ void SparkMax::ConfigPeriodic() noexcept
     // This part of the state machine is orthogonal to the rest, and preempts
     // other states, at least temporarily.  This should not run more than once,
     // but it is set up this way just in case.  Also, at the start of burning
-    // config parameters, just out of paranoia, this code is forced to rerun.
-    // This is driven by nulling out the REV objects.
+    // config parameters, this code is forced to rerun, in order to ensure that
+    // any config-related side effects come into force, following invocation of
+    // RestoreFactoryDefaults() and is driven by nulling out the REV objects.
     if (!motor_)
     {
         DoSafely(
@@ -575,19 +586,17 @@ void SparkMax::ConfigPeriodic() noexcept
     // and "free".  (Re)start the post reset state machine.  Tracking of errors
     // (including resets) is driven by the call to GetStickyFaults() in the
     // main Periodic() method, by the AnyErrors() method, and by the places
-    // throw() is used in the post-reboot state machine, below.
-    DoSafely("GetStickyFault", [&]() -> void
-             {
-        if (motor_->GetStickyFault(rev::CANSparkMax::FaultID::kHasReset))
-        {
-            configReboot_ = true;
-            configGood_ = false;
-            sequence_ = 0;
-            // XXX reset everything?
-        } });
+    // throw() is used here in the post-reboot state machine.
+    if (motor_->GetStickyFault(rev::CANSparkMax::FaultID::kHasReset))
+    {
+        configReboot_ = true;
+        configGood_ = false;
+        sequence_ = 0;
+        // XXX reset everything?
+    }
 
     // Now the three main objects exist;, so (re)establish volatile motor
-    // controller state.  xxx
+    // controller state, after first clearing any faults.
     if (configReboot_)
     {
         // Optimized for setting periodic frame period, not appropriate for
@@ -625,39 +634,74 @@ void SparkMax::ConfigPeriodic() noexcept
                         return;
                     } });
 
-            // Next state depends on type of encoder.
-            if (encoderCounts_ != 0)
-            {
-                sequence_ = 1;
-            }
-            else
-            {
-                // XXX if normal encoder, use next two states to set up limit switches
-                sequence_ = 3;
-            }
+            sequence_ = 1;
 
             return;
         case 1:
-            // For alternate encoder, need to set it up as feedback source.
-            // This might be local, but it isn't documented/clear behavior.
-            DoSafely("SetFeedbackDevice", [&]() -> void
-                     {
-                if (AnyError(controller_->SetFeedbackDevice(*encoder_)))
+            if (encoderCounts_ != 0)
+            {
+                // For alternate encoder, need to set it up as feedback source.
+                // This might be local, but it isn't documented/clear behavior.
+                DoSafely("SetFeedbackDevice", [&]() -> void
+                         {
+                    if (AnyError(controller_->SetFeedbackDevice(*encoder_)))
+                    {
+                        throw std::runtime_error("SetFeedbackDevice()");
+                    } });
+            }
+            else
+            {
+                uint tmp = std::get<uint>(SparkMaxFactory::configDefaults.at("kLimitSwitchFwdPolarity"));
+
+                if (config_.count("kLimitSwitchFwdPolarity") != 0)
                 {
-                    throw std::runtime_error("SetFeedbackDevice()");
+                    tmp = std::get<uint>(config_.at("kLimitSwitchFwdPolarity"));
+                }
+
+                const rev::SparkMaxLimitSwitch::Type polarity = tmp == 0 ? rev::SparkMaxLimitSwitch::Type::kNormallyOpen : rev::SparkMaxLimitSwitch::Type::kNormallyClosed;
+                DoSafely(
+                    "forward_", [&]() -> void
+                    {
+                forward_ = std::make_unique<rev::SparkMaxLimitSwitch>(motor_->GetForwardLimitSwitch(polarity));
+                if (!forward_)
+                {
+                    throw std::runtime_error("forward_");
                 } });
+            }
 
             sequence_ = 2;
 
             return;
         case 2:
-            // For alternate encoder, check counts per revolution is correct.
-            DoSafely("GetCountsPerRevolution", [&]() -> void
-                     {
-                if (encoderCounts_ < 0 || static_cast<uint32_t>(encoderCounts_) != encoder_->GetCountsPerRevolution())
+            if (encoderCounts_ != 0)
+            {
+                // For alternate encoder, check expected counts per revolution.
+                DoSafely("GetCountsPerRevolution", [&]() -> void
+                         {
+                    if (encoderCounts_ < 0 || static_cast<uint32_t>(encoderCounts_) != encoder_->GetCountsPerRevolution())
+                    {
+                        throw std::runtime_error("GetCountsPerRevolution()");
+                    } });
+            }
+            else
+            {
+                uint tmp = std::get<uint>(SparkMaxFactory::configDefaults.at("kLimitSwitchRevPolarity"));
+
+                if (config_.count("kLimitSwitchRevPolarity") != 0)
                 {
-                    throw std::runtime_error("GetCountsPerRevolution()");
+                    tmp = std::get<uint>(config_.at("kLimitSwitchRevPolarity"));
+                }
+
+                const rev::SparkMaxLimitSwitch::Type polarity = tmp == 0 ? rev::SparkMaxLimitSwitch::Type::kNormallyOpen : rev::SparkMaxLimitSwitch::Type::kNormallyClosed;
+                DoSafely(
+                    "reverse_", [&]() -> void
+                    {
+                reverse_ = std::make_unique<rev::SparkMaxLimitSwitch>(motor_->GetReverseLimitSwitch(polarity));
+                if (!reverse_)
+                {
+                    throw std::runtime_error("reverse_");
                 } });
+            }
 
             sequence_ = 3;
 
@@ -697,6 +741,9 @@ void SparkMax::ConfigPeriodic() noexcept
         }
     }
 
+    // At this point, REV objects have been constructed, sticky errors have
+    // been cleared, and volatile state has been handled.  Now, handle checking
+    // or persisting other config parameters.
     if (configRead_ || configPush_ || configBurn_)
     {
         PersistentConfigPeriodic();
@@ -783,7 +830,6 @@ void SparkMax::PersistentConfigPeriodic() noexcept
     if (!configPush_ && !configBurn_)
     {
         configLock_ = false;
-        sequence_ = 0;
 
         return;
     }
@@ -815,6 +861,9 @@ void SparkMax::PersistentConfigPeriodic() noexcept
     configPush_ = false;
     configBurn_ = false;
     sequence_ = 0;
+
+    // AnyError(motor_->RestoreFactoryDefaults())
+    // AnyError(motor_->BurnFlash())
 }
 
 void SparkMax::SetIdleMode(const SmartMotorBase::IdleMode mode) noexcept
