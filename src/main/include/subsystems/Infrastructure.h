@@ -19,6 +19,10 @@ public:
      */
     void Periodic() noexcept override;
 
+    void Enable() noexcept;
+
+    void Disable() noexcept;
+
 private:
     std::unique_ptr<frc::PowerDistribution> pdh_;
     std::unique_ptr<frc::Compressor> ph_;

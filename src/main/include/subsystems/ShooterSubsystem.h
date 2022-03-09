@@ -1,9 +1,9 @@
 #pragma once
 
+#include "subsystems/SparkMax.h"
+
+#include <frc/RobotController.h>
 #include <frc2/command/SubsystemBase.h>
-#include <rev/CANEncoder.h>
-#include <rev/CANPIDController.h>
-#include <rev/CANSparkMax.h>
 
 #include <memory>
 
@@ -16,16 +16,13 @@ public:
     ShooterSubsystem(const ShooterSubsystem &) = delete;
     ShooterSubsystem &operator=(const ShooterSubsystem &) = delete;
 
+    void Periodic() noexcept override;
+
     void Set(double percent) noexcept;
 
 private:
-    void DoSafeShooterMotors(const char *const what, std::function<void()> work) noexcept;
+    std::unique_ptr<SmartMotorBase> m_shooterMotor;
 
-    std::unique_ptr<rev::CANSparkMax> m_shooterOneMotor;
-    std::unique_ptr<rev::SparkMaxRelativeEncoder> m_shooterOneEncoder;
-    std::unique_ptr<rev::SparkMaxPIDController> m_shooterOnePID;
-
-    std::unique_ptr<rev::CANSparkMax> m_shooterTwoMotor;
-    std::unique_ptr<rev::SparkMaxRelativeEncoder> m_shooterTwoEncoder;
-    std::unique_ptr<rev::SparkMaxPIDController> m_shooterTwoPID;
+    uint64_t FPGATime_ = frc::RobotController::GetFPGATime();
+    uint sequence_ = 0;
 };

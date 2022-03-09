@@ -15,5 +15,8 @@
     "**/*~": true
   },
   "C_Cpp.default.configurationProvider": "vscode-wpilib",
-  "wpilib.autoStartRioLog": false
+  "wpilib.autoStartRioLog": false,
+  "files.associations": {
+    "tuple": "cpp"
+  }
 }

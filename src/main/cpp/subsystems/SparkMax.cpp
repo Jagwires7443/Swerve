@@ -1,5 +1,4 @@
 // XXX use count, instead of bool for cumulative counts, include reset count
-// XXX No throws, instead function simply increments error counter for later reporting
 
 #include "subsystems/SparkMax.h"
 
@@ -46,7 +45,10 @@ namespace
     class SparkMax : public SmartMotorBase
     {
     public:
-        SparkMax(const std::string_view name, const int canId, const bool inverted, const int encoderCounts) noexcept : name_{name}, canId_{canId}, inverted_{inverted}, encoderCounts_{encoderCounts} {}
+        SparkMax(const std::string_view name, const int canId, const bool inverted, const int encoderCounts) noexcept : name_{name}, canId_{canId}, inverted_{inverted}, encoderCounts_{encoderCounts}
+        {
+            SetConfig(ConfigMap());
+        }
 
         SparkMax(const SparkMax &) = delete;
         SparkMax &operator=(const SparkMax &) = delete;
@@ -67,8 +69,12 @@ namespace
 
         void SetConfig(const ConfigMap config) noexcept override
         {
-            config_ = config;
-            // XXX merge in {"kIdleMode", uint{1}}
+            // Ensure at least these two config parameters are managed.
+            config_.clear();
+            config_["Firmware Version"] = std::get<uint>(SparkMaxFactory::configDefaults.at("Firmware Version"));
+            config_["kIdleMode"] = std::get<uint>(SparkMaxFactory::configDefaults.at("kIdleMode"));
+
+            config_.merge(ConfigMap(config));
         }
 
         void AddConfig(const ConfigMap config) noexcept override { config_.merge(ConfigMap(config)); }
@@ -92,11 +98,12 @@ namespace
 
             if (burn)
             {
-                configBurn_ = false;
+                configPush_ = true;
+                configBurn_ = true;
             }
             else
             {
-                configPush_ = false;
+                configPush_ = true;
             }
         }
 
@@ -214,6 +221,7 @@ namespace
 
         void ShuffleboardPeriodic() noexcept;
         void ConfigPeriodic() noexcept;
+        void PersistentConfigPeriodic() noexcept;
         void DoSafely(const char *const what, std::function<void()> work, const bool check = true) noexcept;
         bool AnyError(const rev::REVLibError returnCode) noexcept;
         std::tuple<bool, bool, std::string> VerifyConfig(const std::string_view key, const ConfigValue &value) noexcept;
@@ -474,7 +482,7 @@ void SparkMax::Periodic() noexcept
     // do this work during the same period.  The CAN ID (mod 16) is used to
     // facillitate this spread, along with a counter to track Periodic() calls.
     // If the rate for Periodic() is too low (< ~20Hz), things are going to run
-    // slowly, but the robot is going to be generally sluggish.
+    // slowly, but the robot is going to be generally sluggish at that point.
     const uint64_t FPGATime = frc::RobotController::GetFPGATime();
     uint deltaTime = FPGATime - FPGATime_;
 
@@ -495,10 +503,15 @@ void SparkMax::Periodic() noexcept
 // the triple set of REV objects associated with this SparkMax, clear any motor
 // controller faults, and restore volatile state.  After things are at this
 // point, persistent config parameters are handled by another state machine, as
-// appropriate.
+// appropriate.  Also constructs limit switch REV objects as appropriate.
 void SparkMax::ConfigPeriodic() noexcept
 {
     // First stage of state machine; this has to be there before going further.
+    // This part of the state machine is orthogonal to the rest, and preempts
+    // other states, at least temporarily.  This should not run more than once,
+    // but it is set up this way just in case.  Also, at the start of burning
+    // config parameters, just out of paranoia, this code is forced to rerun.
+    // This is driven by nulling out the REV objects.
     if (!motor_)
     {
         DoSafely(
@@ -507,6 +520,7 @@ void SparkMax::ConfigPeriodic() noexcept
             motor_ = std::make_unique<rev::CANSparkMax>(canId_, rev::CANSparkMaxLowLevel::MotorType::kBrushless);
             if (!motor_)
             {
+                // XXX count this (and other throws, below)!
                 throw std::runtime_error("motor_");
             }
 
@@ -558,7 +572,10 @@ void SparkMax::ConfigPeriodic() noexcept
     }
 
     // This is the only reliable way to extract the reset status; again, safe
-    // and "free".  Start the post reset state machine.
+    // and "free".  (Re)start the post reset state machine.  Tracking of errors
+    // (including resets) is driven by the call to GetStickyFaults() in the
+    // main Periodic() method, by the AnyErrors() method, and by the places
+    // throw() is used in the post-reboot state machine, below.
     DoSafely("GetStickyFault", [&]() -> void
              {
         if (motor_->GetStickyFault(rev::CANSparkMax::FaultID::kHasReset))
@@ -566,12 +583,16 @@ void SparkMax::ConfigPeriodic() noexcept
             configReboot_ = true;
             configGood_ = false;
             sequence_ = 0;
+            // XXX reset everything?
         } });
 
+    // Now the three main objects exist;, so (re)establish volatile motor
+    // controller state.  xxx
     if (configReboot_)
     {
         // Optimized for setting periodic frame period, not appropriate for
-        // general cofig parameters.
+        // general cofig parameters.  Relies on particulars of these config
+        // parameters, which isn't great, but is documented behavior.
         auto periodicFramePeriod = [&](const std::string_view k, const uint v) -> bool
         {
             // Check against default value (other results are not
@@ -581,6 +602,7 @@ void SparkMax::ConfigPeriodic() noexcept
 
             if (std::get<1>(verify))
             {
+                // This isn't fast, so it consumes this Periodic() iteration.
                 const std::string apply = ApplyConfig(k, uint{v});
 
                 if (!apply.empty())
@@ -610,12 +632,14 @@ void SparkMax::ConfigPeriodic() noexcept
             }
             else
             {
+                // XXX if normal encoder, use next two states to set up limit switches
                 sequence_ = 3;
             }
 
             return;
         case 1:
             // For alternate encoder, need to set it up as feedback source.
+            // This might be local, but it isn't documented/clear behavior.
             DoSafely("SetFeedbackDevice", [&]() -> void
                      {
                 if (AnyError(controller_->SetFeedbackDevice(*encoder_)))
@@ -660,6 +684,12 @@ void SparkMax::ConfigPeriodic() noexcept
             {
                 configReboot_ = false;
                 configGood_ = true;
+
+                if (configLock_)
+                {
+                    configLock_ = false;
+                }
+
                 sequence_ = 0;
             }
 
@@ -667,72 +697,123 @@ void SparkMax::ConfigPeriodic() noexcept
         }
     }
 
-    if (!configRead_ && !configPush_ && !configBurn_)
+    if (configRead_ || configPush_ || configBurn_)
     {
-        return;
+        PersistentConfigPeriodic();
     }
+}
 
-    // At this point, handle managed config parameters.
+void SparkMax::PersistentConfigPeriodic() noexcept
+{
+    // At this point, handle managed config parameters.  Setting configLock_ is
+    // an indication that this particular state machine is running.
     if (!configLock_)
     {
-        configGood_ = true;
         configLock_ = true;
+        configGood_ = true;
         sequence_ = 0;
         updateConfig_.clear();
         updateConfigReporting_.clear();
     }
 
-    if (sequence_ < config_.size())
+    // The first phase is always scanning the specified config parameters, even
+    // for push or burn.  This builds a list of parameters to be set.
+    if (configRead_)
     {
-        auto it = config_.begin();
-        std::advance(it, sequence_);
-
-        // If false, first result indicates config is bad (read) or needs to be
-        // applied (push).  If true, second result indicates config needs to be
-        // applied (burn).  Third result is for reporting.
-        const std::tuple<bool, bool, std::string> verify = VerifyConfig(it->first, it->second);
-
-        if (!std::get<0>(verify))
+        if (sequence_ < config_.size())
         {
-            configGood_ = false;
+            auto it = config_.begin();
+            std::advance(it, sequence_);
 
-            if (!configBurn_)
+            // If false, first result indicates config is bad (read) or needs
+            // to be applied (push).  If true, second result indicates config
+            // needs to be applied (burn).  Third result is status reporting.
+            const std::tuple<bool, bool, std::string> verify = VerifyConfig(it->first, it->second);
+
+            // printf("**** %s %s %s \"%s\"\n", it->first.c_str(), std::get<0>(verify) ? "T" : "F", std::get<1>(verify) ? "T" : "F", std::get<2>(verify).c_str());
+
+            if (!std::get<0>(verify))
+            {
+                configGood_ = false;
+
+                if (!configBurn_)
+                {
+                    updateConfig_[it->first] = it->second;
+                }
+            }
+
+            if (std::get<1>(verify) && configBurn_)
             {
                 updateConfig_[it->first] = it->second;
             }
-        }
 
-        if (configBurn_ && std::get<1>(verify))
-        {
-            updateConfig_[it->first] = it->second;
-        }
-
-        if (!std::get<2>(verify).empty())
-        {
-            if (!updateConfigReporting_.empty())
+            if (!std::get<2>(verify).empty())
             {
-                updateConfigReporting_ += " ";
+                if (!updateConfigReporting_.empty())
+                {
+                    updateConfigReporting_ += " ";
+                }
+
+                updateConfigReporting_ += std::get<2>(verify);
             }
 
-            updateConfigReporting_ += std::get<2>(verify);
+            ++sequence_;
+
+            return;
         }
 
-        sequence_++;
+        if (updateConfigReporting_ != configReporting_)
+        {
+            configReporting_ = updateConfigReporting_;
+
+            if (configReporting_.empty())
+            {
+                std::printf("SparkMax[%i] %s config: OK.\n", canId_, name_.c_str());
+            }
+            else
+            {
+                std::printf("SparkMax[%i] %s config: %s.\n", canId_, name_.c_str(), configReporting_.c_str());
+            }
+        }
+
+        configRead_ = false;
+        sequence_ = 0;
+    }
+
+    if (!configPush_ && !configBurn_)
+    {
+        configLock_ = false;
+        sequence_ = 0;
 
         return;
     }
 
-    if (updateConfigReporting_ != configReporting_)
+    if (sequence_ < updateConfig_.size())
     {
-        configReporting_ = updateConfigReporting_;
+        auto it = updateConfig_.begin();
+        std::advance(it, sequence_);
 
-        if (!configReporting_.empty())
+        const std::string apply = ApplyConfig(it->first, config_[it->first]);
+
+        if (apply.empty())
         {
-            std::printf("SparkMax[%i] %s config: %s.\n", canId_, name_.c_str(), configReporting_.c_str());
+            std::printf("SparkMax[%i] %s apply config %s: OK.\n", canId_, name_.c_str(), it->first.c_str());
         }
+        else
+        {
+            std::printf("SparkMax[%i] %s apply config %s: %s.\n", canId_, name_.c_str(), it->first.c_str(), apply.c_str());
+        }
+
+        ++sequence_;
+
+        return;
     }
 
+    // XXX push/burn -- do a read to verify and update status
     configLock_ = false;
+    configRead_ = true;
+    configPush_ = false;
+    configBurn_ = false;
     sequence_ = 0;
 }
 
