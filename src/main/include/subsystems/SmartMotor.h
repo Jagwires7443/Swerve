@@ -44,15 +44,25 @@ public:
     // mode).  Provides basic control of motor and sends telemetry of all major
     // parameters.  Alternatively, this might be specified using wpi::Sendable.
 
+    // A typical usage would be to call this from TestInit() and then to call
+    // Periodic() reguarly -- i.e. from Subsystem::Periodic().  Periodic() will
+    // only do extra work to update Shuffleboard after ShuffleboardCreate() has
+    // been called.  The display panel occupies 20x6 tiles in Shuffleboard.
+    // There is no undo for creation, updates will continue until the program
+    // ends.  This behavior allows data to be monitored in all modes, so long
+    // as test mode has run, which never happens in a normal match.
+
     // If supplied, control() will be called from Periodic() once each time the
     // "control" user interface element has a new value (starting from zero and
     // between -1.0 and 1.0, inclusive).  If supplied, reset() will be called
     // from Periodic() each time the "reset" user interface element is clicked.
+    // No matter what, clicking "reset" will call Stop().  If not supplied, a
+    // default control() will be used.  The same applies for reset().
 
-    // A typical usage would be to call this from TestInit() and then to call
-    // Periodic() each time TestPeriodic() runs.  Periodic() will only do extra
-    // work to update Shuffleboard if ShuffleboardCreate() has been called.
-    // The display panel occupies 20x6 tiles in Shuffleboard.
+    // The default control() simply calls Set() with the given value, meaning
+    // percent control.  Other types of control require supplying the control()
+    // parameter.  The default reset() calls SpecifyPosition(0.0) and
+    // ClearStatus().
     virtual void ShuffleboardCreate(frc::ShuffleboardContainer &container,
                                     std::function<void(double)> control = nullptr,
                                     std::function<void()> reset = nullptr) noexcept = 0;
@@ -61,15 +71,6 @@ public:
     using ConfigMap = std::map<std::string, ConfigValue>;
 
     virtual void SetConfig(const ConfigMap config) noexcept = 0;
-    // inverted
-    // encoder inverted
-    // continuous/wrapped
-    // idle mode
-    // position scaling
-    // velocity scaling
-    // position PID / Smart
-    // velocity PID / Smart
-    // firmware version (check only)
 
     virtual void AddConfig(const ConfigMap config) noexcept = 0;
 
@@ -125,6 +126,10 @@ public:
     // parameters, but only when this has been requested (via other API calls).
     virtual void Periodic() noexcept = 0;
 
+    // This likely has the side-effect of printing out a summary of any error
+    // status.  As such, it is most appropriate to call sparingly, perhaps from
+    // DisabledInit(), since this is normally called after Autonomous and
+    // Teleop.  There's little reason to use this, apart from the summary info.
     virtual void ClearFaults() noexcept = 0;
 
     virtual bool GetStatus() noexcept = 0;

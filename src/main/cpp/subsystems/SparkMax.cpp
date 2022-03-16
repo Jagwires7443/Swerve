@@ -3,12 +3,14 @@
 #include "subsystems/SparkMax.h"
 
 #include <bitset>
+#include <cmath>
 #include <cstddef>
 #include <exception>
 #include <functional>
 #include <iomanip>
 #include <ios>
 #include <iterator>
+#include <limits>
 #include <optional>
 #include <sstream>
 #include <string>
@@ -56,6 +58,7 @@ namespace
         SparkMax &operator=(const SparkMax &) = delete;
 
 #if 0
+        // Print out string to index mapping (for updating switch/cases).
         void ConfigIndex() noexcept
         {
             for (const auto &elem : SparkMaxFactory::configDefaults)
@@ -98,6 +101,8 @@ namespace
                 return;
             }
 
+            configRead_ = true;
+
             if (burn)
             {
                 configPush_ = true;
@@ -113,7 +118,7 @@ namespace
 
         bool GetStatus() noexcept override
         {
-            return motor_ && encoder_ && controller_ && faultBits_.none() && configGood_;
+            return motor_ && encoder_ && controller_ && faultBits_.none() && configGood_ && !configPush_ && !configBurn_;
         }
 
         // Every method listed above does any work it has via Periodic().
@@ -207,6 +212,8 @@ namespace
         uint smartCurrentStallLimit_ = std::get<uint>(SparkMaxFactory::configDefaults.at("kSmartCurrentStallLimit"));
         uint smartCurrentFreeLimit_ = std::get<uint>(SparkMaxFactory::configDefaults.at("kSmartCurrentFreeLimit"));
         uint smartCurrentConfig_ = std::get<uint>(SparkMaxFactory::configDefaults.at("kSmartCurrentConfig"));
+
+        // Config parameters which are needed before SetConfig()/AddConfig().
         uint status0_ = std::get<uint>(SparkMaxFactory::configDefaults.at("kStatus0"));
         uint status1_ = std::get<uint>(SparkMaxFactory::configDefaults.at("kStatus1"));
         uint status2_ = std::get<uint>(SparkMaxFactory::configDefaults.at("kStatus2"));
@@ -216,9 +223,10 @@ namespace
         uint64_t FPGATime_ = frc::RobotController::GetFPGATime();
         int iteration_ = 0;
 
-        // The inner state config machine uses motor_, encoder_, and controller_ XXX
-        uint sequence_ = 0;
+        // The inner state config machine uses motor_, encoder_, controller_,
+        // forward_, reverse_, configReboot_, and sequence_ to track state.
         bool configReboot_ = true;
+        uint sequence_ = 0;
 
         std::bitset<16> faultBits_;
         bool configGood_ = false;
@@ -542,6 +550,9 @@ void SparkMax::ConfigPeriodic() noexcept
         return;
     }
 
+    // XXX RestoreFactoryDefaults() state here, extra bool to manage -- move SetInverted here?
+    // No config parameters have been used up to here -- canId_, MotorType, SetInverted
+
     // Second stage of state machine, as above.  Might or might not be slow, so
     // give it a stage to cover worst case.
     if (!encoder_)
@@ -728,12 +739,6 @@ void SparkMax::ConfigPeriodic() noexcept
             {
                 configReboot_ = false;
                 configGood_ = true;
-
-                if (configLock_)
-                {
-                    configLock_ = false;
-                }
-
                 sequence_ = 0;
             }
 
@@ -776,8 +781,6 @@ void SparkMax::PersistentConfigPeriodic() noexcept
             // to be applied (push).  If true, second result indicates config
             // needs to be applied (burn).  Third result is status reporting.
             const std::tuple<bool, bool, std::string> verify = VerifyConfig(it->first, it->second);
-
-            // printf("**** %s %s %s \"%s\"\n", it->first.c_str(), std::get<0>(verify) ? "T" : "F", std::get<1>(verify) ? "T" : "F", std::get<2>(verify).c_str());
 
             if (!std::get<0>(verify))
             {
@@ -862,6 +865,7 @@ void SparkMax::PersistentConfigPeriodic() noexcept
     configBurn_ = false;
     sequence_ = 0;
 
+    // XXX
     // AnyError(motor_->RestoreFactoryDefaults())
     // AnyError(motor_->BurnFlash())
 }
@@ -1060,6 +1064,8 @@ void SparkMax::DoSafely(const char *const what, std::function<void()> work, cons
             motor_ = nullptr;
             encoder_ = nullptr;
             controller_ = nullptr;
+            forward_ = nullptr;
+            reverse_ = nullptr;
             sequence_ = 0;
         }
         else
@@ -1072,6 +1078,8 @@ void SparkMax::DoSafely(const char *const what, std::function<void()> work, cons
         motor_ = nullptr;
         encoder_ = nullptr;
         controller_ = nullptr;
+        forward_ = nullptr;
+        reverse_ = nullptr;
         sequence_ = 0;
 
         std::printf("SparkMax[%i] %s %s exception: %s.\n", canId_, name_.c_str(), what, e.what());
@@ -1081,6 +1089,8 @@ void SparkMax::DoSafely(const char *const what, std::function<void()> work, cons
         motor_ = nullptr;
         encoder_ = nullptr;
         controller_ = nullptr;
+        forward_ = nullptr;
+        reverse_ = nullptr;
         sequence_ = 0;
 
         std::printf("SparkMax[%i] %s %s unknown exception.\n", canId_, name_.c_str(), what);
@@ -1171,10 +1181,34 @@ std::tuple<bool, bool, std::string> SparkMax::VerifyConfig(const std::string_vie
             }
         }
         break;
-    // kLimitSwitchFwdPolarity = 29
-    // kLimitSwitchRevPolarity = 28
-    // kHardLimitFwdEn = 38
-    // kHardLimitRevEn = 37
+    case 29:
+        name = "LimitSwitchFwdPolarity";
+        if (!altMode && forward_)
+        {
+            follower = true;
+        }
+        break;
+    case 28:
+        name = "LimitSwitchRevPolarity";
+        if (!altMode && reverse_)
+        {
+            follower = true;
+        }
+        break;
+    case 38:
+        name = "HardLimitFwdEn";
+        if (!altMode && forward_)
+        {
+            actual_value = bool{forward_->IsLimitSwitchEnabled()};
+        }
+        break;
+    case 37:
+        name = "HardLimitRevEn";
+        if (!altMode && reverse_)
+        {
+            actual_value = bool{reverse_->IsLimitSwitchEnabled()};
+        }
+        break;
     case 39:
         name = "FollowerID";
         if (motor_->IsFollower())
@@ -1459,12 +1493,48 @@ std::tuple<bool, bool, std::string> SparkMax::VerifyConfig(const std::string_vie
         return std::make_tuple(false, true, name);
     }
 
-    if (*actual_value == value)
+    // Comparison is complicated by possibility of double, which need more than
+    // just == and !=.
+    bool equal_actual = actual_value->index() == value.index();
+
+    if (equal_actual)
+    {
+        if (std::get_if<double>(&value) != nullptr)
+        {
+            const double delta = abs(std::get<double>(*actual_value) - std::get<double>(value));
+
+            equal_actual = delta <= std::numeric_limits<double>::epsilon();
+        }
+        else
+        {
+            equal_actual = *actual_value == value;
+        }
+    }
+
+    // Comparison is complicated by possibility of double, which need more than
+    // just == and !=.
+    bool equal_default = default_value.index() == value.index();
+
+    if (equal_default)
+    {
+        if (std::get_if<double>(&value) != nullptr)
+        {
+            const double delta = abs(std::get<double>(default_value) - std::get<double>(value));
+
+            equal_default = delta <= std::numeric_limits<double>::epsilon();
+        }
+        else
+        {
+            equal_default = default_value == value;
+        }
+    }
+
+    if (equal_actual)
     {
         name.clear();
     }
 
-    return std::make_tuple(*actual_value == value, value != default_value, name);
+    return std::make_tuple(equal_actual, !equal_default, name);
 }
 
 std::string SparkMax::ApplyConfig(const std::string_view key, const ConfigValue &value) noexcept
@@ -1547,10 +1617,40 @@ std::string SparkMax::ApplyConfig(const std::string_view key, const ConfigValue 
             }
         }
         break;
-    // kLimitSwitchFwdPolarity = 29
-    // kLimitSwitchRevPolarity = 28
-    // kHardLimitFwdEn = 38
-    // kHardLimitRevEn = 37
+    case 29:
+        name = "LimitSwitchFwdPolarity";
+        if (puint && forward_)
+        {
+            // XXX save ctor polarity and compare?
+        }
+        break;
+    case 28:
+        name = "LimitSwitchRevPolarity";
+        if (puint && reverse_)
+        {
+            // XXX save ctor polarity and compare?
+        }
+        break;
+    case 38:
+        name = "HardLimitFwdEn";
+        if (pbool && forward_)
+        {
+            if (!AnyError(forward_->EnableLimitSwitch(*pbool)))
+            {
+                name.clear();
+            }
+        }
+        break;
+    case 37:
+        name = "HardLimitRevEn";
+        if (pbool && reverse_)
+        {
+            if (!AnyError(reverse_->EnableLimitSwitch(*pbool)))
+            {
+                name.clear();
+            }
+        }
+        break;
     case 39:
         name = "FollowerID";
         if (puint)

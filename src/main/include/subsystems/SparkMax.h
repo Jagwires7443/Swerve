@@ -340,6 +340,8 @@ namespace SparkMaxFactory
 //   and the "_1" set is used for velocity.  There is also a "_2" and "_3" set,
 //   but these are not currently being used (or managed).  They could be useful
 //   if multiple gear ratios are possible or in other scenarios, in the future.
+//   In particular, closed-loop voltage/current control could use the
+//   additional sets.
 //   These are handled via GetPIDController(), plus one of the following:
 //     *  GetP()/SetP()
 //     *  GetI()/SetI()
@@ -366,6 +368,9 @@ namespace SparkMaxFactory
 // as this will happen automatically.  These are listed to document the managed
 // configuration parameters, for SetConfig()/AddConfig().  This covers the name
 // used in this code, the type, and default value for each managed parameter.
+
+// Also note that SmartMotionAccelStrategy does not appear to be implemented;
+// if it is set to kSCurve, this succeeds -- but it reads back as kTrapezoidal.
 namespace SparkMaxFactory
 {
     // Version 1.5.2; all configuration parameters are current at this release.
