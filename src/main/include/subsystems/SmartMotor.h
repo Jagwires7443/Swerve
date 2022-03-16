@@ -144,6 +144,18 @@ public:
 
     virtual IdleMode GetIdleMode() noexcept = 0;
 
+    enum class Direction
+    {
+        kForward = 0,
+        kReverse = 1,
+    };
+
+    virtual void EnableLimit(const Direction direction) noexcept = 0;
+
+    virtual void DisableLimit(const Direction direction) noexcept = 0;
+
+    virtual bool GetLimit(const Direction direction) noexcept = 0;
+
     virtual void Stop() noexcept = 0;
 
     virtual void Set(const double percent) noexcept = 0;
@@ -246,6 +258,21 @@ public:
     IdleMode GetIdleMode() noexcept override
     {
         return base_.GetIdleMode();
+    }
+
+    void EnableLimit(const Direction direction) noexcept override
+    {
+        base_.EnableLimit(direction);
+    }
+
+    void DisableLimit(const Direction direction) noexcept override
+    {
+        base_.DisableLimit(direction);
+    }
+
+    bool GetLimit(const Direction direction) noexcept override
+    {
+        return base_.GetLimit(direction);
     }
 
     void Stop() noexcept override

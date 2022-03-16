@@ -74,15 +74,26 @@ namespace
 
         void SetConfig(const ConfigMap config) noexcept override
         {
+            ConfigMap tmp(config);
+
             // Ensure at least these two config parameters are managed.
             config_.clear();
             config_["Firmware Version"] = std::get<uint>(SparkMaxFactory::configDefaults.at("Firmware Version"));
             config_["kIdleMode"] = std::get<uint>(SparkMaxFactory::configDefaults.at("kIdleMode"));
 
-            config_.merge(ConfigMap(config));
+            // The order matters here, hence the somewhat convoluted logic.
+            tmp.merge(config_);
+            config_.swap(tmp);
         }
 
-        void AddConfig(const ConfigMap config) noexcept override { config_.merge(ConfigMap(config)); }
+        void AddConfig(const ConfigMap config) noexcept override
+        {
+            ConfigMap tmp(config);
+
+            // The order matters here, hence the somewhat convoluted logic.
+            tmp.merge(config_);
+            config_.swap(tmp);
+        }
 
         void CheckConfig() noexcept override
         {
@@ -102,15 +113,12 @@ namespace
             }
 
             configRead_ = true;
+            configPush_ = true;
 
             if (burn)
             {
-                configPush_ = true;
                 configBurn_ = true;
-            }
-            else
-            {
-                configPush_ = true;
+                configRest_ = true;
             }
         }
 
@@ -122,6 +130,8 @@ namespace
         }
 
         // Every method listed above does any work it has via Periodic().
+        // Alternatively, most of this work would be done in a different thread
+        // (ideally as part of the implementation internals provided by REV).
         void Periodic() noexcept override;
 
         void ShuffleboardCreate(frc::ShuffleboardContainer &container,
@@ -131,6 +141,12 @@ namespace
         void SetIdleMode(const IdleMode mode) noexcept override;
 
         IdleMode GetIdleMode() noexcept override;
+
+        void EnableLimit(const Direction direction) noexcept override;
+
+        void DisableLimit(const Direction direction) noexcept override;
+
+        bool GetLimit(const Direction direction) noexcept override;
 
         void Stop() noexcept override;
 
@@ -235,6 +251,7 @@ namespace
         bool configRead_ = false;
         bool configPush_ = false;
         bool configBurn_ = false;
+        bool configRest_ = false;
 
         double position_ = 0.0;
         double velocity_ = 0.0;
@@ -550,7 +567,33 @@ void SparkMax::ConfigPeriodic() noexcept
         return;
     }
 
-    // XXX RestoreFactoryDefaults() state here, extra bool to manage -- move SetInverted here?
+    // When starting to burn config parameters, force everything to a known
+    // initial state and ensure all config parameters start out set to default.
+    // Force everything to be reconstructed, since some parameters may be set
+    // as a side effect of constructing motor_/encoder_/controller_, etc.
+    if (configRest_)
+    {
+        DoSafely(
+            "RestoreFactoryDefaults", [&]() -> void
+            {
+            if (AnyError(motor_->RestoreFactoryDefaults()))
+                {
+                    return;
+                } },
+            false);
+
+        configRest_ = false;
+        motor_ = nullptr;
+        encoder_ = nullptr;
+        controller_ = nullptr;
+        forward_ = nullptr;
+        reverse_ = nullptr;
+        sequence_ = 0;
+
+        return;
+    }
+
+    // XXX SetInverted here?
     // No config parameters have been used up to here -- canId_, MotorType, SetInverted
 
     // Second stage of state machine, as above.  Might or might not be slow, so
@@ -858,16 +901,23 @@ void SparkMax::PersistentConfigPeriodic() noexcept
         return;
     }
 
-    // XXX push/burn -- do a read to verify and update status
+    if (configBurn_)
+    {
+        DoSafely(
+            "RestoreFactoryDefaults", [&]() -> void
+            {
+            if (AnyError(motor_->BurnFlash()))
+                {
+                    return;
+                } });
+    }
+
+    // All done!  Force an explicit config read, to verify and update status.
     configLock_ = false;
-    configRead_ = true;
+    configRead_ = configBurn_;
     configPush_ = false;
     configBurn_ = false;
     sequence_ = 0;
-
-    // XXX
-    // AnyError(motor_->RestoreFactoryDefaults())
-    // AnyError(motor_->BurnFlash())
 }
 
 void SparkMax::SetIdleMode(const SmartMotorBase::IdleMode mode) noexcept
@@ -891,6 +941,77 @@ SmartMotorBase::IdleMode SparkMax::GetIdleMode() noexcept
              { mode = motor_->GetIdleMode(); });
 
     return mode == rev::CANSparkMax::IdleMode::kBrake ? SmartMotorBase::IdleMode::kBrake : SmartMotorBase::IdleMode::kCoast;
+}
+
+void SparkMax::EnableLimit(const Direction direction) noexcept
+{
+    if (configLock_)
+    {
+        return;
+    }
+
+    switch (direction)
+    {
+    case (Direction::kForward):
+        if (forward_)
+        {
+            forward_->EnableLimitSwitch(true);
+        }
+        break;
+    case (Direction::kReverse):
+        if (reverse_)
+        {
+            reverse_->EnableLimitSwitch(true);
+        }
+        break;
+    }
+}
+
+void SparkMax::DisableLimit(const Direction direction) noexcept
+{
+    if (configLock_)
+    {
+        return;
+    }
+
+    switch (direction)
+    {
+    case (Direction::kForward):
+        if (forward_)
+        {
+            forward_->EnableLimitSwitch(false);
+        }
+        break;
+    case (Direction::kReverse):
+        if (reverse_)
+        {
+            reverse_->EnableLimitSwitch(false);
+        }
+        break;
+    }
+}
+
+bool SparkMax::GetLimit(const Direction direction) noexcept
+{
+    bool result = false;
+
+    switch (direction)
+    {
+    case (Direction::kForward):
+        if (forward_)
+        {
+            result = forward_->Get();
+        }
+        break;
+    case (Direction::kReverse):
+        if (reverse_)
+        {
+            result = reverse_->Get();
+        }
+        break;
+    }
+
+    return result;
 }
 
 void SparkMax::Stop() noexcept
@@ -1156,11 +1277,11 @@ std::tuple<bool, bool, std::string> SparkMax::VerifyConfig(const std::string_vie
     case 58:
         name = "Firmware Version (";
         {
-            const uint val = uint{motor_->GetFirmwareVersion()};
+            const uint val = motor_->GetFirmwareVersion();
             const std::string str = motor_->GetFirmwareString();
 
             name += FirmwareInfo(val, str);
-            actual_value = val;
+            actual_value = uint{val};
         }
         name += ")";
         break;

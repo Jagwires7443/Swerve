@@ -104,6 +104,12 @@ void RobotContainer::ConfigureButtonBindings() noexcept
                                                                                             { m_driveSubsystem.ZeroHeading();
                                                                                             m_fieldOriented = true; },
                                                                                             {&m_driveSubsystem}));
+  frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kA).WhenPressed(frc2::RunCommand([&]() -> void
+                                                                                              { m_infrastructureSubsystem.Enable(); },
+                                                                                              {&m_infrastructureSubsystem}));
+  frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kB).WhenPressed(frc2::RunCommand([&]() -> void
+                                                                                              { m_infrastructureSubsystem.Disable(); },
+                                                                                              {&m_infrastructureSubsystem}));
 }
 
 frc2::Command *RobotContainer::GetAutonomousCommand() noexcept

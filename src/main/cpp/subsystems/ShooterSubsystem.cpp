@@ -1,4 +1,5 @@
 #include "subsystems/ShooterSubsystem.h"
+#include "subsystems/SparkMax.h"
 
 #include "Constants.h"
 
@@ -11,29 +12,6 @@ ShooterSubsystem::ShooterSubsystem() noexcept
 
 void ShooterSubsystem::Periodic() noexcept
 {
-    const uint64_t FPGATime = frc::RobotController::GetFPGATime();
-    uint deltaTime = FPGATime - FPGATime_;
-
-    if (deltaTime > 30000000) // 30-second tick
-    {
-        FPGATime_ = FPGATime;
-
-        if (sequence_ == 0)
-        {
-            printf("**** Check.\n");
-            m_shooterMotor->CheckConfig();
-
-            ++sequence_;
-        }
-        else
-        {
-            printf("**** Apply.\n");
-            m_shooterMotor->ApplyConfig(false);
-
-            sequence_ = 0;
-        }
-    }
-
     m_shooterMotor->Periodic();
 }
 

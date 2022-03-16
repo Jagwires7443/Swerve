@@ -49,7 +49,9 @@ namespace SparkMaxFactory
 // Control Frame Period (see SetControlFramePeriodMs)
 // CAN Timeout (see SetCANTimeout)
 //   These are managed on the roboRIO side of things.  There is no attempt to
-//   cover these, they are simply left at default values.
+//   cover these, they are simply left at default values.  Note that this can
+//   lead to loop time overrun warnings, especially if a motor controller
+//   reboots.
 
 // Motor Inverted (see GetInverted / SetInverted)
 //   This is managed on the roboRIO side of things.  SmartMotor handles this by
