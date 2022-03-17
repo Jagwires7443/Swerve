@@ -7,15 +7,13 @@
 
 ShooterSubsystem::ShooterSubsystem() noexcept
 {
-    m_shooterMotor = SparkMaxFactory::CreateSparkMax("Shooter", 1, false);
 }
 
 void ShooterSubsystem::Periodic() noexcept
 {
-    m_shooterMotor->Periodic();
+    // m_shooterMotor->Periodic();
 }
 
 void ShooterSubsystem::Set(double percent) noexcept
 {
-    m_shooterMotor->SetVoltage(percent * 12_V);
 }

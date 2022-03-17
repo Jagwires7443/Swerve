@@ -1,6 +1,8 @@
 #pragma once
 
-#include "ctre/Phoenix.h"
+#include "subsystems/SparkMax.h"
+
+#include <frc/DoubleSolenoid.h>
 #include <frc2/command/SubsystemBase.h>
 
 #include <memory>
@@ -14,11 +16,28 @@ public:
     FeederSubsystem(const FeederSubsystem &) = delete;
     FeederSubsystem &operator=(const FeederSubsystem &) = delete;
 
+    void Periodic() noexcept override;
+
     void Set(double percent) noexcept;
 
-private:
-    void DoSafeFeederMotors(const char *const what, std::function<void()> work) noexcept;
+    void Pneumatics() noexcept;
 
-    std::unique_ptr<ctre::phoenix::motorcontrol::can::WPI_VictorSPX> m_feederOneMotor;
-    std::unique_ptr<ctre::phoenix::motorcontrol::can::WPI_VictorSPX> m_feederTwoMotor;
+    void LockIntake() noexcept;
+
+    void DropIntake() noexcept;
+
+    void LowerIntake() noexcept;
+
+    void RaiseIntake() noexcept;
+
+private:
+    std::unique_ptr<SmartMotorBase> m_intakeMotor;
+    std::unique_ptr<SmartMotorBase> m_elevatorMotor;
+    std::unique_ptr<SmartMotorBase> m_feederMotor;
+    std::unique_ptr<SmartMotorBase> m_shooterMotor;
+    std::unique_ptr<SmartMotorBase> m_backspinMotor;
+    std::unique_ptr<SmartMotorBase> m_climberMotor;
+
+    std::unique_ptr<frc::DoubleSolenoid> m_intakeRelease;
+    std::unique_ptr<frc::DoubleSolenoid> m_intakeRaise;
 };

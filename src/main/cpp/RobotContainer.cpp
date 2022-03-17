@@ -19,7 +19,8 @@ RobotContainer::RobotContainer() noexcept
   ConfigureButtonBindings();
 
   // Set up default drive command; non-owning pointer is passed by value.
-  auto requirements = {dynamic_cast<frc2::Subsystem *>(&m_driveSubsystem)};
+  auto driveRequirements = {dynamic_cast<frc2::Subsystem *>(&m_driveSubsystem)};
+  auto feederRequirements = {dynamic_cast<frc2::Subsystem *>(&m_feederSubsystem)};
 
   // Drive, as commanded by operator joystick controls.
   m_driveCommand = std::make_unique<frc2::RunCommand>(
@@ -65,7 +66,7 @@ RobotContainer::RobotContainer() noexcept
           m_shooterSubsystem.Set(shooter);
         }
       },
-      requirements);
+      driveRequirements);
 
   // Point swerve modules, but do not actually drive.
   m_pointCommand = std::make_unique<frc2::RunCommand>(
@@ -79,7 +80,7 @@ RobotContainer::RobotContainer() noexcept
         // been reached.
         (void)m_driveSubsystem.SetTurningPosition(angle);
       },
-      requirements);
+      driveRequirements);
 
   m_autonomousCommand = std::make_unique<ExampleCommand>(&m_driveSubsystem);
 
@@ -92,7 +93,43 @@ RobotContainer::RobotContainer() noexcept
   m_orbitCommand = std::make_unique<OrbitCommand>(&m_driveSubsystem);
   m_pirouetteCommand = std::make_unique<PirouetteCommand>(&m_driveSubsystem);
 
+  m_pneumaticsNeutralCommand = std::make_unique<frc2::RunCommand>(
+      [&]() -> void
+      {
+        m_feederSubsystem.Pneumatics();
+      },
+      feederRequirements);
+
+  m_dropIntakeCommand = std::make_unique<frc2::RunCommand>(
+      [&]() -> void
+      {
+        m_feederSubsystem.DropIntake();
+      },
+      feederRequirements);
+
+  m_lockIntakeCommand = std::make_unique<frc2::RunCommand>(
+      [&]() -> void
+      {
+        m_feederSubsystem.LockIntake();
+      },
+      feederRequirements);
+
+  m_raiseIntakeCommand = std::make_unique<frc2::RunCommand>(
+      [&]() -> void
+      {
+        m_feederSubsystem.RaiseIntake();
+      },
+      feederRequirements);
+
+  m_lowerIntakeCommand = std::make_unique<frc2::RunCommand>(
+      [&]() -> void
+      {
+        m_feederSubsystem.LowerIntake();
+      },
+      feederRequirements);
+
   m_driveSubsystem.SetDefaultCommand(*m_driveCommand);
+  m_feederSubsystem.SetDefaultCommand(*m_pneumaticsNeutralCommand);
 }
 
 void RobotContainer::ConfigureButtonBindings() noexcept
@@ -110,6 +147,22 @@ void RobotContainer::ConfigureButtonBindings() noexcept
   frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kB).WhenPressed(frc2::RunCommand([&]() -> void
                                                                                               { m_infrastructureSubsystem.Disable(); },
                                                                                               {&m_infrastructureSubsystem}));
+
+  frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kBack).WhenPressed(frc2::RunCommand([&]() -> void
+                                                                                                 { m_feederSubsystem.LockIntake(); },
+                                                                                                 {&m_feederSubsystem}));
+
+  frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kStart).WhenPressed(frc2::RunCommand([&]() -> void
+                                                                                                  { m_feederSubsystem.DropIntake(); },
+                                                                                                  {&m_feederSubsystem}));
+
+  frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kLeftStick).WhenPressed(frc2::RunCommand([&]() -> void
+                                                                                                      { m_feederSubsystem.RaiseIntake(); },
+                                                                                                      {&m_feederSubsystem}));
+
+  frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kRightStick).WhenPressed(frc2::RunCommand([&]() -> void
+                                                                                                       { m_feederSubsystem.LowerIntake(); },
+                                                                                                       {&m_feederSubsystem}));
 }
 
 frc2::Command *RobotContainer::GetAutonomousCommand() noexcept

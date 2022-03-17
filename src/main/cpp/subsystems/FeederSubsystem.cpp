@@ -6,55 +6,60 @@
 
 FeederSubsystem::FeederSubsystem() noexcept
 {
-    return;
+    m_intakeMotor = SparkMaxFactory::CreateSparkMax("Intake", 9, false);
+    m_elevatorMotor = SparkMaxFactory::CreateSparkMax("Elevator", 10, true);
+    m_feederMotor = SparkMaxFactory::CreateSparkMax("Feeder", 11, true);
+    m_shooterMotor = SparkMaxFactory::CreateSparkMax("Shooter", 13, false);
+    m_backspinMotor = SparkMaxFactory::CreateSparkMax("Backspin", 14, false);
+    m_climberMotor = SparkMaxFactory::CreateSparkMax("Climber", 12, false);
 
-    DoSafeFeederMotors("ctor", [&]() -> void
-                       {
-        m_feederOneMotor = std::make_unique<ctre::phoenix::motorcontrol::can::WPI_VictorSPX>(
-            nonDrive::kFeederOneCanID);
-        m_feederTwoMotor = std::make_unique<ctre::phoenix::motorcontrol::can::WPI_VictorSPX>(
-            nonDrive::kFeederTwoCanID);
+    m_intakeRelease = std::make_unique<frc::DoubleSolenoid>(1, frc::PneumaticsModuleType::REVPH, 0, 1);
+    m_intakeRaise = std::make_unique<frc::DoubleSolenoid>(1, frc::PneumaticsModuleType::REVPH, 2, 3);
 
-        if (!m_feederOneMotor || !m_feederTwoMotor)
-        {
-            throw std::runtime_error("m_feederMotor");
-        }
-
-        m_feederOneMotor->SetInverted(false);
-        m_feederTwoMotor->SetInverted(true); });
+    Pneumatics();
 }
 
-void FeederSubsystem::DoSafeFeederMotors(const char *const what, std::function<void()> work) noexcept
+void FeederSubsystem::Periodic() noexcept
 {
-    try
-    {
-        work();
-    }
-    catch (const std::exception &e)
-    {
-        m_feederOneMotor = nullptr;
-        m_feederTwoMotor = nullptr;
-
-        std::printf("Feeder Motors %s exception: %s.\n", what, e.what());
-    }
-    catch (...)
-    {
-        m_feederOneMotor = nullptr;
-        m_feederTwoMotor = nullptr;
-
-        std::printf("Feeder Motors %s unknown exception.\n", what);
-    }
+    m_intakeMotor->Periodic();
+    m_elevatorMotor->Periodic();
+    m_feederMotor->Periodic();
+    m_shooterMotor->Periodic();
+    m_backspinMotor->Periodic();
+    m_climberMotor->Periodic();
 }
 
 void FeederSubsystem::Set(double percent) noexcept
 {
-    DoSafeFeederMotors("Set()", [&]() -> void
-                       {
-        if (!m_feederOneMotor || !m_feederTwoMotor)
-        {
-            return;
-        }
+    m_intakeMotor->SetVoltage(percent * 12_V);
+    m_elevatorMotor->SetVoltage(percent * 12_V);
+    m_feederMotor->SetVoltage(percent * 12_V);
+    m_shooterMotor->SetVoltage(percent * 12_V);
+    m_backspinMotor->SetVoltage(percent * 12_V);
+}
 
-        m_feederOneMotor->SetVoltage(percent * 12_V);
-        m_feederTwoMotor->SetVoltage(percent * 12_V); });
+void FeederSubsystem::Pneumatics() noexcept
+{
+    m_intakeRelease->Set(frc::DoubleSolenoid::Value::kOff);
+    m_intakeRaise->Set(frc::DoubleSolenoid::Value::kOff);
+}
+
+void FeederSubsystem::LockIntake() noexcept
+{
+    m_intakeRelease->Set(frc::DoubleSolenoid::Value::kForward);
+}
+
+void FeederSubsystem::DropIntake() noexcept
+{
+    m_intakeRelease->Set(frc::DoubleSolenoid::Value::kReverse);
+}
+
+void FeederSubsystem::LowerIntake() noexcept
+{
+    m_intakeRaise->Set(frc::DoubleSolenoid::Value::kForward);
+}
+
+void FeederSubsystem::RaiseIntake() noexcept
+{
+    m_intakeRaise->Set(frc::DoubleSolenoid::Value::kReverse);
 }

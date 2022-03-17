@@ -66,5 +66,11 @@ private:
   std::unique_ptr<OrbitCommand> m_orbitCommand;
   std::unique_ptr<PirouetteCommand> m_pirouetteCommand;
 
+  std::unique_ptr<frc2::RunCommand> m_pneumaticsNeutralCommand;
+  std::unique_ptr<frc2::RunCommand> m_dropIntakeCommand;
+  std::unique_ptr<frc2::RunCommand> m_lockIntakeCommand;
+  std::unique_ptr<frc2::RunCommand> m_raiseIntakeCommand;
+  std::unique_ptr<frc2::RunCommand> m_lowerIntakeCommand;
+
   frc::XboxController m_xbox{0};
 };
