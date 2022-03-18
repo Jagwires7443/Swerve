@@ -20,6 +20,10 @@ public:
 
     void Set(double percent) noexcept;
 
+    void Fire() noexcept;
+
+    void Hold() noexcept;
+
     void Pneumatics() noexcept;
 
     void LockIntake() noexcept;
@@ -34,8 +38,6 @@ private:
     std::unique_ptr<SmartMotorBase> m_intakeMotor;
     std::unique_ptr<SmartMotorBase> m_elevatorMotor;
     std::unique_ptr<SmartMotorBase> m_feederMotor;
-    std::unique_ptr<SmartMotorBase> m_shooterMotor;
-    std::unique_ptr<SmartMotorBase> m_backspinMotor;
     std::unique_ptr<SmartMotorBase> m_climberMotor;
 
     std::unique_ptr<frc::DoubleSolenoid> m_intakeRelease;

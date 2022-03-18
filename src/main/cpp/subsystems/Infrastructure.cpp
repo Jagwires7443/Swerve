@@ -9,6 +9,8 @@ InfrastructureSubsystem::InfrastructureSubsystem() noexcept
 
     pdh_->ClearStickyFaults();
     pdh_->SetSwitchableChannel(false);
+
+    Enable();
 }
 
 void InfrastructureSubsystem::Periodic() noexcept {}

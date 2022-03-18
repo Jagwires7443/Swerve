@@ -2,7 +2,6 @@
 
 #include "subsystems/SparkMax.h"
 
-#include <frc/RobotController.h>
 #include <frc2/command/SubsystemBase.h>
 
 #include <memory>
@@ -20,9 +19,9 @@ public:
 
     void Set(double percent) noexcept;
 
+    void Stop() noexcept;
+
 private:
     std::unique_ptr<SmartMotorBase> m_shooterMotor;
-
-    uint64_t FPGATime_ = frc::RobotController::GetFPGATime();
-    uint sequence_ = 0;
+    std::unique_ptr<SmartMotorBase> m_backspinMotor;
 };
