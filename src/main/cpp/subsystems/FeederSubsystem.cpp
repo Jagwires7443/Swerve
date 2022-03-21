@@ -6,6 +6,13 @@
 
 FeederSubsystem::FeederSubsystem() noexcept
 {
+    const SmartMotorBase::ConfigMap config = {
+        {"kIdleMode", uint{0}},
+        {"kRampRate", double{0.1}},
+        {"kSmartCurrentStallLimit", uint{30}}, // Amps
+        {"kSmartCurrentFreeLimit", uint{10}},  // Amps
+    };
+
     m_intakeMotor = SparkMaxFactory::CreateSparkMax("Intake", 9, false);
     m_elevatorMotor = SparkMaxFactory::CreateSparkMax("Elevator", 10, true);
     m_feederMotor = SparkMaxFactory::CreateSparkMax("Feeder", 11, true);
@@ -13,6 +20,14 @@ FeederSubsystem::FeederSubsystem() noexcept
 
     m_intakeRaise = std::make_unique<frc::DoubleSolenoid>(1, frc::PneumaticsModuleType::REVPH, 0, 1);
     m_intakeRelease = std::make_unique<frc::DoubleSolenoid>(1, frc::PneumaticsModuleType::REVPH, 2, 3);
+
+    m_intakeMotor->SetConfig(config);
+    m_elevatorMotor->SetConfig(config);
+    m_feederMotor->SetConfig(config);
+
+    m_intakeMotor->ApplyConfig(false);
+    m_elevatorMotor->ApplyConfig(false);
+    m_feederMotor->ApplyConfig(false);
 
     Pneumatics();
 }

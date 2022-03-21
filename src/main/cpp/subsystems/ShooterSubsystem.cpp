@@ -6,8 +6,18 @@
 
 ShooterSubsystem::ShooterSubsystem() noexcept
 {
+    const SmartMotorBase::ConfigMap config = {
+        {"kIdleMode", uint{0}},
+    };
+
     m_shooterMotor = SparkMaxFactory::CreateSparkMax("Shooter", 13, false);
     m_backspinMotor = SparkMaxFactory::CreateSparkMax("Backspin", 14, false);
+
+    m_shooterMotor->SetConfig(config);
+    m_backspinMotor->SetConfig(config);
+
+    m_shooterMotor->ApplyConfig(false);
+    m_backspinMotor->ApplyConfig(false);
 }
 
 void ShooterSubsystem::Periodic() noexcept
