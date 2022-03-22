@@ -7,6 +7,8 @@
 FeederSubsystem::FeederSubsystem() noexcept
 {
     const SmartMotorBase::ConfigMap config = {
+        {"kStatus1", uint{250}},
+        {"kStatus2", uint{250}},
         {"kIdleMode", uint{0}},
         {"kRampRate", double{0.1}},
         {"kSmartCurrentStallLimit", uint{30}}, // Amps
@@ -44,16 +46,25 @@ void FeederSubsystem::Set(double percent) noexcept
 {
     m_elevatorMotor->SetVoltage(percent * 12_V);
     m_intakeMotor->SetVoltage(percent * 12_V);
-}
 
-void FeederSubsystem::Fire() noexcept
-{
-    m_feederMotor->SetVoltage(12_V);
+    if (percent < 0.0)
+    {
+        m_feederMotor->SetVoltage(percent * 12_V);
+    }
+    else
+    {
+        m_feederMotor->SetVoltage(0.0_V);
+    }
 }
 
 void FeederSubsystem::Hold() noexcept
 {
     m_feederMotor->Stop();
+}
+
+void FeederSubsystem::Fire() noexcept
+{
+    m_feederMotor->SetVoltage(12_V);
 }
 
 void FeederSubsystem::Pneumatics() noexcept
@@ -72,12 +83,20 @@ void FeederSubsystem::DropIntake() noexcept
     m_intakeRelease->Set(frc::DoubleSolenoid::Value::kReverse);
 }
 
+void FeederSubsystem::RaiseIntake() noexcept
+{
+    m_intakeRaise->Set(frc::DoubleSolenoid::Value::kForward);
+}
+
 void FeederSubsystem::LowerIntake() noexcept
 {
     m_intakeRaise->Set(frc::DoubleSolenoid::Value::kReverse);
 }
 
-void FeederSubsystem::RaiseIntake() noexcept
+void FeederSubsystem::Raise() noexcept
 {
-    m_intakeRaise->Set(frc::DoubleSolenoid::Value::kForward);
+}
+
+void FeederSubsystem::Lower() noexcept
+{
 }

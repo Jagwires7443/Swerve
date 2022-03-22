@@ -1,3 +1,7 @@
+// XXX Not on/off when misaligned, but compute component?
+// XXX If no turning position, turn module into a caster (all coast)?
+// XXX Update angle in disabled/periodic (for alignment).
+
 // See https://github.com/wpilibsuite/allwpilib/blob/main/wpilibcExamples/src/main/cpp/examples/SwerveControllerCommand/cpp/subsystems/SwerveModule.cpp.
 // See https://docs.revrobotics.com/sparkmax/operating-modes/closed-loop-control.
 
@@ -391,8 +395,8 @@ void SwerveModule::ConstructTurningMotor() noexcept
                        {
         m_turningMotor = std::make_unique<rev::CANSparkMax>(
             m_turningMotorCanID, rev::CANSparkMaxLowLevel::MotorType::kBrushless);
-        m_turningEncoder = std::make_unique<rev::SparkMaxAlternateEncoder>(
-            m_turningMotor->GetAlternateEncoder(4096));
+        m_turningEncoder = std::make_unique<rev::SparkMaxRelativeEncoder>(
+            m_turningMotor->GetEncoder());
         m_turningPID = std::make_unique<rev::SparkMaxPIDController>(m_turningMotor->GetPIDController());
 
         if (!m_turningMotor)
@@ -411,11 +415,6 @@ void SwerveModule::ConstructTurningMotor() noexcept
         if (!m_turningEncoder || !m_turningPID)
         {
             throw std::runtime_error("m_turningEncoder");
-        }
-
-        if (m_turningEncoder->SetInverted(m_turningEncoderInverted) != rev::REVLibError::kOk)
-        {
-            throw std::runtime_error("SetInverted()");
         }
 
         if (m_turningPID->SetFeedbackDevice(*m_turningEncoder) != rev::REVLibError::kOk)
@@ -1069,8 +1068,8 @@ void SwerveModule::TestPeriodic() noexcept
 
         m_verifyMotorControllersWhen = now + 10s;
 
-        m_turningMotorControllerValidated = VerifyTurningMotorControllerConfig();
-        m_driveMotorControllerValidated = VerifyDriveMotorControllerConfig();
+        // XXX m_turningMotorControllerValidated = VerifyTurningMotorControllerConfig();
+        // XXX m_driveMotorControllerValidated = VerifyDriveMotorControllerConfig();
     }
 
     // Obtain raw data from DutyCycle object; absolute position without
@@ -1637,11 +1636,6 @@ bool SwerveModule::VerifyTurningMotorControllerConfig() noexcept
         if (m_turningMotor->GetInverted() != m_turningMotorInverted)
         {
             turningMotorControllerConfig += " MI";
-        }
-
-        if (m_turningEncoder->GetInverted() != m_turningEncoderInverted)
-        {
-            turningMotorControllerConfig += " EI";
         }
 
         if (m_turningPID->GetP() != m_turningPosition_P)

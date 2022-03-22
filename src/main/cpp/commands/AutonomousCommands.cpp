@@ -6,3 +6,9 @@
 
 ExampleCommand::ExampleCommand(DriveSubsystem *subsystem) noexcept
     : m_subsystem{subsystem} { SetName("Example"); }
+
+void ExampleCommand::Initialize() noexcept {}
+
+void ExampleCommand::Execute() noexcept {}
+
+void ExampleCommand::End(bool interrupted) noexcept {}

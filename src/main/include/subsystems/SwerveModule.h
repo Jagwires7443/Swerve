@@ -302,7 +302,6 @@ private:
   // robot, and are never expected to change.
   const bool m_driveMotorInverted{physical::kDriveMotorInverted};
   const bool m_turningMotorInverted{physical::kTurningMotorInverted};
-  const bool m_turningEncoderInverted{physical::kTurningEncoderInverted};
 
   // Until REV bug for continuous rotation is fixed, must do turning PID on the
   // roboRIO.  Setting m_rio false allows testing turning PID on the SPARK MAX.
@@ -346,7 +345,7 @@ private:
   std::unique_ptr<frc::DutyCycle> m_turningPositionPWM;
 
   std::unique_ptr<rev::CANSparkMax> m_turningMotor;
-  std::unique_ptr<rev::SparkMaxAlternateEncoder> m_turningEncoder;
+  std::unique_ptr<rev::SparkMaxRelativeEncoder> m_turningEncoder;
   std::unique_ptr<rev::SparkMaxPIDController> m_turningPID;
 
   std::unique_ptr<rev::CANSparkMax> m_driveMotor;

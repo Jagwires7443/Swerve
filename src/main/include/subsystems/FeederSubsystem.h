@@ -20,9 +20,13 @@ public:
 
     void Set(double percent) noexcept;
 
+    void Hold() noexcept;
+
     void Fire() noexcept;
 
-    void Hold() noexcept;
+    void Raise() noexcept;
+
+    void Lower() noexcept;
 
     void Pneumatics() noexcept;
 
@@ -30,9 +34,9 @@ public:
 
     void DropIntake() noexcept;
 
-    void LowerIntake() noexcept;
-
     void RaiseIntake() noexcept;
+
+    void LowerIntake() noexcept;
 
 private:
     std::unique_ptr<SmartMotorBase> m_intakeMotor;

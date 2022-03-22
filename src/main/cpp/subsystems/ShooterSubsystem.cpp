@@ -7,6 +7,8 @@
 ShooterSubsystem::ShooterSubsystem() noexcept
 {
     const SmartMotorBase::ConfigMap config = {
+        {"kStatus1", uint{250}},
+        {"kStatus2", uint{250}},
         {"kIdleMode", uint{0}},
     };
 

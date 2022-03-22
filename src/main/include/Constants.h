@@ -89,10 +89,9 @@ namespace physical
     constexpr int kRearLeftTurningEncoderPort = 2;
     constexpr int kRearRightTurningEncoderPort = 3;
 
-    // These can flip because of gearing or wiring.
+    // These can flip because of gearing.
     constexpr bool kDriveMotorInverted = false;
     constexpr bool kTurningMotorInverted = false;
-    constexpr bool kTurningEncoderInverted = true;
 }
 
 namespace firmware

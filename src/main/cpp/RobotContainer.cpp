@@ -20,7 +20,10 @@ RobotContainer::RobotContainer() noexcept
   ConfigureButtonBindings();
 
   // Set up default drive command; non-owning pointer is passed by value.
-  auto driveRequirements = {dynamic_cast<frc2::Subsystem *>(&m_driveSubsystem), dynamic_cast<frc2::Subsystem *>(&m_shooterSubsystem)};
+  auto driveRequirements = {
+      dynamic_cast<frc2::Subsystem *>(&m_driveSubsystem),
+      // dynamic_cast<frc2::Subsystem *>(&m_feederSubsystem),  XXX Set() is here, rest is buttons
+      dynamic_cast<frc2::Subsystem *>(&m_shooterSubsystem)};
 
   // Drive, as commanded by operator joystick controls.
   m_driveCommand = std::make_unique<frc2::RunCommand>(
@@ -74,8 +77,6 @@ RobotContainer::RobotContainer() noexcept
         // Ingnore return (bool); no need to check that commanded angle has
         // been reached.
         (void)m_driveSubsystem.SetTurningPosition(angle);
-
-        m_shooterSubsystem.Stop();
       },
       driveRequirements);
 
@@ -94,34 +95,39 @@ RobotContainer::RobotContainer() noexcept
   m_feederSubsystem.SetDefaultCommand(frc2::RunCommand([&]() -> void
                                                        { m_feederSubsystem.Pneumatics(); },
                                                        {&m_feederSubsystem}));
-  m_shooterSubsystem.SetDefaultCommand(frc2::RunCommand([&]() -> void
-                                                        { m_shooterSubsystem.Stop(); },
-                                                        {&m_shooterSubsystem}));
 }
 
 void RobotContainer::ConfigureButtonBindings() noexcept
 {
-  frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kX).WhileHeld(frc2::RunCommand([&]() -> void
-                                                                                            { m_fieldOriented = false; },
-                                                                                            {&m_driveSubsystem}));
-  frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kY).WhileHeld(frc2::RunCommand([&]() -> void
-                                                                                            { m_driveSubsystem.ZeroHeading();
+  frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kX).WhenPressed(frc2::RunCommand([&]() -> void
+                                                                                              { m_fieldOriented = false; },
+                                                                                              {}));
+  frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kY).WhenPressed(frc2::RunCommand([&]() -> void
+                                                                                              { m_driveSubsystem.ZeroHeading();
                                                                                             m_fieldOriented = true; },
-                                                                                            {&m_driveSubsystem}));
-  frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kA).WhileHeld(frc2::RunCommand([&]() -> void
-                                                                                            { m_slow = true; },
-                                                                                            {&m_driveSubsystem}));
-  frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kB).WhileHeld(frc2::RunCommand([&]() -> void
-                                                                                            { m_slow = false; },
-                                                                                            {&m_driveSubsystem}));
+                                                                                              {}));
+  frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kA).WhenPressed(frc2::RunCommand([&]() -> void
+                                                                                              { m_slow = true; },
+                                                                                              {}));
+  frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kB).WhenPressed(frc2::RunCommand([&]() -> void
+                                                                                              { m_slow = false; },
+                                                                                              {}));
 
-  frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kLeftBumper).WhileHeld(frc2::RunCommand([&]() -> void
-                                                                                                     { m_feederSubsystem.Fire(); },
-                                                                                                     {&m_feederSubsystem}));
+  frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kLeftBumper).WhenPressed(frc2::RunCommand([&]() -> void
+                                                                                                       { m_feederSubsystem.Fire(); },
+                                                                                                       {&m_feederSubsystem}));
 
   frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kLeftBumper).WhenReleased(frc2::RunCommand([&]() -> void
                                                                                                         { m_feederSubsystem.Hold(); },
                                                                                                         {&m_feederSubsystem}));
+
+  frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kStart).WhenPressed(frc2::RunCommand([&]() -> void
+                                                                                                  { m_feederSubsystem.Raise(); },
+                                                                                                  {&m_feederSubsystem}));
+
+  frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kBack).WhenPressed(frc2::RunCommand([&]() -> void
+                                                                                                 { m_feederSubsystem.Lower(); },
+                                                                                                 {&m_feederSubsystem}));
 
   frc2::POVButton(&m_xbox, 90).WhileHeld(frc2::RunCommand([&]() -> void
                                                           { m_feederSubsystem.LockIntake(); },
@@ -208,8 +214,8 @@ std::tuple<double, double, double, bool> RobotContainer::GetDriveTeleopControls(
 
   if (m_slow)
   {
-    x *= 0.1;
-    y *= 0.1;
+    x *= 0.2;
+    y *= 0.2;
     z *= 0.1;
   }
 
