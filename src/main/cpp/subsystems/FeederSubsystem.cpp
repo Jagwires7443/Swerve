@@ -6,6 +6,7 @@
 
 FeederSubsystem::FeederSubsystem() noexcept
 {
+    // NEO 550.
     const SmartMotorBase::ConfigMap config = {
         {"kStatus1", uint{250}},
         {"kStatus2", uint{250}},
@@ -19,8 +20,6 @@ FeederSubsystem::FeederSubsystem() noexcept
         {"kStatus1", uint{250}},
         {"kStatus2", uint{250}},
         {"kRampRate", double{0.5}},
-        {"kLimitSwitchFwdPolarity", uint{0}}, // 0 = Normally Open, 1 = Normally Closed
-        {"kLimitSwitchRevPolarity", uint{0}},
     };
 
     m_intakeMotor = SparkMaxFactory::CreateSparkMax("Intake", 9, false);
@@ -41,7 +40,7 @@ FeederSubsystem::FeederSubsystem() noexcept
     m_feederMotor->ApplyConfig(false);
     m_climberMotor->ApplyConfig(false);
 
-    Pneumatics();
+    Default(0.0);
 }
 
 void FeederSubsystem::Periodic() noexcept
@@ -52,8 +51,63 @@ void FeederSubsystem::Periodic() noexcept
     m_climberMotor->Periodic();
 }
 
-void FeederSubsystem::Pneumatics() noexcept
+void FeederSubsystem::Default(const double percent) noexcept
 {
+    m_intakeMotor->SetVoltage(percent * 12_V);
+    m_elevatorMotor->SetVoltage(percent * 12_V);
+
+    m_feederMotor->Stop();
+    m_climberMotor->Stop();
+
+    m_intakeRelease->Set(frc::DoubleSolenoid::Value::kOff);
+    m_intakeRaise->Set(frc::DoubleSolenoid::Value::kOff);
+}
+
+void FeederSubsystem::Eject() noexcept
+{
+    m_intakeMotor->SetVoltage(-12.0_V);
+    m_elevatorMotor->SetVoltage(-12.0_V);
+    m_feederMotor->SetVoltage(-12.0_V);
+
+    m_climberMotor->Stop();
+
+    m_intakeRelease->Set(frc::DoubleSolenoid::Value::kOff);
+    m_intakeRaise->Set(frc::DoubleSolenoid::Value::kOff);
+}
+
+void FeederSubsystem::Fire() noexcept
+{
+    m_intakeMotor->Stop();
+    m_elevatorMotor->Stop();
+
+    m_feederMotor->SetVoltage(12_V);
+
+    m_climberMotor->Stop();
+
+    m_intakeRelease->Set(frc::DoubleSolenoid::Value::kOff);
+    m_intakeRaise->Set(frc::DoubleSolenoid::Value::kOff);
+}
+
+void FeederSubsystem::Raise() noexcept
+{
+    m_intakeMotor->Stop();
+    m_elevatorMotor->Stop();
+    m_feederMotor->Stop();
+
+    //    m_climberMotor->SetVoltage(2.0_V);
+
+    m_intakeRelease->Set(frc::DoubleSolenoid::Value::kOff);
+    m_intakeRaise->Set(frc::DoubleSolenoid::Value::kOff);
+}
+
+void FeederSubsystem::Lower() noexcept
+{
+    m_intakeMotor->Stop();
+    m_elevatorMotor->Stop();
+    m_feederMotor->Stop();
+
+    //    m_climberMotor->SetVoltage(-2.0_V);
+
     m_intakeRelease->Set(frc::DoubleSolenoid::Value::kOff);
     m_intakeRaise->Set(frc::DoubleSolenoid::Value::kOff);
 }
@@ -76,39 +130,4 @@ void FeederSubsystem::RaiseIntake() noexcept
 void FeederSubsystem::LowerIntake() noexcept
 {
     m_intakeRaise->Set(frc::DoubleSolenoid::Value::kReverse);
-}
-
-void FeederSubsystem::Set(double percent) noexcept
-{
-    m_elevatorMotor->SetVoltage(percent * 12_V);
-    m_intakeMotor->SetVoltage(percent * 12_V);
-
-    if (percent < 0.0)
-    {
-        m_feederMotor->SetVoltage(percent * 12_V);
-    }
-    else
-    {
-        m_feederMotor->Stop();
-    }
-}
-
-void FeederSubsystem::Hold() noexcept
-{
-    m_feederMotor->Stop();
-}
-
-void FeederSubsystem::Fire() noexcept
-{
-    m_feederMotor->SetVoltage(12_V);
-}
-
-void FeederSubsystem::Raise() noexcept
-{
-    //    m_climberMotor->SetVoltage(2.0_V);
-}
-
-void FeederSubsystem::Lower() noexcept
-{
-    //    m_climberMotor->SetVoltage(-2.0_V);
 }

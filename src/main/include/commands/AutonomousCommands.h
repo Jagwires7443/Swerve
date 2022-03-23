@@ -8,24 +8,16 @@
 #include <frc2/command/CommandHelper.h>
 
 #include "subsystems/DriveSubsystem.h"
+#include "subsystems/FeederSubsystem.h"
+#include "subsystems/ShooterSubsystem.h"
 
-/**
- * An example command that uses an example subsystem.
- *
- * <p>Note that this extends CommandHelper, rather extending CommandBase
- * directly; this is crucially important, or else the decorator functions in
- * Command will *not* work!
- */
-class ExampleCommand
-    : public frc2::CommandHelper<frc2::CommandBase, ExampleCommand>
+#include <frc/RobotController.h>
+
+class AutonomousCommand
+    : public frc2::CommandHelper<frc2::CommandBase, AutonomousCommand>
 {
 public:
-  /**
-   * Creates a new ExampleCommand.
-   *
-   * @param subsystem The subsystem used by this command.
-   */
-  explicit ExampleCommand(DriveSubsystem *subsystem) noexcept;
+  AutonomousCommand(DriveSubsystem *const drive, FeederSubsystem *const feeder, ShooterSubsystem *const shooter) noexcept;
 
   void Initialize() noexcept override;
 
@@ -34,5 +26,10 @@ public:
   void End(bool interrupted) noexcept override;
 
 private:
-  DriveSubsystem *m_subsystem{nullptr};
+  DriveSubsystem *const m_drive;
+  FeederSubsystem *const m_feeder;
+  ShooterSubsystem *const m_shooter;
+
+  uint64_t FPGATime_{0};
+  uint counter_{0};
 };

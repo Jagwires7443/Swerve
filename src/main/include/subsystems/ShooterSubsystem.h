@@ -17,7 +17,7 @@ public:
 
     void Periodic() noexcept override;
 
-    void Set(double percent) noexcept;
+    void Default(const double percent) noexcept;
 
     void Stop() noexcept;
 

@@ -39,12 +39,14 @@ public:
   void TestExit() noexcept;
   void TestPeriodic() noexcept;
 
+  void DisabledInit() noexcept;
+
 private:
   std::tuple<double, double, double, bool> GetDriveTeleopControls() noexcept;
 
   void ConfigureButtonBindings() noexcept;
 
-  bool m_fieldOriented = true;
+  bool m_fieldOriented = false;
   bool m_slow = false;
 
   // The robot's subsystems and commands are defined here...
@@ -56,7 +58,7 @@ private:
   std::unique_ptr<frc2::RunCommand> m_driveCommand;
   std::unique_ptr<frc2::RunCommand> m_pointCommand;
 
-  std::unique_ptr<ExampleCommand> m_autonomousCommand;
+  std::unique_ptr<AutonomousCommand> m_autonomousCommand;
 
   std::unique_ptr<ZeroCommand> m_zeroCommand;
   std::unique_ptr<MaxVAndATurningCommand> m_maxVAndATurningCommand;

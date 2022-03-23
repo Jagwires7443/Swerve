@@ -18,17 +18,15 @@ public:
 
     void Periodic() noexcept override;
 
-    void Set(double percent) noexcept;
+    void Default(const double percent) noexcept;
 
-    void Hold() noexcept;
+    void Eject() noexcept;
 
     void Fire() noexcept;
 
     void Raise() noexcept;
 
     void Lower() noexcept;
-
-    void Pneumatics() noexcept;
 
     void LockIntake() noexcept;
 

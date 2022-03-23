@@ -28,7 +28,7 @@ void ShooterSubsystem::Periodic() noexcept
     m_backspinMotor->Periodic();
 }
 
-void ShooterSubsystem::Set(double percent) noexcept
+void ShooterSubsystem::Default(const double percent) noexcept
 {
     m_shooterMotor->SetVoltage(percent * 12_V);
     // m_backspinMotor->SetVoltage(percent * 12_V);
