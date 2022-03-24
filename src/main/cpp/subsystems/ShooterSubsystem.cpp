@@ -6,8 +6,10 @@
 
 ShooterSubsystem::ShooterSubsystem() noexcept
 {
+    // These motors use bang-bang control, thus an increased velocity reporting
+    // rate (kStatus1).
     const SmartMotorBase::ConfigMap config = {
-        {"kStatus1", uint{250}},
+        {"kStatus1", uint{10}},
         {"kStatus2", uint{250}},
         {"kIdleMode", uint{0}},
     };
@@ -28,10 +30,40 @@ void ShooterSubsystem::Periodic() noexcept
     m_backspinMotor->Periodic();
 }
 
-void ShooterSubsystem::Default(const double percent) noexcept
+void ShooterSubsystem::Default(const double percent, const double velocity) noexcept
 {
-    m_shooterMotor->SetVoltage(percent * 12_V);
-    // m_backspinMotor->SetVoltage(percent * 12_V);
+#if 0 // XXX
+
+    const double shooterVelocity = m_shooterMotor->GetVelocityRaw();
+    // const double backspinVelocity = m_backspinMotor->GetVelocityRaw();
+
+    if (shooterVelocity < velocity)
+    {
+        m_shooterMotor->Set(1.0);
+    }
+    else
+    {
+        m_shooterMotor->Stop();
+    }
+
+#else
+
+    if (velocity == 0.0)
+    {
+        m_shooterMotor->SetVoltage(percent * 12_V);
+        // m_backspinMotor->SetVoltage(percent * 12_V);
+    }
+    else if (percent > 0.25)
+    {
+        m_shooterMotor->SetVoltage(velocity / 1500.0 * 12_V);
+        // m_backspinMotor->SetVoltage(velocity / 1500.0 * 12_V);
+    }
+    else
+    {
+        m_shooterMotor->Stop();
+        m_backspinMotor->Stop();
+    }
+#endif
 }
 
 void ShooterSubsystem::Stop() noexcept

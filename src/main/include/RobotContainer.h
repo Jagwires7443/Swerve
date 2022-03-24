@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <frc/GenericHID.h>
 #include <frc/XboxController.h>
 #include <frc2/command/Command.h>
 #include <frc2/command/RunCommand.h>
@@ -46,8 +47,9 @@ private:
 
   void ConfigureButtonBindings() noexcept;
 
-  bool m_fieldOriented = false;
-  bool m_slow = false;
+  bool m_fieldOriented{false};
+  bool m_slow{false};
+  double m_shooterVelocity{0.0};
 
   // The robot's subsystems and commands are defined here...
   DriveSubsystem m_driveSubsystem;
@@ -70,4 +72,5 @@ private:
   std::unique_ptr<PirouetteCommand> m_pirouetteCommand;
 
   frc::XboxController m_xbox{0};
+  frc::GenericHID m_buttonBoard{1};
 };

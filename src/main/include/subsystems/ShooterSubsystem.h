@@ -17,7 +17,7 @@ public:
 
     void Periodic() noexcept override;
 
-    void Default(const double percent) noexcept;
+    void Default(const double percent, const double velocity) noexcept;
 
     void Stop() noexcept;
 

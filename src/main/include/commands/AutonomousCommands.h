@@ -9,6 +9,7 @@
 
 #include "subsystems/DriveSubsystem.h"
 #include "subsystems/FeederSubsystem.h"
+#include "subsystems/Infrastructure.h"
 #include "subsystems/ShooterSubsystem.h"
 
 #include <frc/RobotController.h>
@@ -17,7 +18,7 @@ class AutonomousCommand
     : public frc2::CommandHelper<frc2::CommandBase, AutonomousCommand>
 {
 public:
-  AutonomousCommand(DriveSubsystem *const drive, FeederSubsystem *const feeder, ShooterSubsystem *const shooter) noexcept;
+  AutonomousCommand(DriveSubsystem *const drive, FeederSubsystem *const feeder, InfrastructureSubsystem *const infrastructure, ShooterSubsystem *const shooter) noexcept;
 
   void Initialize() noexcept override;
 
@@ -25,11 +26,15 @@ public:
 
   void End(bool interrupted) noexcept override;
 
+  bool IsFinished() noexcept override { return finished_; }
+
 private:
   DriveSubsystem *const m_drive;
   FeederSubsystem *const m_feeder;
+  InfrastructureSubsystem *const m_infrastructure;
   ShooterSubsystem *const m_shooter;
 
+  bool finished_{false};
   uint64_t FPGATime_{0};
   uint counter_{0};
 };

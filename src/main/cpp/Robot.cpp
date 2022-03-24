@@ -4,9 +4,13 @@
 
 #include "Robot.h"
 
+#include <frc/livewindow/LiveWindow.h>
 #include <frc2/command/CommandScheduler.h>
 
-void Robot::RobotInit() noexcept {}
+void Robot::RobotInit() noexcept
+{
+  frc::LiveWindow::DisableAllTelemetry();
+}
 
 /**
  * This function is called every robot packet, no matter the mode. Use

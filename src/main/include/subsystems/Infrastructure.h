@@ -3,6 +3,7 @@
 #include <frc/Compressor.h>
 #include <frc/PowerDistribution.h>
 #include <frc2/command/SubsystemBase.h>
+#include <units/pressure.h>
 
 #include <memory>
 
@@ -22,6 +23,8 @@ public:
     void Enable() noexcept;
 
     void Disable() noexcept;
+
+    units::pressure::pounds_per_square_inch_t GetPressure() noexcept;
 
 private:
     std::unique_ptr<frc::PowerDistribution> pdh_;

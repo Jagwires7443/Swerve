@@ -1,7 +1,5 @@
 #include "subsystems/Infrastructure.h"
 
-#include <units/pressure.h>
-
 InfrastructureSubsystem::InfrastructureSubsystem() noexcept
 {
     pdh_ = std::make_unique<frc::PowerDistribution>(1, frc::PowerDistribution::ModuleType::kRev);
@@ -23,4 +21,9 @@ void InfrastructureSubsystem::Enable() noexcept
 void InfrastructureSubsystem::Disable() noexcept
 {
     ph_->Disable();
+}
+
+units::pressure::pounds_per_square_inch_t InfrastructureSubsystem::GetPressure() noexcept
+{
+    return ph_->GetPressure();
 }

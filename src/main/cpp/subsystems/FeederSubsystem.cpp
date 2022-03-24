@@ -20,6 +20,7 @@ FeederSubsystem::FeederSubsystem() noexcept
         {"kStatus1", uint{250}},
         {"kStatus2", uint{250}},
         {"kRampRate", double{0.5}},
+        {"kSmartCurrentStallLimit", uint{40}}, // Amps
     };
 
     m_intakeMotor = SparkMaxFactory::CreateSparkMax("Intake", 9, false);
@@ -94,7 +95,7 @@ void FeederSubsystem::Raise() noexcept
     m_elevatorMotor->Stop();
     m_feederMotor->Stop();
 
-    //    m_climberMotor->SetVoltage(2.0_V);
+    m_climberMotor->SetVoltage(-8.0_V);
 
     m_intakeRelease->Set(frc::DoubleSolenoid::Value::kOff);
     m_intakeRaise->Set(frc::DoubleSolenoid::Value::kOff);
@@ -106,7 +107,7 @@ void FeederSubsystem::Lower() noexcept
     m_elevatorMotor->Stop();
     m_feederMotor->Stop();
 
-    //    m_climberMotor->SetVoltage(-2.0_V);
+    m_climberMotor->SetVoltage(8.0_V);
 
     m_intakeRelease->Set(frc::DoubleSolenoid::Value::kOff);
     m_intakeRaise->Set(frc::DoubleSolenoid::Value::kOff);
