@@ -21,6 +21,8 @@ FeederSubsystem::FeederSubsystem() noexcept
         {"kStatus2", uint{250}},
         {"kRampRate", double{0.5}},
         {"kSmartCurrentStallLimit", uint{40}}, // Amps
+        // {"kSoftLimitFwd", double{0.0}},
+        // {"kSoftLimitRev", double{0.0}},
     };
 
     m_intakeMotor = SparkMaxFactory::CreateSparkMax("Intake", 9, false);
@@ -51,6 +53,10 @@ void FeederSubsystem::Periodic() noexcept
     m_feederMotor->Periodic();
     m_climberMotor->Periodic();
 }
+
+void FeederSubsystem::TestInit() noexcept {}
+void FeederSubsystem::TestExit() noexcept {}
+void FeederSubsystem::TestPeriodic() noexcept {}
 
 void FeederSubsystem::Default(const double percent) noexcept
 {

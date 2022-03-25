@@ -52,7 +52,7 @@ RobotContainer::RobotContainer() noexcept
       },
       driveRequirements);
 
-  m_autonomousCommand = std::make_unique<AutonomousCommand>(&m_driveSubsystem, &m_feederSubsystem, &m_shooterSubsystem);
+  m_autonomousCommand = std::make_unique<AutonomousCommand>(&m_driveSubsystem, &m_feederSubsystem, &m_infrastructureSubsystem, &m_shooterSubsystem);
 
   m_zeroCommand = std::make_unique<ZeroCommand>(&m_driveSubsystem);
   m_maxVAndATurningCommand = std::make_unique<MaxVAndATurningCommand>(&m_driveSubsystem);
@@ -62,7 +62,20 @@ RobotContainer::RobotContainer() noexcept
   m_spirographCommand = std::make_unique<SpirographCommand>(&m_driveSubsystem);
   m_orbitCommand = std::make_unique<OrbitCommand>(&m_driveSubsystem);
   m_pirouetteCommand = std::make_unique<PirouetteCommand>(&m_driveSubsystem);
+}
 
+void RobotContainer::AutonomousInit() noexcept
+{
+  m_driveSubsystem.SetDefaultCommand(frc2::RunCommand([&]() -> void {},
+                                                      {&m_driveSubsystem}));
+  m_feederSubsystem.SetDefaultCommand(frc2::RunCommand([&]() -> void {},
+                                                       {&m_feederSubsystem}));
+  m_shooterSubsystem.SetDefaultCommand(frc2::RunCommand([&]() -> void {},
+                                                        {&m_shooterSubsystem}));
+}
+
+void RobotContainer::TeleopInit() noexcept
+{
   m_driveSubsystem.SetDefaultCommand(*m_driveCommand);
   m_feederSubsystem.SetDefaultCommand(frc2::RunCommand([&]() -> void
                                                        { m_feederSubsystem.Default(m_xbox.GetRightTriggerAxis()); },
@@ -74,20 +87,20 @@ RobotContainer::RobotContainer() noexcept
 
 void RobotContainer::ConfigureButtonBindings() noexcept
 {
-  frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kA).WhileHeld(frc2::InstantCommand([&]() -> void
-                                                                                                { m_slow = true; },
-                                                                                                {}));
-  frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kB).WhileHeld(frc2::InstantCommand([&]() -> void
-                                                                                                { m_slow = false; },
-                                                                                                {}));
+  frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kA).WhenHeld(frc2::InstantCommand([&]() -> void
+                                                                                               { m_slow = true; },
+                                                                                               {}));
+  frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kB).WhenHeld(frc2::InstantCommand([&]() -> void
+                                                                                               { m_slow = false; },
+                                                                                               {}));
 
-  frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kX).WhileHeld(frc2::InstantCommand([&]() -> void
-                                                                                                { m_fieldOriented = false; },
-                                                                                                {}));
-  frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kY).WhileHeld(frc2::InstantCommand([&]() -> void
-                                                                                                { m_driveSubsystem.ZeroHeading();
+  frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kX).WhenHeld(frc2::InstantCommand([&]() -> void
+                                                                                               { m_fieldOriented = false; },
+                                                                                               {}));
+  frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kY).WhenHeld(frc2::InstantCommand([&]() -> void
+                                                                                               { m_driveSubsystem.ZeroHeading();
                                                                                             m_fieldOriented = true; },
-                                                                                                {&m_driveSubsystem}));
+                                                                                               {&m_driveSubsystem}));
 
   frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kLeftBumper).WhileHeld(frc2::InstantCommand([&]() -> void
                                                                                                          { m_feederSubsystem.Fire(); },
@@ -121,25 +134,25 @@ void RobotContainer::ConfigureButtonBindings() noexcept
                                                                { m_feederSubsystem.LowerIntake(); },
                                                                {&m_feederSubsystem}));
 
-  frc2::JoystickButton(&m_buttonBoard, 5).WhileHeld(frc2::InstantCommand([&]() -> void
-                                                                         { m_shooterVelocity = -500.0; },
+  frc2::JoystickButton(&m_buttonBoard, 5).WhenHeld(frc2::InstantCommand([&]() -> void
+                                                                        { m_shooterVelocity = -500.0; },
+                                                                        {}));
+
+  frc2::JoystickButton(&m_buttonBoard, 6).WhenHeld(frc2::InstantCommand([&]() -> void
+                                                                        { m_shooterVelocity = 0.0; },
+                                                                        {}));
+
+  frc2::JoystickButton(&m_buttonBoard, 10).WhenHeld(frc2::InstantCommand([&]() -> void
+                                                                         { m_shooterVelocity = 1350.0; },
                                                                          {}));
 
-  frc2::JoystickButton(&m_buttonBoard, 6).WhileHeld(frc2::InstantCommand([&]() -> void
-                                                                         { m_shooterVelocity = 0.0; },
+  frc2::JoystickButton(&m_buttonBoard, 11).WhenHeld(frc2::InstantCommand([&]() -> void
+                                                                         { m_shooterVelocity = 900.0; },
                                                                          {}));
 
-  frc2::JoystickButton(&m_buttonBoard, 10).WhileHeld(frc2::InstantCommand([&]() -> void
-                                                                          { m_shooterVelocity = 1500.0; },
-                                                                          {}));
-
-  frc2::JoystickButton(&m_buttonBoard, 11).WhileHeld(frc2::InstantCommand([&]() -> void
-                                                                          { m_shooterVelocity = 900.0; },
-                                                                          {}));
-
-  frc2::JoystickButton(&m_buttonBoard, 12).WhileHeld(frc2::InstantCommand([&]() -> void
-                                                                          { m_shooterVelocity = 300.0; },
-                                                                          {}));
+  frc2::JoystickButton(&m_buttonBoard, 12).WhenHeld(frc2::InstantCommand([&]() -> void
+                                                                         { m_shooterVelocity = 300.0; },
+                                                                         {}));
 }
 
 frc2::Command *RobotContainer::GetAutonomousCommand() noexcept
@@ -223,6 +236,8 @@ void RobotContainer::TestInit() noexcept
   frc2::CommandScheduler::GetInstance().CancelAll();
 
   m_driveSubsystem.TestInit();
+  m_feederSubsystem.TestInit();
+  m_shooterSubsystem.TestInit();
 
   frc::SendableChooser<frc2::Command *> *chooser = m_driveSubsystem.TestModeChooser();
 
@@ -245,11 +260,15 @@ void RobotContainer::TestExit() noexcept
   frc2::CommandScheduler::GetInstance().CancelAll();
 
   m_driveSubsystem.TestExit();
+  m_feederSubsystem.TestExit();
+  m_shooterSubsystem.TestExit();
 }
 
 void RobotContainer::TestPeriodic() noexcept
 {
   m_driveSubsystem.TestPeriodic();
+  m_feederSubsystem.TestPeriodic();
+  m_shooterSubsystem.TestPeriodic();
 }
 
 void RobotContainer::DisabledInit() noexcept

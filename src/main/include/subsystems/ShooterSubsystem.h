@@ -17,6 +17,10 @@ public:
 
     void Periodic() noexcept override;
 
+    void TestInit() noexcept;
+    void TestExit() noexcept;
+    void TestPeriodic() noexcept;
+
     void Default(const double percent, const double velocity) noexcept;
 
     void Stop() noexcept;

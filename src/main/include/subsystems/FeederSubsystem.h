@@ -18,6 +18,10 @@ public:
 
     void Periodic() noexcept override;
 
+    void TestInit() noexcept;
+    void TestExit() noexcept;
+    void TestPeriodic() noexcept;
+
     void Default(const double percent) noexcept;
 
     void Eject() noexcept;

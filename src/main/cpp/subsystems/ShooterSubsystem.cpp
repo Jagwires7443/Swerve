@@ -30,10 +30,15 @@ void ShooterSubsystem::Periodic() noexcept
     m_backspinMotor->Periodic();
 }
 
+void ShooterSubsystem::TestInit() noexcept {}
+void ShooterSubsystem::TestExit() noexcept {}
+void ShooterSubsystem::TestPeriodic() noexcept {}
+
 void ShooterSubsystem::Default(const double percent, const double velocity) noexcept
 {
 #if 0 // XXX
 
+    // RPM.
     const double shooterVelocity = m_shooterMotor->GetVelocityRaw();
     // const double backspinVelocity = m_backspinMotor->GetVelocityRaw();
 

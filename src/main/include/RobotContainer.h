@@ -41,6 +41,8 @@ public:
   void TestPeriodic() noexcept;
 
   void DisabledInit() noexcept;
+  void AutonomousInit() noexcept;
+  void TeleopInit() noexcept;
 
 private:
   std::tuple<double, double, double, bool> GetDriveTeleopControls() noexcept;

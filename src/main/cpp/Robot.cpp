@@ -56,6 +56,8 @@ void Robot::AutonomousInit() noexcept
   {
     m_autonomousCommand->Schedule();
   }
+
+  m_container.AutonomousInit();
 }
 
 void Robot::AutonomousPeriodic() noexcept {}
@@ -73,6 +75,8 @@ void Robot::TeleopInit() noexcept
     m_autonomousCommand->Cancel();
     m_autonomousCommand = nullptr;
   }
+
+  m_container.TeleopInit();
 }
 
 /**

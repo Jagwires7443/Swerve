@@ -34,6 +34,7 @@ private:
   InfrastructureSubsystem *const m_infrastructure;
   ShooterSubsystem *const m_shooter;
 
+  bool pressure_{false};
   bool finished_{false};
   uint64_t FPGATime_{0};
   uint counter_{0};
