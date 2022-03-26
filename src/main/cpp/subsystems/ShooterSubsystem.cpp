@@ -36,12 +36,31 @@ void ShooterSubsystem::TestPeriodic() noexcept {}
 
 void ShooterSubsystem::Default(const double percent, const double velocity) noexcept
 {
+    // Manual control (backup).
+    if (velocity == 0.0)
+    {
+        m_shooterMotor->SetVoltage(percent * 12_V);
+        // m_backspinMotor->SetVoltage(percent * 12_V);
+
+        return;
+    }
+
+    // On/off trigger control (off here).
+    if (percent < 0.25)
+    {
+        m_shooterMotor->Stop();
+        m_backspinMotor->Stop();
+
+        return;
+    }
+
 #if 0 // XXX
 
     // RPM.
     const double shooterVelocity = m_shooterMotor->GetVelocityRaw();
     // const double backspinVelocity = m_backspinMotor->GetVelocityRaw();
 
+    // Bang-bang velocity control (simple).
     if (shooterVelocity < velocity)
     {
         m_shooterMotor->Set(1.0);
@@ -53,21 +72,9 @@ void ShooterSubsystem::Default(const double percent, const double velocity) noex
 
 #else
 
-    if (velocity == 0.0)
-    {
-        m_shooterMotor->SetVoltage(percent * 12_V);
-        // m_backspinMotor->SetVoltage(percent * 12_V);
-    }
-    else if (percent > 0.25)
-    {
-        m_shooterMotor->SetVoltage(velocity / 1500.0 * 12_V);
-        // m_backspinMotor->SetVoltage(velocity / 1500.0 * 12_V);
-    }
-    else
-    {
-        m_shooterMotor->Stop();
-        m_backspinMotor->Stop();
-    }
+    m_shooterMotor->SetVoltage(velocity / 1500.0 * 12_V);
+    // m_backspinMotor->SetVoltage(velocity / 1500.0 * 12_V);
+
 #endif
 }
 

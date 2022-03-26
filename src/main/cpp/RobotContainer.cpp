@@ -143,11 +143,11 @@ void RobotContainer::ConfigureButtonBindings() noexcept
                                                                         {}));
 
   frc2::JoystickButton(&m_buttonBoard, 10).WhenHeld(frc2::InstantCommand([&]() -> void
-                                                                         { m_shooterVelocity = 1350.0; },
+                                                                         { m_shooterVelocity = 1500.0; },
                                                                          {}));
 
   frc2::JoystickButton(&m_buttonBoard, 11).WhenHeld(frc2::InstantCommand([&]() -> void
-                                                                         { m_shooterVelocity = 900.0; },
+                                                                         { m_shooterVelocity = 1000.0; },
                                                                          {}));
 
   frc2::JoystickButton(&m_buttonBoard, 12).WhenHeld(frc2::InstantCommand([&]() -> void

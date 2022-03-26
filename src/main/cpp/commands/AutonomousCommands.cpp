@@ -40,12 +40,16 @@ void AutonomousCommand::Execute() noexcept
 
     const units::pressure::pounds_per_square_inch_t pressure = m_infrastructure->GetPressure();
 
-    if (!pressure_ && pressure < 75_psi)
+    if (pressure >= 75_psi)
+    {
+        pressure_ = true;
+    }
+
+    if (!pressure_)
     {
         return;
     }
 
-    pressure_ = true;
     ++counter_;
 
     if (counter_ <= 5) // 500ms
@@ -59,9 +63,9 @@ void AutonomousCommand::Execute() noexcept
 
         m_feeder->LockIntake();
         m_feeder->RaiseIntake();
-
         m_feeder->Default(1.0);
-        m_shooter->Default(0.5, 750.0);
+
+        m_shooter->Default(1.0, 750.0);
 
         return;
     }
@@ -75,6 +79,7 @@ void AutonomousCommand::Execute() noexcept
 
         m_feeder->DropIntake();
         m_feeder->LowerIntake();
+        m_feeder->Default(1.0);
 
         return;
     }
@@ -87,6 +92,7 @@ void AutonomousCommand::Execute() noexcept
         }
 
         m_feeder->LockIntake();
+        m_feeder->Default(1.0);
 
         return;
     }
@@ -121,6 +127,30 @@ void AutonomousCommand::Execute() noexcept
         {
             printf("Auto Stage 6.\n"); // XXX
         }
+
+        return;
+    }
+
+    if (counter_ <= 100) // 10s
+    {
+        if (counter_ == 100)
+        {
+            printf("Auto Stage 7.\n"); // XXX
+        }
+
+        m_drive->Drive(-0.25_mps, 0_mps, 0_deg_per_s, false);
+
+        return;
+    }
+
+    if (counter_ <= 110) // 11s
+    {
+        if (counter_ == 110)
+        {
+            printf("Auto Stage 8.\n"); // XXX
+        }
+
+        m_drive->Drive(0_mps, 0_mps, 30_deg_per_s, false);
 
         return;
     }
