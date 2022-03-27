@@ -850,7 +850,8 @@ bool DriveSubsystem::SetTurningPosition(const units::angle::degree_t position) n
 
 bool DriveSubsystem::SetTurnByAngle(units::degree_t angle) noexcept
 {
-  return SetDriveDistance(angle / 360_deg * physical::kDriveMetersPerTurningCircle);
+  // Use IMU!
+  return SetTurnInPlace() && SetDriveDistance(angle / 360_deg * physical::kDriveMetersPerTurningCircle);
 }
 
 bool DriveSubsystem::SetDriveDistance(units::length::meter_t distance) noexcept

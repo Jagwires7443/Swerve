@@ -14,9 +14,9 @@ void AutonomousCommand::Initialize() noexcept
 {
     m_drive->Drive(0_mps, 0_mps, 0_deg_per_s, false);
 
+    m_feeder->Default(0.0);
     m_feeder->LockIntake();
     m_feeder->RaiseIntake();
-    m_feeder->Default(0.0);
 
     m_shooter->Stop();
 
@@ -61,11 +61,11 @@ void AutonomousCommand::Execute() noexcept
 
         // m_drive->Drive();
 
+        m_feeder->Default(1.0);
         m_feeder->LockIntake();
         m_feeder->RaiseIntake();
-        m_feeder->Default(1.0);
 
-        m_shooter->Default(1.0, 750.0);
+        m_shooter->Default(1.0, 800.0);
 
         return;
     }
@@ -77,9 +77,9 @@ void AutonomousCommand::Execute() noexcept
             printf("Auto Stage 2.\n"); // XXX
         }
 
+        m_feeder->Default(1.0);
         m_feeder->DropIntake();
         m_feeder->LowerIntake();
-        m_feeder->Default(1.0);
 
         return;
     }
@@ -91,8 +91,8 @@ void AutonomousCommand::Execute() noexcept
             printf("Auto Stage 3.\n"); // XXX
         }
 
-        m_feeder->LockIntake();
         m_feeder->Default(1.0);
+        m_feeder->LockIntake();
 
         return;
     }
@@ -138,19 +138,21 @@ void AutonomousCommand::Execute() noexcept
             printf("Auto Stage 7.\n"); // XXX
         }
 
-        m_drive->Drive(-0.25_mps, 0_mps, 0_deg_per_s, false);
+        // bool SetTurnByAngle(units::degree_t angle);
+
+        m_drive->Drive(-0.20_mps, 0_mps, 0_deg_per_s, false);
 
         return;
     }
 
-    if (counter_ <= 110) // 11s
+    if (counter_ <= 108) // 10.8s
     {
         if (counter_ == 110)
         {
             printf("Auto Stage 8.\n"); // XXX
         }
 
-        m_drive->Drive(0_mps, 0_mps, 30_deg_per_s, false);
+        m_drive->Drive(0_mps, 0_mps, 0_deg_per_s, false);
 
         return;
     }
