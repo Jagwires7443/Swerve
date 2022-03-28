@@ -12,7 +12,7 @@ FeederSubsystem::FeederSubsystem() noexcept
         {"kStatus2", uint{250}},
         {"kIdleMode", uint{0}},
         {"kRampRate", double{0.1}},
-        {"kSmartCurrentStallLimit", uint{20}}, // Amps
+        {"kSmartCurrentStallLimit", uint{25}}, // Amps
         {"kSmartCurrentFreeLimit", uint{10}},  // Amps
     };
 

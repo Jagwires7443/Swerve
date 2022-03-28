@@ -822,6 +822,11 @@ void SwerveModule::SetDriveVelocity(units::velocity::meters_per_second_t velocit
                     throw std::runtime_error("SetReference()");
                 }
 #else
+                // XXX
+                // units::meter_t kDriveMetersPerRotation = 1_m / 25.57 = 25.57_mps
+                // units::meters_per_second_t kMaxDriveSpeed = 12.1_fps / 2 = 0.3048 * 12.1_mps / 2 = 1.84404_mps
+                // m_driveMotor->SetVoltage(velocity / physical::kMaxDriveSpeed * 1_V);
+
                 m_driveMotor->SetVoltage(velocity * 1_s / physical::kDriveMetersPerRotation * 1_V);
 #endif
 
