@@ -191,24 +191,24 @@ namespace
 
         // Shuffleboard UI elements, used by ShuffleboardCreate() and
         // ShuffleboardPeriodic() only.
-        bool shuffleboard_ = false;
-        frc::SimpleWidget *temperatureUI_ = nullptr;
-        frc::SimpleWidget *statusUI_ = nullptr;
-        frc::SimpleWidget *faultsUI_ = nullptr;
-        frc::SimpleWidget *stickyFaultsUI_ = nullptr;
-        frc::SimpleWidget *voltageUI_ = nullptr;
-        frc::SimpleWidget *currentUI_ = nullptr;
-        frc::SimpleWidget *percentUI_ = nullptr;
-        frc::SimpleWidget *speedUI_ = nullptr;
-        frc::SimpleWidget *distanceUI_ = nullptr;
-        frc::SimpleWidget *velocityUI_ = nullptr;
-        frc::SimpleWidget *controlUI_ = nullptr;
-        frc::SimpleWidget *resetUI_ = nullptr;
+        bool shuffleboard_{false};
+        frc::SimpleWidget *temperatureUI_{nullptr};
+        frc::SimpleWidget *statusUI_{nullptr};
+        frc::SimpleWidget *faultsUI_{nullptr};
+        frc::SimpleWidget *stickyFaultsUI_{nullptr};
+        frc::SimpleWidget *voltageUI_{nullptr};
+        frc::SimpleWidget *currentUI_{nullptr};
+        frc::SimpleWidget *percentUI_{nullptr};
+        frc::SimpleWidget *speedUI_{nullptr};
+        frc::SimpleWidget *distanceUI_{nullptr};
+        frc::SimpleWidget *velocityUI_{nullptr};
+        frc::SimpleWidget *controlUI_{nullptr};
+        frc::SimpleWidget *resetUI_{nullptr};
 
         // Shuffleboard UI control element mechanism.
-        double previousControl_ = 0.0;
-        std::function<void(double)> controlF_ = nullptr;
-        std::function<void()> resetF_ = nullptr;
+        double previousControl_{0.0};
+        std::function<void(double)> controlF_{nullptr};
+        std::function<void()> resetF_{nullptr};
 
         // Configuration Parameters, set via SetConfig() and AddConfig().
         ConfigMap config_;
