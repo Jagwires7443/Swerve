@@ -10,6 +10,11 @@ AngleSensor::AngleSensor(const int channel, const int alignment) noexcept : alig
 
 void AngleSensor::Periodic() noexcept
 {
+    if (!shuffleboard_)
+    {
+        return;
+    }
+
     units::angle::degree_t commandedPosition{0_deg};
     units::angle::degree_t encoderPosition{0_deg};
 
@@ -78,18 +83,6 @@ void AngleSensor::Periodic() noexcept
     alignmentUI_->GetEntry().SetDouble(static_cast<double>(alignment_));
 }
 
-std::optional<units::angle::degree_t> AngleSensor::GetAbsolutePosition() noexcept
-{
-    const auto position = GetAbsolutePosition(dutyCycle_->GetFrequency(), dutyCycle_->GetOutput(), true);
-
-    if (!position.has_value())
-    {
-        return std::nullopt;
-    }
-
-    return units::angle::turn_t{static_cast<double>(position.value()) / 4096.0};
-}
-
 void AngleSensor::ShuffleboardCreate(frc::ShuffleboardContainer &container,
                                      std::function<std::pair<units::angle::degree_t, units::angle::degree_t>()> getCommandedAndEncoderPositionsF) noexcept
 {
@@ -127,6 +120,18 @@ void AngleSensor::ShuffleboardCreate(frc::ShuffleboardContainer &container,
     getCommandedAndEncoderPositionsF_ = getCommandedAndEncoderPositionsF;
 
     shuffleboard_ = true;
+}
+
+std::optional<units::angle::degree_t> AngleSensor::GetAbsolutePosition() noexcept
+{
+    const auto position = GetAbsolutePosition(dutyCycle_->GetFrequency(), dutyCycle_->GetOutput(), true);
+
+    if (!position.has_value())
+    {
+        return std::nullopt;
+    }
+
+    return units::angle::turn_t{static_cast<double>(position.value()) / 4096.0};
 }
 
 std::optional<int> AngleSensor::GetAbsolutePosition(const int frequency, const double output, const bool applyOffset) noexcept

@@ -87,20 +87,20 @@ void RobotContainer::TeleopInit() noexcept
 
 void RobotContainer::ConfigureButtonBindings() noexcept
 {
-  frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kA).WhenHeld(frc2::InstantCommand([&]() -> void
-                                                                                               { m_slow = true; },
-                                                                                               {}));
-  frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kB).WhenHeld(frc2::InstantCommand([&]() -> void
-                                                                                               { m_slow = false; },
-                                                                                               {}));
+  frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kA).WhenPressed(frc2::InstantCommand([&]() -> void
+                                                                                                  { m_slow = true; },
+                                                                                                  {}));
+  frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kB).WhenPressed(frc2::InstantCommand([&]() -> void
+                                                                                                  { m_slow = false; },
+                                                                                                  {}));
 
-  frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kX).WhenHeld(frc2::InstantCommand([&]() -> void
-                                                                                               { m_fieldOriented = false; },
-                                                                                               {}));
-  frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kY).WhenHeld(frc2::InstantCommand([&]() -> void
-                                                                                               { m_driveSubsystem.ZeroHeading();
+  frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kX).WhenPressed(frc2::InstantCommand([&]() -> void
+                                                                                                  { m_fieldOriented = false; },
+                                                                                                  {}));
+  frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kY).WhenPressed(frc2::InstantCommand([&]() -> void
+                                                                                                  { m_driveSubsystem.ZeroHeading();
                                                                                             m_fieldOriented = true; },
-                                                                                               {&m_driveSubsystem}));
+                                                                                                  {&m_driveSubsystem}));
 
   frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kLeftBumper).WhileHeld(frc2::InstantCommand([&]() -> void
                                                                                                          { m_feederSubsystem.Fire(); },
@@ -134,9 +134,9 @@ void RobotContainer::ConfigureButtonBindings() noexcept
                                                                { m_feederSubsystem.LowerIntake(); },
                                                                {&m_feederSubsystem}));
 
-  frc2::JoystickButton(&m_buttonBoard, 5).WhenHeld(frc2::InstantCommand([&]() -> void
-                                                                        { m_shooterVelocity = -500.0; },
-                                                                        {}));
+  frc2::JoystickButton(&m_buttonBoard, 5).WhenPressed(frc2::InstantCommand([&]() -> void
+                                                                           { m_shooterVelocity = -500.0; },
+                                                                           {}));
 
   frc2::JoystickButton(&m_buttonBoard, 6).WhenPressed(frc2::InstantCommand([&]() -> void
                                                                            { m_turbo = true; },
@@ -146,13 +146,13 @@ void RobotContainer::ConfigureButtonBindings() noexcept
                                                                             { m_turbo = false; },
                                                                             {}));
 
-  frc2::JoystickButton(&m_buttonBoard, 10).WhenHeld(frc2::InstantCommand([&]() -> void
-                                                                         { m_shooterVelocity = 1200.0; },
-                                                                         {}));
+  frc2::JoystickButton(&m_buttonBoard, 10).WhenPressed(frc2::InstantCommand([&]() -> void
+                                                                            { m_shooterVelocity = 1200.0; },
+                                                                            {}));
 
-  frc2::JoystickButton(&m_buttonBoard, 11).WhenHeld(frc2::InstantCommand([&]() -> void
-                                                                         { m_shooterVelocity = 1000.0; },
-                                                                         {}));
+  frc2::JoystickButton(&m_buttonBoard, 11).WhenPressed(frc2::InstantCommand([&]() -> void
+                                                                            { m_shooterVelocity = 1000.0; },
+                                                                            {}));
 
   frc2::JoystickButton(&m_buttonBoard, 12).WhenHeld(frc2::InstantCommand([&]() -> void
                                                                          { m_shooterVelocity = 300.0; },
@@ -233,9 +233,9 @@ std::tuple<double, double, double, bool> RobotContainer::GetDriveTeleopControls(
   }
   else if (m_slow)
   {
-    x *= 0.2;
-    y *= 0.2;
-    z *= 0.1;
+    x *= 0.50;
+    y *= 0.50;
+    z *= 0.25;
   }
 
   return std::make_tuple(x, y, z, m_fieldOriented);

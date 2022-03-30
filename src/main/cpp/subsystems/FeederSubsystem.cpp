@@ -25,6 +25,10 @@ FeederSubsystem::FeederSubsystem() noexcept
         // {"kSoftLimitRev", double{0.0}},
     };
 
+    const SmartMotorBase::ConfigMap moreTorque = {
+        {"kSmartCurrentStallLimit", uint{30}}, // Amps
+    };
+
     m_intakeMotor = SparkMaxFactory::CreateSparkMax("Intake", 9, false);
     m_elevatorMotor = SparkMaxFactory::CreateSparkMax("Elevator", 10, true);
     m_feederMotor = SparkMaxFactory::CreateSparkMax("Feeder", 11, true);
@@ -37,6 +41,7 @@ FeederSubsystem::FeederSubsystem() noexcept
     m_elevatorMotor->SetConfig(config);
     m_feederMotor->SetConfig(config);
     m_climberMotor->SetConfig(climberConfig);
+    m_elevatorMotor->AddConfig(moreTorque);
 
     m_intakeMotor->ApplyConfig(false);
     m_elevatorMotor->ApplyConfig(false);
@@ -101,7 +106,7 @@ void FeederSubsystem::Raise() noexcept
     m_elevatorMotor->Stop();
     m_feederMotor->Stop();
 
-    m_climberMotor->SetVoltage(-8.0_V);
+    m_climberMotor->SetVoltage(-10.0_V);
 
     m_intakeRelease->Set(frc::DoubleSolenoid::Value::kOff);
     m_intakeRaise->Set(frc::DoubleSolenoid::Value::kOff);
@@ -113,7 +118,7 @@ void FeederSubsystem::Lower() noexcept
     m_elevatorMotor->Stop();
     m_feederMotor->Stop();
 
-    m_climberMotor->SetVoltage(8.0_V);
+    m_climberMotor->SetVoltage(10.0_V);
 
     m_intakeRelease->Set(frc::DoubleSolenoid::Value::kOff);
     m_intakeRaise->Set(frc::DoubleSolenoid::Value::kOff);

@@ -742,30 +742,10 @@ void SwerveModule::SetDriveDistance(units::length::meter_t distance) noexcept
                 {
                     throw std::runtime_error("SetReference()");
                 }
-
-                if (!m_brakeApplied)
-                {
-                    if (m_driveMotor->SetIdleMode(rev::CANSparkMax::IdleMode::kBrake) != rev::REVLibError::kOk)
-                    {
-                        throw std::runtime_error("SetIdleMode()");
-                    }
-
-                    m_brakeApplied = true;
-                }
             }
             else
             {
                 m_driveMotor->StopMotor();
-
-                if (m_brakeApplied)
-                {
-                    if (m_driveMotor->SetIdleMode(rev::CANSparkMax::IdleMode::kCoast) != rev::REVLibError::kOk)
-                    {
-                        throw std::runtime_error("SetIdleMode()");
-                    }
-
-                    m_brakeApplied = false;
-                }
             }
         } });
 }
@@ -812,48 +792,26 @@ void SwerveModule::SetDriveVelocity(units::velocity::meters_per_second_t velocit
                      {
         if (m_driveMotor && m_drivePID)
         {
-            if (m_turningPositionAsCommanded)
-            {
-#if 0
-                // SetReference(SetPoint, rev::ControlType::kSmartVelocity, 1, FeedForward)
-                if (m_drivePID->SetReference(
-                        (velocity * 60_s / physical::kDriveMetersPerRotation).to<double>(), rev::CANSparkMax::ControlType::kSmartVelocity, 1) != rev::REVLibError::kOk)
-                {
-                    throw std::runtime_error("SetReference()");
-                }
-#else
-                // XXX
-                // units::meter_t kDriveMetersPerRotation = 1_m / 25.57 = 25.57_mps
-                // units::meters_per_second_t kMaxDriveSpeed = 12.1_fps / 2 = 0.3048 * 12.1_mps / 2 = 1.84404_mps
-                // m_driveMotor->SetVoltage(velocity / physical::kMaxDriveSpeed * 1_V);
+            const units::angle::degree_t angleError = m_turningPosition - m_commandedHeading;
+            const double vectorAlignment = std::cos(units::angle::radian_t{angleError}.to<double>());
 
-                m_driveMotor->SetVoltage(velocity * 1_s / physical::kDriveMetersPerRotation * 1_V);
+#if 0
+            // SetReference(SetPoint, rev::ControlType::kSmartVelocity, 1, FeedForward)
+            if (m_drivePID->SetReference(
+                    (velocity * 60_s / physical::kDriveMetersPerRotation).to<double>(), rev::CANSparkMax::ControlType::kSmartVelocity, 1) != rev::REVLibError::kOk)
+            {
+                throw std::runtime_error("SetReference()");
+            }
+#else
+            // XXX
+            // m_driveMotor->SetVoltage(velocity * 1_s / physical::kDriveMetersPerRotation * 1_V);
+            // units::meter_t kDriveMetersPerRotation = 1_m / 25.57 = 25.57_mps
+            // units::meters_per_second_t kMaxDriveSpeed = 12.1_fps / 2 = 0.3048 * 12.1_mps / 2 = 1.84404_mps
+
+            m_driveMotor->SetVoltage(velocity * vectorAlignment / physical::kMaxDriveSpeed * 12_V);
+
 #endif
 
-                if (!m_brakeApplied && m_commandedBrake)
-                {
-                    if (m_driveMotor->SetIdleMode(rev::CANSparkMax::IdleMode::kBrake) != rev::REVLibError::kOk)
-                    {
-                        throw std::runtime_error("SetIdleMode()");
-                    }
-
-                    m_brakeApplied = true;
-                }
-            }
-            else
-            {
-                m_driveMotor->StopMotor();
-
-                if (m_brakeApplied)
-                {
-                    if (m_driveMotor->SetIdleMode(rev::CANSparkMax::IdleMode::kCoast) != rev::REVLibError::kOk)
-                    {
-                        throw std::runtime_error("SetIdleMode()");
-                    }
-
-                    m_brakeApplied = false;
-                }
-            }
         } });
 }
 

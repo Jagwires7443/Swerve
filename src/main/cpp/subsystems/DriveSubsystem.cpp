@@ -132,7 +132,7 @@ void DriveSubsystem::Periodic() noexcept
             {
     if (m_ahrs)
     {
-      botRot = m_ahrs->GetRotation2d();
+      botRot = -m_ahrs->GetRotation2d();
     } });
 
   m_odometry->Update(botRot, m_frontLeftSwerveModule->GetState(),
@@ -150,7 +150,7 @@ void DriveSubsystem::ResetOdometry(frc::Pose2d pose) noexcept
             {
     if (m_ahrs)
     {
-      botRot = m_ahrs->GetRotation2d();
+      botRot = -m_ahrs->GetRotation2d();
     } });
 
   m_odometry->ResetPosition(pose, botRot);
@@ -903,7 +903,7 @@ void DriveSubsystem::Drive(units::meters_per_second_t xSpeed,
             {
     if (m_ahrs)
     {
-      botRot = m_ahrs->GetRotation2d();
+      botRot = -m_ahrs->GetRotation2d();
     } });
 
   if (!m_ahrs)

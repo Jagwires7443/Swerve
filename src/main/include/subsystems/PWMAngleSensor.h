@@ -20,14 +20,14 @@ public:
     AngleSensor(const AngleSensor &) = delete;
     AngleSensor &operator=(const AngleSensor &) = delete;
 
-    std::optional<units::angle::degree_t> GetAbsolutePosition() noexcept;
-
     void Periodic() noexcept;
 
     void ShuffleboardCreate(frc::ShuffleboardContainer &container,
                             std::function<std::pair<units::angle::degree_t, units::angle::degree_t>()> getCommandedAndEncoderPositions = nullptr) noexcept;
 
     void SetAlignment(const int alignment) noexcept { alignment_ = alignment; }
+
+    std::optional<units::angle::degree_t> GetAbsolutePosition() noexcept;
 
 private:
     // Range is [0-4095].

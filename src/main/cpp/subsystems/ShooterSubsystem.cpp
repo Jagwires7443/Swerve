@@ -54,8 +54,8 @@ void ShooterSubsystem::Default(const double percent, const double velocity) noex
         return;
     }
 
-#if 0 // XXX
-
+// Unfortunately, SPARK MAX has too much velocity measurement latency for this.
+#if 0
     // RPM.
     const double shooterVelocity = m_shooterMotor->GetVelocityRaw();
     // const double backspinVelocity = m_backspinMotor->GetVelocityRaw();
