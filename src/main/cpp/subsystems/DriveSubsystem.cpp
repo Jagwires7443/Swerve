@@ -966,6 +966,24 @@ void DriveSubsystem::SetModuleStates(wpi::array<frc::SwerveModuleState, 4> &desi
   rearLeft.speed *= m_limit;
   rearRight.speed *= m_limit;
 
+  // To avoid brownout, reduce power when wheels are too far out of position.
+  const units::angle::degree_t frontLeftTurningError = m_frontLeftSwerveModule->GetTurningPosition() - frontLeft.angle.Degrees();
+  const units::angle::degree_t frontRightTurningError = m_frontRightSwerveModule->GetTurningPosition() - frontRight.angle.Degrees();
+  const units::angle::degree_t rearLeftTurningError = m_rearLeftSwerveModule->GetTurningPosition() - rearLeft.angle.Degrees();
+  const units::angle::degree_t rearRightTurningError = m_rearRightSwerveModule->GetTurningPosition() - rearRight.angle.Degrees();
+  const double totalTurningError = std::abs(frontLeftTurningError.to<double>()) +
+                                   std::abs(frontRightTurningError.to<double>()) +
+                                   std::abs(rearLeftTurningError.to<double>()) +
+                                   std::abs(rearRightTurningError.to<double>());
+
+  if (totalTurningError > 10.0)
+  {
+    frontLeft.speed *= 0.5;
+    frontRight.speed *= 0.5;
+    rearLeft.speed *= 0.5;
+    rearRight.speed *= 0.5;
+  }
+
   m_frontLeftSwerveModule->SetDesiredState(frontLeft);
   m_frontRightSwerveModule->SetDesiredState(frontRight);
   m_rearLeftSwerveModule->SetDesiredState(rearLeft);

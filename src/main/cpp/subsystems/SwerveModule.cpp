@@ -808,7 +808,7 @@ void SwerveModule::SetDriveVelocity(units::velocity::meters_per_second_t velocit
             // units::meter_t kDriveMetersPerRotation = 1_m / 25.57 = 25.57_mps
             // units::meters_per_second_t kMaxDriveSpeed = 12.1_fps / 2 = 0.3048 * 12.1_mps / 2 = 1.84404_mps
 
-            m_driveMotor->SetVoltage(velocity * vectorAlignment / physical::kMaxDriveSpeed * 12_V);
+            m_driveMotor->SetVoltage(velocity * vectorAlignment / physical::kMaxDriveSpeed * 13.6_V);
 
 #endif
 
