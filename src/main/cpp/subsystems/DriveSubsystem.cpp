@@ -65,6 +65,16 @@ DriveSubsystem::DriveSubsystem() noexcept
 
   ZeroHeading();
 
+  m_orientationController = std::make_unique<frc::ProfiledPIDController<units::angle::degrees>>(
+      pidf::kDriveThetaP,
+      pidf::kDriveThetaI,
+      pidf::kDriveThetaD,
+      std::move(frc::TrapezoidProfile<units::angle::degrees>::Constraints{
+          pidf::kDriveThetaMaxVelocity,
+          pidf::kDriveThetaMaxAcceleration}));
+
+  m_orientationController->EnableContinuousInput(-180_deg, +180_deg);
+
   // Initial position (third parameter) defaulted to "frc::Pose2d()"; initial
   // angle (second parameter) is automatically zeroed by navX initialization.
   m_odometry = std::make_unique<frc::SwerveDriveOdometry<4>>(kDriveKinematics, 0_deg);
@@ -133,7 +143,17 @@ void DriveSubsystem::Periodic() noexcept
     if (m_ahrs)
     {
       botRot = -m_ahrs->GetRotation2d();
+    }
+    else
+    {
+      m_theta = 0.0;
+
+      return;
     } });
+
+  // Compute value to apply to correct robot orientation, or to follow rotation
+  // profile.
+  m_theta = m_orientationController->Calculate(botRot.Degrees());
 
   m_odometry->Update(botRot, m_frontLeftSwerveModule->GetState(),
                      m_frontRightSwerveModule->GetState(), m_rearLeftSwerveModule->GetState(),
@@ -725,11 +745,14 @@ void DriveSubsystem::ResetDrive() noexcept
   m_rotation = 0.0;
   m_x = 0.0;
   m_y = 0.0;
+  m_theta = 0.0;
 
   m_frontLeftSwerveModule->ResetDrive();
   m_frontRightSwerveModule->ResetDrive();
   m_rearLeftSwerveModule->ResetDrive();
   m_rearRightSwerveModule->ResetDrive();
+
+  m_orientationController->Reset(GetHeading(), units::angular_velocity::degrees_per_second_t{GetTurnRate()});
 }
 
 void DriveSubsystem::SetDriveBrakeMode(bool brake) noexcept
@@ -806,10 +829,10 @@ bool DriveSubsystem::SetLockWheelsX() noexcept
   m_commandedStateRearLeft = rearLeft;
   m_commandedStateRearRight = rearRight;
 
-  m_frontLeftSwerveModule->SetTurningPosition(frontLeft.angle.Degrees());
-  m_frontRightSwerveModule->SetTurningPosition(frontRight.angle.Degrees());
-  m_rearLeftSwerveModule->SetTurningPosition(rearLeft.angle.Degrees());
-  m_rearRightSwerveModule->SetTurningPosition(rearRight.angle.Degrees());
+  m_frontLeftSwerveModule->SetDesiredState(frontLeft);
+  m_frontRightSwerveModule->SetDesiredState(frontRight);
+  m_rearLeftSwerveModule->SetDesiredState(rearLeft);
+  m_rearRightSwerveModule->SetDesiredState(rearRight);
 
   const bool fl = m_frontLeftSwerveModule->CheckTurningPosition();
   const bool fr = m_frontRightSwerveModule->CheckTurningPosition();
@@ -848,10 +871,31 @@ bool DriveSubsystem::SetTurningPosition(const units::angle::degree_t position) n
   return (fl && fr && rl && rr) || !m_run;
 }
 
-bool DriveSubsystem::SetTurnByAngle(units::degree_t angle) noexcept
+bool DriveSubsystem::SetTurnToAngle(units::degree_t angle) noexcept
 {
-  // Use IMU!
-  return SetTurnInPlace() && SetDriveDistance(angle / 360_deg * physical::kDriveMetersPerTurningCircle);
+  if (!SetTurnInPlace())
+  {
+    return false;
+  }
+
+  // return SetDriveDistance(angle / 360_deg * physical::kDriveMetersPerTurningCircle);
+
+  m_orientationController->SetGoal(angle);
+
+  const bool atGoal = m_orientationController->AtGoal();
+  double velocity = m_theta;
+
+  if (atGoal)
+  {
+    velocity = 0.0;
+  }
+
+  m_frontLeftSwerveModule->SetDriveVelocity(units::velocity::meters_per_second_t{velocity});
+  m_frontRightSwerveModule->SetDriveVelocity(units::velocity::meters_per_second_t{velocity});
+  m_rearLeftSwerveModule->SetDriveVelocity(units::velocity::meters_per_second_t{velocity});
+  m_rearRightSwerveModule->SetDriveVelocity(units::velocity::meters_per_second_t{velocity});
+
+  return atGoal;
 }
 
 bool DriveSubsystem::SetDriveDistance(units::length::meter_t distance) noexcept

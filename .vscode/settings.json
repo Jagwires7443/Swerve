@@ -82,5 +82,7 @@
     "cinttypes": "cpp",
     "typeinfo": "cpp",
     "variant": "cpp"
-  }
+  },
+  "wpilib.skipTests": true,
+  "wpilib.autoSaveOnDeploy": true
 }

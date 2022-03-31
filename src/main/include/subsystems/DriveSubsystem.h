@@ -9,6 +9,7 @@
 #include "Constants.h"
 
 #include <AHRS.h>
+#include <frc/controller/ProfiledPIDController.h>
 #include <frc/geometry/Pose2d.h>
 #include <frc/geometry/Rotation2d.h>
 #include <frc/geometry/Translation2d.h>
@@ -65,7 +66,7 @@ public:
   bool SetTurnInPlace() noexcept;                                          // Orient modules for spin in-place
   bool SetLockWheelsX() noexcept;                                          // Orient modules for staying ("X")
   bool SetTurningPosition(const units::angle::degree_t position) noexcept; // Orient modules same direction
-  bool SetTurnByAngle(units::degree_t angle) noexcept;                     // Spin, once set to spin in-place
+  bool SetTurnToAngle(units::degree_t angle) noexcept;                     // Spin, once set to spin in-place
   bool SetDriveDistance(units::length::meter_t distance) noexcept;         // Drive for specified distance
 
   /**
@@ -261,6 +262,9 @@ private:
   // The gyro sensor.
   std::unique_ptr<AHRS> m_ahrs;
 
+  // Theta controller (for keeping steady heading, or for rotating drive base).
+  std::unique_ptr<frc::ProfiledPIDController<units::angle::degrees>> m_orientationController;
+
   // Four swerve modules.
   std::unique_ptr<SwerveModule> m_frontLeftSwerveModule;
   std::unique_ptr<SwerveModule> m_frontRightSwerveModule;
@@ -304,6 +308,7 @@ private:
   double m_rotation{0.0};
   double m_x{0.0};
   double m_y{0.0};
+  double m_theta{0.0};
 
   // Test Mode modification of behavior, allows low-level control and
   // modification of drive speed.

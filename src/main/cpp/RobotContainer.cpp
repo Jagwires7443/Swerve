@@ -28,6 +28,11 @@ RobotContainer::RobotContainer() noexcept
   m_driveCommand = std::make_unique<frc2::RunCommand>(
       [&]() -> void
       {
+        if (m_firing)
+        {
+          (void)m_driveSubsystem.SetLockWheelsX();
+        }
+
         const auto controls = GetDriveTeleopControls();
 
         m_driveSubsystem.Drive(
@@ -101,6 +106,14 @@ void RobotContainer::ConfigureButtonBindings() noexcept
                                                                                                   { m_driveSubsystem.ZeroHeading();
                                                                                             m_fieldOriented = true; },
                                                                                                   {&m_driveSubsystem}));
+
+  frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kLeftBumper).WhenPressed(frc2::InstantCommand([&]() -> void
+                                                                                                           { m_firing = true; },
+                                                                                                           {}));
+
+  frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kLeftBumper).WhenReleased(frc2::InstantCommand([&]() -> void
+                                                                                                            { m_firing = false; },
+                                                                                                            {}));
 
   frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kLeftBumper).WhileHeld(frc2::InstantCommand([&]() -> void
                                                                                                          { m_feederSubsystem.Fire(); },

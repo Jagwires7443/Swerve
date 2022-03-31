@@ -131,6 +131,12 @@ namespace pidf
     constexpr double kDriveVelocityD = 0.0;
     constexpr double kDriveVelocityDF = 0.0;
     constexpr double kDriveVelocityF = 0.0;
+
+    constexpr units::degrees_per_second_t kDriveThetaMaxVelocity = 90_deg_per_s;
+    constexpr units::degrees_per_second_squared_t kDriveThetaMaxAcceleration = 900_deg_per_s_sq;
+    constexpr double kDriveThetaP = 0.03;
+    constexpr double kDriveThetaI = 0.0;
+    constexpr double kDriveThetaD = 0.0;
 }
 
 namespace nonDrive
