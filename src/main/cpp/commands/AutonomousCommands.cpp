@@ -52,6 +52,9 @@ void AutonomousCommand::Execute() noexcept
 
     ++counter_;
 
+    // Assuming pneumatics were prefilled, counter runs 1 - ~150.
+
+    // Sit still, run intake/elevator, spin up shooter.
     if (counter_ <= 5) // 500ms
     {
         if (counter_ == 5)
@@ -59,7 +62,7 @@ void AutonomousCommand::Execute() noexcept
             printf("Auto Stage 1.\n"); // XXX
         }
 
-        // m_drive->Drive();
+        m_drive->Drive(0_mps, 0_mps, 0_deg_per_s, false);
 
         m_feeder->Default(1.0);
         m_feeder->LockIntake();
@@ -70,6 +73,7 @@ void AutonomousCommand::Execute() noexcept
         return;
     }
 
+    // Drop and lower intake (first ball is preloaded).
     if (counter_ <= 10) // 1s
     {
         if (counter_ == 10)
@@ -77,13 +81,13 @@ void AutonomousCommand::Execute() noexcept
             printf("Auto Stage 2.\n"); // XXX
         }
 
-        m_feeder->Default(1.0);
         m_feeder->DropIntake();
         m_feeder->LowerIntake();
 
         return;
     }
 
+    // Reextend drop catches.
     if (counter_ <= 15) // 1.5s
     {
         if (counter_ == 15)
@@ -91,29 +95,17 @@ void AutonomousCommand::Execute() noexcept
             printf("Auto Stage 3.\n"); // XXX
         }
 
-        m_feeder->Default(1.0);
         m_feeder->LockIntake();
 
         return;
     }
 
-    if (counter_ <= 20) // 2s
+    // Take first shot!
+    if (counter_ <= 35) // 3.5s
     {
-        if (counter_ == 20)
+        if (counter_ == 35)
         {
             printf("Auto Stage 4.\n"); // XXX
-        }
-
-        m_feeder->Default(1.0);
-
-        return;
-    }
-
-    if (counter_ <= 30) // 3s
-    {
-        if (counter_ == 30)
-        {
-            printf("Auto Stage 5.\n"); // XXX
         }
 
         m_feeder->Fire();
@@ -121,38 +113,42 @@ void AutonomousCommand::Execute() noexcept
         return;
     }
 
-    if (counter_ <= 75) // 7.5s
+    if (counter_ <= 40) // 4s
     {
-        if (counter_ == 75)
+        if (counter_ == 40)
+        {
+            printf("Auto Stage 5.\n"); // XXX
+        }
+
+        m_drive->Drive(-0.20_mps, 0_mps, 0_deg_per_s, false);
+
+        m_feeder->Default(0.0);
+
+        m_shooter->Stop();
+
+        return;
+    }
+
+    if (counter_ <= 45) // 4.5s
+    {
+        if (counter_ == 45)
         {
             printf("Auto Stage 6.\n"); // XXX
         }
 
+        m_drive->Drive(0_mps, 0_mps, 0_deg_per_s, false);
+
         return;
     }
 
-    if (counter_ <= 100) // 10s
+    if (counter_ <= 65) // 6.5s
     {
-        if (counter_ == 100)
+        if (counter_ == 120)
         {
             printf("Auto Stage 7.\n"); // XXX
         }
 
-        // bool SetTurnByAngle(units::degree_t angle);
-
-        m_drive->Drive(-0.20_mps, 0_mps, 0_deg_per_s, false);
-
-        return;
-    }
-
-    if (counter_ <= 108) // 10.8s
-    {
-        if (counter_ == 110)
-        {
-            printf("Auto Stage 8.\n"); // XXX
-        }
-
-        m_drive->Drive(0_mps, 0_mps, 0_deg_per_s, false);
+        (void)m_drive->SetTurnToAngle(180_deg);
 
         return;
     }
