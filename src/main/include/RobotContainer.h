@@ -50,9 +50,8 @@ private:
   void ConfigureButtonBindings() noexcept;
 
   bool m_fieldOriented{false};
-  bool m_firing{false};
+  bool m_lock{false};
   bool m_slow{false};
-  bool m_turbo{false};
   double m_shooterVelocity{0.0};
 
   // The robot's subsystems and commands are defined here...

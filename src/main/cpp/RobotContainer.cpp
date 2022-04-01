@@ -28,9 +28,11 @@ RobotContainer::RobotContainer() noexcept
   m_driveCommand = std::make_unique<frc2::RunCommand>(
       [&]() -> void
       {
-        if (m_firing)
+        if (m_lock)
         {
           (void)m_driveSubsystem.SetLockWheelsX();
+
+          return;
         }
 
         const auto controls = GetDriveTeleopControls();
@@ -107,14 +109,6 @@ void RobotContainer::ConfigureButtonBindings() noexcept
                                                                                             m_fieldOriented = true; },
                                                                                                   {&m_driveSubsystem}));
 
-  frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kLeftBumper).WhenPressed(frc2::InstantCommand([&]() -> void
-                                                                                                           { m_firing = true; },
-                                                                                                           {}));
-
-  frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kLeftBumper).WhenReleased(frc2::InstantCommand([&]() -> void
-                                                                                                            { m_firing = false; },
-                                                                                                            {}));
-
   frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kLeftBumper).WhileHeld(frc2::InstantCommand([&]() -> void
                                                                                                          { m_feederSubsystem.Fire(); },
                                                                                                          {&m_feederSubsystem}));
@@ -152,11 +146,11 @@ void RobotContainer::ConfigureButtonBindings() noexcept
                                                                            {}));
 
   frc2::JoystickButton(&m_buttonBoard, 6).WhenPressed(frc2::InstantCommand([&]() -> void
-                                                                           { m_turbo = true; },
+                                                                           { m_lock = true; },
                                                                            {}));
 
   frc2::JoystickButton(&m_buttonBoard, 6).WhenReleased(frc2::InstantCommand([&]() -> void
-                                                                            { m_turbo = false; },
+                                                                            { m_lock = false; },
                                                                             {}));
 
   frc2::JoystickButton(&m_buttonBoard, 10).WhenPressed(frc2::InstantCommand([&]() -> void
@@ -238,13 +232,7 @@ std::tuple<double, double, double, bool> RobotContainer::GetDriveTeleopControls(
   y = shape(y);
   z = shape(z, 0.0);
 
-  if (m_turbo)
-  {
-    x *= 13.87;
-    y *= 13.87;
-    z *= 13.87;
-  }
-  else if (m_slow)
+  if (m_slow)
   {
     x *= 0.50;
     y *= 0.50;
