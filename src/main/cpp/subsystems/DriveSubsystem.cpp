@@ -890,10 +890,12 @@ bool DriveSubsystem::SetTurnToAngle(units::degree_t angle) noexcept
     velocity = 0.0;
   }
 
-  m_frontLeftSwerveModule->SetDriveVelocity(units::velocity::meters_per_second_t{velocity});
-  m_frontRightSwerveModule->SetDriveVelocity(units::velocity::meters_per_second_t{velocity});
-  m_rearLeftSwerveModule->SetDriveVelocity(units::velocity::meters_per_second_t{velocity});
-  m_rearRightSwerveModule->SetDriveVelocity(units::velocity::meters_per_second_t{velocity});
+  const units::meters_per_second_t linearVelocity = velocity * physical::kMaxTurnRate / 360_deg * physical::kDriveMetersPerTurningCircle;
+
+  m_frontLeftSwerveModule->SetDriveVelocity(linearVelocity);
+  m_frontRightSwerveModule->SetDriveVelocity(linearVelocity);
+  m_rearLeftSwerveModule->SetDriveVelocity(linearVelocity);
+  m_rearRightSwerveModule->SetDriveVelocity(linearVelocity);
 
   return atGoal;
 }
