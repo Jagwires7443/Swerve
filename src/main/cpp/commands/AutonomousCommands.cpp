@@ -70,7 +70,7 @@ void AutonomousCommand::Execute() noexcept
         m_feeder->LockIntake();
         m_feeder->RaiseIntake();
 
-        m_shooter->Default(1.0, 800.0);
+        m_shooter->Default(1.0, 575.0);
 
         return;
     }
@@ -116,14 +116,14 @@ void AutonomousCommand::Execute() noexcept
     }
 
     // Back up, also stop feeder and shooter.
-    if (counter_ <= 40) // 3.5 - 4.0s
+    if (counter_ <= 55) // 3.5 - 5.5s
     {
-        if (counter_ == 40)
+        if (counter_ == 55)
         {
             printf("Auto Stage 5.\n");
         }
 
-        m_drive->Drive(-0.20_mps, 0_mps, 0_deg_per_s, false);
+        m_drive->Drive(-0.55_mps, 0_mps, 0_deg_per_s, false);
 
         m_feeder->Default(0.0);
 
@@ -133,9 +133,9 @@ void AutonomousCommand::Execute() noexcept
     }
 
     // Stop.
-    if (counter_ <= 45) // 4.0 - 4.5s
+    if (counter_ <= 60) // 5.5 - 6.0s
     {
-        if (counter_ == 45)
+        if (counter_ == 60)
         {
             printf("Auto Stage 6.\n");
         }
@@ -146,9 +146,9 @@ void AutonomousCommand::Execute() noexcept
     }
 
     // Turn around.
-    if (counter_ <= 65) // 4.5 - 6.5s
+    if (counter_ <= 100) // 6.0 - 10s
     {
-        if (counter_ == 120)
+        if (counter_ == 100)
         {
             printf("Auto Stage 7.\n");
         }

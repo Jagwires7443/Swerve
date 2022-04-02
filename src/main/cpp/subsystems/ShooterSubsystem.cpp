@@ -39,8 +39,8 @@ void ShooterSubsystem::Default(const double percent, const double velocity) noex
     // Manual control (backup).
     if (velocity == 0.0)
     {
-        m_shooterMotor->SetVoltage(percent * 12_V);
-        m_backspinMotor->SetVoltage(percent * 12_V);
+        m_shooterMotor->SetVoltage(percent * 12.00_V);
+        m_backspinMotor->SetVoltage(percent * 11.25_V);
 
         return;
     }

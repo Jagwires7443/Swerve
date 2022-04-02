@@ -154,16 +154,16 @@ void RobotContainer::ConfigureButtonBindings() noexcept
                                                                             {}));
 
   frc2::JoystickButton(&m_buttonBoard, 10).WhenPressed(frc2::InstantCommand([&]() -> void
-                                                                            { m_shooterVelocity = 1300.0; },
+                                                                            { m_shooterVelocity = 1200.0; },
                                                                             {}));
 
   frc2::JoystickButton(&m_buttonBoard, 11).WhenPressed(frc2::InstantCommand([&]() -> void
                                                                             { m_shooterVelocity = 900.0; },
                                                                             {}));
 
-  frc2::JoystickButton(&m_buttonBoard, 12).WhenHeld(frc2::InstantCommand([&]() -> void
-                                                                         { m_shooterVelocity = 300.0; },
-                                                                         {}));
+  frc2::JoystickButton(&m_buttonBoard, 12).WhenPressed(frc2::InstantCommand([&]() -> void
+                                                                            { m_shooterVelocity = 400.0; },
+                                                                            {}));
 }
 
 frc2::Command *RobotContainer::GetAutonomousCommand() noexcept
@@ -236,7 +236,13 @@ std::tuple<double, double, double, bool> RobotContainer::GetDriveTeleopControls(
   {
     x *= 0.50;
     y *= 0.50;
-    z *= 0.25;
+    z *= 0.40;
+  }
+  else
+  {
+    x *= 2.0;
+    y *= 2.0;
+    z *= 1.6;
   }
 
   return std::make_tuple(x, y, z, m_fieldOriented);
