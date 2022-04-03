@@ -70,7 +70,7 @@ void AutonomousCommand::Execute() noexcept
         m_feeder->LockIntake();
         m_feeder->RaiseIntake();
 
-        m_shooter->Default(1.0, 575.0);
+        m_shooter->Stop();
 
         return;
     }
@@ -102,7 +102,7 @@ void AutonomousCommand::Execute() noexcept
         return;
     }
 
-    // Take first shot!
+    // Back up, also stop feeder and shooter.
     if (counter_ <= 35) // 1.5 - 3.5s
     {
         if (counter_ == 35)
@@ -110,34 +110,21 @@ void AutonomousCommand::Execute() noexcept
             printf("Auto Stage 4.\n");
         }
 
-        m_feeder->Fire();
-
-        return;
-    }
-
-    // Back up, also stop feeder and shooter.
-    if (counter_ <= 55) // 3.5 - 5.5s
-    {
-        if (counter_ == 55)
-        {
-            printf("Auto Stage 5.\n");
-        }
-
         m_drive->Drive(-0.55_mps, 0_mps, 0_deg_per_s, false);
 
         m_feeder->Default(0.0);
 
-        m_shooter->Stop();
+        m_shooter->Default(1.0, 930.0);
 
         return;
     }
 
     // Stop.
-    if (counter_ <= 60) // 5.5 - 6.0s
+    if (counter_ <= 40) // 3.5 - 4.0s
     {
-        if (counter_ == 60)
+        if (counter_ == 40)
         {
-            printf("Auto Stage 6.\n");
+            printf("Auto Stage 5.\n");
         }
 
         m_drive->Drive(0_mps, 0_mps, 0_deg_per_s, false);
@@ -145,13 +132,28 @@ void AutonomousCommand::Execute() noexcept
         return;
     }
 
+    // Take first shot!
+    if (counter_ <= 60) // 4.0 - 6.0s
+    {
+        if (counter_ == 60)
+        {
+            printf("Auto Stage 6.\n");
+        }
+
+        m_feeder->Fire();
+
+        return;
+    }
+
     // Turn around.
-    if (counter_ <= 100) // 6.0 - 10s
+    if (counter_ <= 100) // 6.0 - 10.0s
     {
         if (counter_ == 100)
         {
             printf("Auto Stage 7.\n");
         }
+
+        m_shooter->Stop();
 
         (void)m_drive->SetTurnToAngle(180_deg);
 

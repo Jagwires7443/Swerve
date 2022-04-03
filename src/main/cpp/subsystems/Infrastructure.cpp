@@ -4,9 +4,11 @@ InfrastructureSubsystem::InfrastructureSubsystem() noexcept
 {
     pdh_ = std::make_unique<frc::PowerDistribution>(1, frc::PowerDistribution::ModuleType::kRev);
     ph_ = std::make_unique<frc::Compressor>(1, frc::PneumaticsModuleType::REVPH);
+    leds_ = std::make_unique<frc::Spark>(0);
 
     pdh_->ClearStickyFaults();
     pdh_->SetSwitchableChannel(false);
+    leds_->Set(0.0);
 
     Enable();
 }
