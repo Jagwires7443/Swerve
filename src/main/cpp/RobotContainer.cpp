@@ -164,6 +164,12 @@ void RobotContainer::ConfigureButtonBindings() noexcept
   frc2::JoystickButton(&m_buttonBoard, 12).WhenPressed(frc2::InstantCommand([&]() -> void
                                                                             { m_shooterVelocity = 400.0; },
                                                                             {}));
+
+  // This is the "Guide" or "Logitech" (large, in the middle) button.
+  frc2::JoystickButton(&m_xbox, 13).WhenPressed(frc2::InstantCommand([&]() -> void
+                                                                     { m_infrastructureSubsystem.SetLEDPattern(m_LEDPattern++);
+                                                                     if (m_LEDPattern >= m_infrastructureSubsystem.GetLEDPatternCount()) { m_LEDPattern = 0; } },
+                                                                     {&m_infrastructureSubsystem}));
 }
 
 frc2::Command *RobotContainer::GetAutonomousCommand() noexcept

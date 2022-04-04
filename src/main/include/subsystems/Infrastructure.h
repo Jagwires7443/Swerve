@@ -7,6 +7,7 @@
 #include <units/pressure.h>
 
 #include <memory>
+#include <string_view>
 
 class InfrastructureSubsystem : public frc2::SubsystemBase
 {
@@ -26,6 +27,12 @@ public:
     void Disable() noexcept;
 
     units::pressure::pounds_per_square_inch_t GetPressure() noexcept;
+
+    uint GetLEDPatternCount() noexcept;
+
+    std::string_view GetLEDPatternDescription(uint pattern) noexcept;
+
+    void SetLEDPattern(uint pattern) noexcept;
 
 private:
     std::unique_ptr<frc::PowerDistribution> pdh_;
