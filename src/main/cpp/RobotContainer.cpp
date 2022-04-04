@@ -13,10 +13,14 @@
 #include <frc2/command/RunCommand.h>
 
 #include <cmath>
+#include <cstdio>
+#include <string>
 
 RobotContainer::RobotContainer() noexcept
 {
   // Initialize all of your commands and subsystems here
+
+  m_LEDPatternCount = m_infrastructureSubsystem.GetLEDPatternCount();
 
   // Configure the button bindings
   ConfigureButtonBindings();
@@ -79,6 +83,9 @@ void RobotContainer::AutonomousInit() noexcept
                                                        {&m_feederSubsystem}));
   m_shooterSubsystem.SetDefaultCommand(frc2::RunCommand([&]() -> void {},
                                                         {&m_shooterSubsystem}));
+  m_infrastructureSubsystem.SetDefaultCommand(frc2::RunCommand([&]() -> void
+                                                               { m_infrastructureSubsystem.SetLEDPattern(m_LEDPattern); },
+                                                               {&m_infrastructureSubsystem}));
 }
 
 void RobotContainer::TeleopInit() noexcept
@@ -90,6 +97,9 @@ void RobotContainer::TeleopInit() noexcept
   m_shooterSubsystem.SetDefaultCommand(frc2::RunCommand([&]() -> void
                                                         { m_shooterSubsystem.Default(m_xbox.GetLeftTriggerAxis(), m_shooterVelocity); },
                                                         {&m_shooterSubsystem}));
+  m_infrastructureSubsystem.SetDefaultCommand(frc2::RunCommand([&]() -> void
+                                                               { m_infrastructureSubsystem.SetLEDPattern(m_LEDPattern); },
+                                                               {&m_infrastructureSubsystem}));
 }
 
 void RobotContainer::ConfigureButtonBindings() noexcept
@@ -167,9 +177,10 @@ void RobotContainer::ConfigureButtonBindings() noexcept
 
   // This is the "Guide" or "Logitech" (large, in the middle) button.
   frc2::JoystickButton(&m_xbox, 13).WhenPressed(frc2::InstantCommand([&]() -> void
-                                                                     { m_infrastructureSubsystem.SetLEDPattern(m_LEDPattern++);
-                                                                     if (m_LEDPattern >= m_infrastructureSubsystem.GetLEDPatternCount()) { m_LEDPattern = 0; } },
-                                                                     {&m_infrastructureSubsystem}));
+                                                                     { ++m_LEDPattern;
+                                                                     if (m_LEDPattern >= m_LEDPatternCount) { m_LEDPattern = 0; }
+                                                                     std::printf("LED Pattern[%u]: %s\n", m_LEDPattern, std::string(m_infrastructureSubsystem.GetLEDPatternDescription(m_LEDPattern)).c_str()); },
+                                                                     {}));
 }
 
 frc2::Command *RobotContainer::GetAutonomousCommand() noexcept
