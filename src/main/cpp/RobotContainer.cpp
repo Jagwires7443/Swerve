@@ -63,7 +63,8 @@ RobotContainer::RobotContainer() noexcept
       },
       driveRequirements);
 
-  m_autonomousCommand = std::make_unique<AutonomousCommand>(&m_driveSubsystem, &m_feederSubsystem, &m_infrastructureSubsystem, &m_shooterSubsystem);
+  m_oneBallAuto = std::make_unique<OneBallAuto>(&m_driveSubsystem, &m_feederSubsystem, &m_infrastructureSubsystem, &m_shooterSubsystem);
+  m_twoBallAuto = std::make_unique<TwoBallAuto>(&m_driveSubsystem, &m_feederSubsystem, &m_infrastructureSubsystem, &m_shooterSubsystem);
 
   m_zeroCommand = std::make_unique<ZeroCommand>(&m_driveSubsystem);
   m_maxVAndATurningCommand = std::make_unique<MaxVAndATurningCommand>(&m_driveSubsystem);
@@ -185,7 +186,14 @@ void RobotContainer::ConfigureButtonBindings() noexcept
 
 frc2::Command *RobotContainer::GetAutonomousCommand() noexcept
 {
-  return m_autonomousCommand.get();
+  if (m_buttonBoard.GetRawButton(13))
+  {
+    return m_oneBallAuto.get();
+  }
+  else
+  {
+    return m_twoBallAuto.get();
+  }
 }
 
 std::tuple<double, double, double, bool> RobotContainer::GetDriveTeleopControls() noexcept

@@ -7,10 +7,13 @@
 #include <frc2/command/SequentialCommandGroup.h>
 #include <frc2/command/WaitCommand.h>
 
-AutonomousCommand::AutonomousCommand(DriveSubsystem *const drive, FeederSubsystem *const feeder, InfrastructureSubsystem *const infrastructure, ShooterSubsystem *const shooter) noexcept
-    : m_drive{drive}, m_feeder{feeder}, m_infrastructure{infrastructure}, m_shooter{shooter} { SetName("Autonomous"); }
+OneBallAuto::OneBallAuto(DriveSubsystem *const drive, FeederSubsystem *const feeder, InfrastructureSubsystem *const infrastructure, ShooterSubsystem *const shooter) noexcept
+    : m_drive{drive}, m_feeder{feeder}, m_infrastructure{infrastructure}, m_shooter{shooter} { SetName("OneBallAuto"); }
 
-void AutonomousCommand::Initialize() noexcept
+TwoBallAuto::TwoBallAuto(DriveSubsystem *const drive, FeederSubsystem *const feeder, InfrastructureSubsystem *const infrastructure, ShooterSubsystem *const shooter) noexcept
+    : m_drive{drive}, m_feeder{feeder}, m_infrastructure{infrastructure}, m_shooter{shooter} { SetName("TwoBallAuto"); }
+
+void OneBallAuto::Initialize() noexcept
 {
     m_drive->Drive(0_mps, 0_mps, 0_deg_per_s, false);
 
@@ -22,9 +25,49 @@ void AutonomousCommand::Initialize() noexcept
 
     FPGATime_ = frc::RobotController::GetFPGATime();
     counter_ = 0;
+
+    printf("One Ball Auto.\n");
 }
 
-void AutonomousCommand::Execute() noexcept
+void TwoBallAuto::Initialize() noexcept
+{
+    m_drive->Drive(0_mps, 0_mps, 0_deg_per_s, false);
+
+    m_feeder->Default(0.0);
+    m_feeder->LockIntake();
+    m_feeder->RaiseIntake();
+
+    m_shooter->Stop();
+
+    FPGATime_ = frc::RobotController::GetFPGATime();
+    counter_ = 0;
+
+    printf("Two Ball Auto.\n");
+}
+
+void OneBallAuto::End(bool interrupted) noexcept
+{
+    printf("Auto Final: %u.\n", counter_);
+
+    m_drive->Drive(0_mps, 0_mps, 0_deg_per_s, false);
+
+    m_feeder->Default(0.0);
+
+    m_shooter->Stop();
+}
+
+void TwoBallAuto::End(bool interrupted) noexcept
+{
+    printf("Auto Final: %u.\n", counter_);
+
+    m_drive->Drive(0_mps, 0_mps, 0_deg_per_s, false);
+
+    m_feeder->Default(0.0);
+
+    m_shooter->Stop();
+}
+
+void OneBallAuto::Execute() noexcept
 {
     const uint64_t FPGATime = frc::RobotController::GetFPGATime();
     const uint deltaTime = (FPGATime - FPGATime_) / 1000; // ms
@@ -56,7 +99,7 @@ void AutonomousCommand::Execute() noexcept
 
     // Assuming pneumatics were prefilled, counter runs 1 - ~150.
 
-    // Sit still, run intake/elevator, spin up shooter.
+    // Sit still and run intake/elevator.
     if (counter_ <= 5) // 0.0 - 0.5s
     {
         if (counter_ == 5)
@@ -102,7 +145,7 @@ void AutonomousCommand::Execute() noexcept
         return;
     }
 
-    // Back up, also stop feeder and shooter.
+    // Back up and spin up shooter.
     if (counter_ <= 35) // 1.5 - 3.5s
     {
         if (counter_ == 35)
@@ -145,31 +188,53 @@ void AutonomousCommand::Execute() noexcept
         return;
     }
 
-    // Turn around.
-    if (counter_ <= 100) // 6.0 - 10.0s
+    finished_ = true;
+}
+
+void TwoBallAuto::Execute() noexcept
+{
+    const uint64_t FPGATime = frc::RobotController::GetFPGATime();
+    const uint deltaTime = (FPGATime - FPGATime_) / 1000; // ms
+
+    if (deltaTime < 100) // 100ms
     {
-        if (counter_ == 100)
+        return;
+    }
+
+    FPGATime_ = FPGATime;
+
+    // Will arrive here every 100ms, for 15s autonomous period.
+
+    const units::pressure::pounds_per_square_inch_t pressure = m_infrastructure->GetPressure();
+
+    if (pressure >= 75_psi)
+    {
+        printf("Auto Stage 0.\n");
+
+        pressure_ = true;
+    }
+
+    if (!pressure_)
+    {
+        return;
+    }
+
+    ++counter_;
+
+    // Assuming pneumatics were prefilled, counter runs 1 - ~150.
+
+    // Turn around.
+    if (counter_ <= 40) // 0.0 - 4.0s
+    {
+        if (counter_ == 40)
         {
-            printf("Auto Stage 7.\n");
+            printf("Auto Stage 1.\n");
         }
 
-        m_shooter->Stop();
-
-        (void)m_drive->SetTurnToAngle(180_deg);
+        (void)m_drive->SetTurnToAngle(90_deg);
 
         return;
     }
 
     finished_ = true;
-}
-
-void AutonomousCommand::End(bool interrupted) noexcept
-{
-    printf("Auto Final: %u.\n", counter_);
-
-    m_drive->Drive(0_mps, 0_mps, 0_deg_per_s, false);
-
-    m_feeder->Default(0.0);
-
-    m_shooter->Stop();
 }

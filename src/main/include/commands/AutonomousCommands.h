@@ -14,11 +14,37 @@
 
 #include <frc/RobotController.h>
 
-class AutonomousCommand
-    : public frc2::CommandHelper<frc2::CommandBase, AutonomousCommand>
+class OneBallAuto
+    : public frc2::CommandHelper<frc2::CommandBase, OneBallAuto>
 {
 public:
-  AutonomousCommand(DriveSubsystem *const drive, FeederSubsystem *const feeder, InfrastructureSubsystem *const infrastructure, ShooterSubsystem *const shooter) noexcept;
+  OneBallAuto(DriveSubsystem *const drive, FeederSubsystem *const feeder, InfrastructureSubsystem *const infrastructure, ShooterSubsystem *const shooter) noexcept;
+
+  void Initialize() noexcept override;
+
+  void Execute() noexcept override;
+
+  void End(bool interrupted) noexcept override;
+
+  bool IsFinished() noexcept override { return finished_; }
+
+private:
+  DriveSubsystem *const m_drive;
+  FeederSubsystem *const m_feeder;
+  InfrastructureSubsystem *const m_infrastructure;
+  ShooterSubsystem *const m_shooter;
+
+  bool pressure_{false};
+  bool finished_{false};
+  uint64_t FPGATime_{0};
+  uint counter_{0};
+};
+
+class TwoBallAuto
+    : public frc2::CommandHelper<frc2::CommandBase, TwoBallAuto>
+{
+public:
+  TwoBallAuto(DriveSubsystem *const drive, FeederSubsystem *const feeder, InfrastructureSubsystem *const infrastructure, ShooterSubsystem *const shooter) noexcept;
 
   void Initialize() noexcept override;
 

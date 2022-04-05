@@ -65,7 +65,8 @@ private:
   std::unique_ptr<frc2::RunCommand> m_driveCommand;
   std::unique_ptr<frc2::RunCommand> m_pointCommand;
 
-  std::unique_ptr<AutonomousCommand> m_autonomousCommand;
+  std::unique_ptr<OneBallAuto> m_oneBallAuto;
+  std::unique_ptr<TwoBallAuto> m_twoBallAuto;
 
   std::unique_ptr<ZeroCommand> m_zeroCommand;
   std::unique_ptr<MaxVAndATurningCommand> m_maxVAndATurningCommand;
