@@ -84,8 +84,7 @@ void RobotContainer::AutonomousInit() noexcept
                                                        {&m_feederSubsystem}));
   m_shooterSubsystem.SetDefaultCommand(frc2::RunCommand([&]() -> void {},
                                                         {&m_shooterSubsystem}));
-  m_infrastructureSubsystem.SetDefaultCommand(frc2::RunCommand([&]() -> void
-                                                               { m_infrastructureSubsystem.SetLEDPattern(m_LEDPattern); },
+  m_infrastructureSubsystem.SetDefaultCommand(frc2::RunCommand([&]() -> void {},
                                                                {&m_infrastructureSubsystem}));
 }
 
@@ -176,23 +175,22 @@ void RobotContainer::ConfigureButtonBindings() noexcept
                                                                             { m_shooterVelocity = 400.0; },
                                                                             {}));
 
-  // This is the "Guide" or "Logitech" (large, in the middle) button.
-  frc2::JoystickButton(&m_xbox, 13).WhenPressed(frc2::InstantCommand([&]() -> void
-                                                                     { ++m_LEDPattern;
+  frc2::JoystickButton(&m_buttonBoard, 7).WhenPressed(frc2::InstantCommand([&]() -> void
+                                                                           { ++m_LEDPattern;
                                                                      if (m_LEDPattern >= m_LEDPatternCount) { m_LEDPattern = 0; }
                                                                      std::printf("LED Pattern[%u]: %s\n", m_LEDPattern, std::string(m_infrastructureSubsystem.GetLEDPatternDescription(m_LEDPattern)).c_str()); },
-                                                                     {}));
+                                                                           {}));
 }
 
 frc2::Command *RobotContainer::GetAutonomousCommand() noexcept
 {
-  if (m_buttonBoard.GetRawButton(13))
+  if (m_buttonBoard.GetRawButton(8))
   {
-    return m_oneBallAuto.get();
+    return m_twoBallAuto.get();
   }
   else
   {
-    return m_twoBallAuto.get();
+    return m_oneBallAuto.get();
   }
 }
 
