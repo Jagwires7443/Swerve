@@ -6,19 +6,23 @@
 
 #include <frc2/command/CommandBase.h>
 #include <frc2/command/CommandHelper.h>
+#include <frc/RobotController.h>
 
 #include "subsystems/DriveSubsystem.h"
 #include "subsystems/FeederSubsystem.h"
 #include "subsystems/Infrastructure.h"
 #include "subsystems/ShooterSubsystem.h"
 
-#include <frc/RobotController.h>
+#include <string_view>
 
-class OneBallAuto
-    : public frc2::CommandHelper<frc2::CommandBase, OneBallAuto>
+class TimedAutoBase : public frc2::CommandHelper<frc2::CommandBase, TimedAutoBase>
 {
+protected:
+  TimedAutoBase(DriveSubsystem *const drive, FeederSubsystem *const feeder, InfrastructureSubsystem *const infrastructure, ShooterSubsystem *const shooter, std::string_view name) noexcept
+      : m_drive{drive}, m_feeder{feeder}, m_infrastructure{infrastructure}, m_shooter{shooter} { SetName(name); }
+
 public:
-  OneBallAuto(DriveSubsystem *const drive, FeederSubsystem *const feeder, InfrastructureSubsystem *const infrastructure, ShooterSubsystem *const shooter) noexcept;
+  virtual ~TimedAutoBase() noexcept = default;
 
   void Initialize() noexcept override;
 
@@ -28,40 +32,35 @@ public:
 
   bool IsFinished() noexcept override { return finished_; }
 
-private:
+  virtual bool Iteration(const uint counter) noexcept { return true; }
+
+protected:
   DriveSubsystem *const m_drive;
   FeederSubsystem *const m_feeder;
   InfrastructureSubsystem *const m_infrastructure;
   ShooterSubsystem *const m_shooter;
 
+private:
   bool pressure_{false};
   bool finished_{false};
   uint64_t FPGATime_{0};
   uint counter_{0};
 };
 
-class TwoBallAuto
-    : public frc2::CommandHelper<frc2::CommandBase, TwoBallAuto>
+class OneBallAuto : public TimedAutoBase
 {
 public:
-  TwoBallAuto(DriveSubsystem *const drive, FeederSubsystem *const feeder, InfrastructureSubsystem *const infrastructure, ShooterSubsystem *const shooter) noexcept;
+  OneBallAuto(DriveSubsystem *const drive, FeederSubsystem *const feeder, InfrastructureSubsystem *const infrastructure, ShooterSubsystem *const shooter) noexcept
+      : TimedAutoBase(drive, feeder, infrastructure, shooter, "OneBallAuto") {}
 
-  void Initialize() noexcept override;
+  bool Iteration(const uint counter) noexcept override;
+};
 
-  void Execute() noexcept override;
+class TwoBallAuto : public TimedAutoBase
+{
+public:
+  TwoBallAuto(DriveSubsystem *const drive, FeederSubsystem *const feeder, InfrastructureSubsystem *const infrastructure, ShooterSubsystem *const shooter) noexcept
+      : TimedAutoBase(drive, feeder, infrastructure, shooter, "TwoBallAuto") {}
 
-  void End(bool interrupted) noexcept override;
-
-  bool IsFinished() noexcept override { return finished_; }
-
-private:
-  DriveSubsystem *const m_drive;
-  FeederSubsystem *const m_feeder;
-  InfrastructureSubsystem *const m_infrastructure;
-  ShooterSubsystem *const m_shooter;
-
-  bool pressure_{false};
-  bool finished_{false};
-  uint64_t FPGATime_{0};
-  uint counter_{0};
+  bool Iteration(const uint counter) noexcept override;
 };
