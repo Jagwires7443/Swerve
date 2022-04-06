@@ -50,6 +50,8 @@ void TimedAutoBase::Execute() noexcept
 
     if (!pressure_)
     {
+        m_infrastructure->SetLEDPattern(78);
+
         return;
     }
 
@@ -58,6 +60,8 @@ void TimedAutoBase::Execute() noexcept
 
     if (finished)
     {
+        m_infrastructure->SetLEDPattern(95);
+
         finished_ = true;
     }
 }
@@ -75,6 +79,8 @@ bool OneBallAuto::Iteration(const uint counter) noexcept
 
         m_shooter->Stop();
 
+        m_infrastructure->SetLEDPattern(79);
+
         return false;
     }
 
@@ -82,6 +88,8 @@ bool OneBallAuto::Iteration(const uint counter) noexcept
     if (counter <= 10) // 0.5 - 1.0s
     {
         m_feeder->DropIntake();
+
+        m_infrastructure->SetLEDPattern(80);
 
         return false;
     }
@@ -91,6 +99,8 @@ bool OneBallAuto::Iteration(const uint counter) noexcept
     {
         m_feeder->LockIntake();
         m_feeder->LowerIntake();
+
+        m_infrastructure->SetLEDPattern(81);
 
         return false;
     }
@@ -104,6 +114,8 @@ bool OneBallAuto::Iteration(const uint counter) noexcept
 
         m_shooter->Default(1.0, 930.0);
 
+        m_infrastructure->SetLEDPattern(82);
+
         return false;
     }
 
@@ -112,6 +124,8 @@ bool OneBallAuto::Iteration(const uint counter) noexcept
     {
         m_drive->Drive(0_mps, 0_mps, 0_deg_per_s, false);
 
+        m_infrastructure->SetLEDPattern(83);
+
         return false;
     }
 
@@ -119,6 +133,8 @@ bool OneBallAuto::Iteration(const uint counter) noexcept
     if (counter <= 60) // 4.0 - 6.0s
     {
         m_feeder->Fire();
+
+        m_infrastructure->SetLEDPattern(84);
 
         return false;
     }
@@ -132,6 +148,8 @@ bool TwoBallAuto::Iteration(const uint counter) noexcept
     if (counter <= 40) // 0.0 - 4.0s
     {
         (void)m_drive->SetTurnToAngle(90_deg);
+
+        m_infrastructure->SetLEDPattern(79);
 
         return false;
     }
