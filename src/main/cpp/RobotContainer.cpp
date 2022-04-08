@@ -184,7 +184,7 @@ void RobotContainer::ConfigureButtonBindings() noexcept
 
 frc2::Command *RobotContainer::GetAutonomousCommand() noexcept
 {
-  if (m_buttonBoard.GetRawButton(8))
+  if (m_buttonBoard.GetRawButton(9))
   {
     return m_twoBallAuto.get();
   }

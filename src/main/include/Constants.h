@@ -23,10 +23,10 @@ namespace physical
 {
     // Alignment constants, for each swerve module.  Specified on [-2048, 2048)
     // "count" scale, in (dimensionless) angular units.
-    constexpr int kFrontLeftAlignmentOffset = +2028;
-    constexpr int kFrontRightAlignmentOffset = +421;
-    constexpr int kRearLeftAlignmentOffset = -25;
-    constexpr int kRearRightAlignmentOffset = -222;
+    constexpr int kFrontLeftAlignmentOffset = +2064;
+    constexpr int kFrontRightAlignmentOffset = +445;
+    constexpr int kRearLeftAlignmentOffset = -16;
+    constexpr int kRearRightAlignmentOffset = -201;
 
     // SDS Mk3 Standard (or Fast) Gear Ratio: 8.16:1 (or 6.86:1);
     // Nominal Wheel Diameter (4"): =0.1016m;
@@ -132,11 +132,12 @@ namespace pidf
     constexpr double kDriveVelocityDF = 0.0;
     constexpr double kDriveVelocityF = 0.0;
 
-    constexpr units::degrees_per_second_t kDriveThetaMaxVelocity = 90_deg_per_s;
-    constexpr units::degrees_per_second_squared_t kDriveThetaMaxAcceleration = 900_deg_per_s_sq;
-    constexpr double kDriveThetaP = 2.0;
+    constexpr units::degrees_per_second_t kDriveThetaMaxVelocity = 45_deg_per_s;
+    constexpr units::degrees_per_second_squared_t kDriveThetaMaxAcceleration = 450_deg_per_s_sq;
+    constexpr double kDriveThetaP = 0.0055;
     constexpr double kDriveThetaI = 0.0;
     constexpr double kDriveThetaD = 0.0;
+    constexpr double kDriveThetaF = 0.0025;
 }
 
 namespace nonDrive

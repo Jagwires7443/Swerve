@@ -7,6 +7,8 @@
 void TimedAutoBase::Initialize() noexcept
 {
     m_drive->Drive(0_mps, 0_mps, 0_deg_per_s, false);
+    m_drive->ResetDrive();
+    m_drive->ZeroHeading();
 
     m_feeder->Default(0.0);
     m_feeder->LockIntake();
@@ -14,6 +16,8 @@ void TimedAutoBase::Initialize() noexcept
 
     m_shooter->Stop();
 
+    pressure_ = false;
+    finished_ = false;
     FPGATime_ = frc::RobotController::GetFPGATime();
     counter_ = 0;
 }
@@ -56,9 +60,7 @@ void TimedAutoBase::Execute() noexcept
     }
 
     // Assuming pneumatics were prefilled, counter runs 1 - ~150.
-    const bool finished = Iteration(++counter_);
-
-    if (finished)
+    if (Iteration(++counter_))
     {
         m_infrastructure->SetLEDPattern(95);
 
@@ -145,11 +147,26 @@ bool OneBallAuto::Iteration(const uint counter) noexcept
 bool TwoBallAuto::Iteration(const uint counter) noexcept
 {
     // Turn around.
-    if (counter <= 40) // 0.0 - 4.0s
+    if (counter < 40) // 0.0 - 4.0s
     {
-        (void)m_drive->SetTurnToAngle(90_deg);
+        if (m_drive->SetTurnToAngle(180_deg))
+        {
+            m_infrastructure->SetLEDPattern(80);
+        }
+        else
+        {
+            m_infrastructure->SetLEDPattern(79);
+        }
 
-        m_infrastructure->SetLEDPattern(79);
+        return false;
+    }
+    else if (counter == 40)
+    {
+        m_drive->Drive(0_mps, 0_mps, 0_deg_per_s, false);
+        m_drive->ResetDrive();
+        m_drive->ZeroHeading();
+
+        m_infrastructure->SetLEDPattern(81);
 
         return false;
     }

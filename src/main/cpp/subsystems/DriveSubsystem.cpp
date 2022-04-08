@@ -873,6 +873,8 @@ bool DriveSubsystem::SetTurningPosition(const units::angle::degree_t position) n
 
 bool DriveSubsystem::SetTurnToAngle(units::degree_t angle) noexcept
 {
+  m_orientationController->SetGoal(angle);
+
   if (!SetTurnInPlace())
   {
     return false;
@@ -880,24 +882,25 @@ bool DriveSubsystem::SetTurnToAngle(units::degree_t angle) noexcept
 
   // return SetDriveDistance(angle / 360_deg * physical::kDriveMetersPerTurningCircle);
 
-  m_orientationController->SetGoal(angle);
+  double theta = m_theta;
 
-  const bool atGoal = m_orientationController->AtGoal();
-  double velocity = m_theta;
-
-  if (atGoal)
+  if (theta > 0.0)
   {
-    velocity = 0.0;
+    theta += pidf::kDriveThetaF;
+  }
+  else if (theta < 0.0)
+  {
+    theta -= pidf::kDriveThetaF;
   }
 
-  const units::meters_per_second_t linearVelocity = velocity * physical::kMaxTurnRate / 360_deg * physical::kDriveMetersPerTurningCircle;
+  const units::meters_per_second_t linearVelocity = theta * physical::kMaxTurnRate / 360_deg * physical::kDriveMetersPerTurningCircle;
 
   m_frontLeftSwerveModule->SetDriveVelocity(linearVelocity);
   m_frontRightSwerveModule->SetDriveVelocity(linearVelocity);
   m_rearLeftSwerveModule->SetDriveVelocity(linearVelocity);
   m_rearRightSwerveModule->SetDriveVelocity(linearVelocity);
 
-  return atGoal;
+  return m_orientationController->AtGoal();
 }
 
 bool DriveSubsystem::SetDriveDistance(units::length::meter_t distance) noexcept
