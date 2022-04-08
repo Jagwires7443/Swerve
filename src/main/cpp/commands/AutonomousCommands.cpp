@@ -16,6 +16,8 @@ void TimedAutoBase::Initialize() noexcept
 
     m_shooter->Stop();
 
+    m_infrastructure->SetLEDPattern(99);
+
     pressure_ = false;
     finished_ = false;
     FPGATime_ = frc::RobotController::GetFPGATime();
@@ -29,6 +31,8 @@ void TimedAutoBase::End(bool interrupted) noexcept
     m_feeder->Default(0.0);
 
     m_shooter->Stop();
+
+    m_infrastructure->SetLEDPattern(99);
 }
 
 void TimedAutoBase::Execute() noexcept
@@ -131,7 +135,7 @@ bool OneBallAuto::Iteration(const uint counter) noexcept
         return false;
     }
 
-    // Take first shot!
+    // Take the shot!
     if (counter <= 60) // 4.0 - 6.0s
     {
         m_feeder->Fire();
@@ -146,27 +150,128 @@ bool OneBallAuto::Iteration(const uint counter) noexcept
 
 bool TwoBallAuto::Iteration(const uint counter) noexcept
 {
+    // Sit still.
+    if (counter <= 5) // 0.0 - 0.5s
+    {
+        m_drive->Drive(0_mps, 0_mps, 0_deg_per_s, false);
+
+        m_feeder->Default(0.0);
+        m_feeder->LockIntake();
+        m_feeder->RaiseIntake();
+
+        m_shooter->Stop();
+
+        m_infrastructure->SetLEDPattern(79);
+
+        return false;
+    }
+
+    // Drop intake (first ball is preloaded).
+    if (counter <= 10) // 0.5 - 1.0s
+    {
+        m_feeder->DropIntake();
+
+        m_infrastructure->SetLEDPattern(80);
+
+        return false;
+    }
+
+    // Reextend drop catches, lower intake.
+    if (counter <= 15) // 1.0 - 1.5s
+    {
+        m_feeder->LockIntake();
+        m_feeder->LowerIntake();
+
+        m_infrastructure->SetLEDPattern(81);
+
+        return false;
+    }
+
+    // Drive forward, run intake.
+    if (counter <= 35) // 1.5 - 3.5s
+    {
+        m_drive->Drive(0.55_mps, 0_mps, 0_deg_per_s, false);
+
+        m_feeder->Default(1.0);
+
+        m_infrastructure->SetLEDPattern(82);
+
+        return false;
+    }
+
+    // Stop.
+    if (counter <= 40) // 3.5 - 4.0s
+    {
+        m_drive->Drive(0_mps, 0_mps, 0_deg_per_s, false);
+
+        m_infrastructure->SetLEDPattern(83);
+
+        return false;
+    }
+
     // Turn around.
-    if (counter < 40) // 0.0 - 4.0s
+    if (counter < 80) // 4.0 - 8.0s
     {
         if (m_drive->SetTurnToAngle(180_deg))
         {
-            m_infrastructure->SetLEDPattern(80);
+            m_infrastructure->SetLEDPattern(85);
         }
         else
         {
-            m_infrastructure->SetLEDPattern(79);
+            m_infrastructure->SetLEDPattern(84);
         }
 
         return false;
     }
-    else if (counter == 40)
+    else if (counter == 80)
     {
         m_drive->Drive(0_mps, 0_mps, 0_deg_per_s, false);
         m_drive->ResetDrive();
         m_drive->ZeroHeading();
 
-        m_infrastructure->SetLEDPattern(81);
+        m_infrastructure->SetLEDPattern(86);
+
+        return false;
+    }
+
+    // Spin up shooter.
+    if (counter <= 100) // 8.0 - 10.0s
+    {
+        m_shooter->Default(1.0, 930.0);
+
+        m_feeder->Default(0.0);
+
+        m_infrastructure->SetLEDPattern(87);
+
+        return false;
+    }
+
+    // Take first shot!
+    if (counter <= 120) // 10.0 - 12.0s
+    {
+        m_feeder->Fire();
+
+        m_infrastructure->SetLEDPattern(88);
+
+        return false;
+    }
+
+    // Feed and hold second shot.
+    if (counter <= 120) // 10.0 - 12.0s
+    {
+        m_feeder->Default(1.0);
+
+        m_infrastructure->SetLEDPattern(89);
+
+        return false;
+    }
+
+    // Take second, buzzer beater shot!
+    if (counter <= 140) // 12.0 - 14.0s
+    {
+        m_feeder->Fire();
+
+        m_infrastructure->SetLEDPattern(90);
 
         return false;
     }
