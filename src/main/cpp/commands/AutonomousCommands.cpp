@@ -16,7 +16,7 @@ void TimedAutoBase::Initialize() noexcept
 
     m_shooter->Stop();
 
-    m_infrastructure->SetLEDPattern(99);
+    m_infrastructure->SetLEDPattern(95);
 
     pressure_ = false;
     finished_ = false;
@@ -32,7 +32,7 @@ void TimedAutoBase::End(bool interrupted) noexcept
 
     m_shooter->Stop();
 
-    m_infrastructure->SetLEDPattern(99);
+    m_infrastructure->SetLEDPattern(95);
 }
 
 void TimedAutoBase::Execute() noexcept
@@ -188,7 +188,7 @@ bool TwoBallAuto::Iteration(const uint counter) noexcept
     }
 
     // Drive forward, run intake.
-    if (counter <= 35) // 1.5 - 3.5s
+    if (counter <= 30) // 1.5 - 3.0s
     {
         m_drive->Drive(0.55_mps, 0_mps, 0_deg_per_s, false);
 
@@ -200,7 +200,7 @@ bool TwoBallAuto::Iteration(const uint counter) noexcept
     }
 
     // Stop.
-    if (counter <= 40) // 3.5 - 4.0s
+    if (counter <= 35) // 3.0 - 3.5s
     {
         m_drive->Drive(0_mps, 0_mps, 0_deg_per_s, false);
 
@@ -210,7 +210,7 @@ bool TwoBallAuto::Iteration(const uint counter) noexcept
     }
 
     // Turn around.
-    if (counter < 80) // 4.0 - 8.0s
+    if (counter < 70) // 3.5 - 7.0s
     {
         if (m_drive->SetTurnToAngle(180_deg))
         {
@@ -223,7 +223,7 @@ bool TwoBallAuto::Iteration(const uint counter) noexcept
 
         return false;
     }
-    else if (counter == 80)
+    else if (counter == 70)
     {
         m_drive->Drive(0_mps, 0_mps, 0_deg_per_s, false);
         m_drive->ResetDrive();
@@ -235,7 +235,7 @@ bool TwoBallAuto::Iteration(const uint counter) noexcept
     }
 
     // Spin up shooter.
-    if (counter <= 100) // 8.0 - 10.0s
+    if (counter <= 90) // 7.0 - 9.0s
     {
         m_shooter->Default(1.0, 930.0);
 
@@ -247,7 +247,7 @@ bool TwoBallAuto::Iteration(const uint counter) noexcept
     }
 
     // Take first shot!
-    if (counter <= 120) // 10.0 - 12.0s
+    if (counter <= 110) // 9.0 - 11.0s
     {
         m_feeder->Fire();
 
@@ -257,7 +257,7 @@ bool TwoBallAuto::Iteration(const uint counter) noexcept
     }
 
     // Feed and hold second shot.
-    if (counter <= 120) // 10.0 - 12.0s
+    if (counter <= 120) // 11.0 - 12.0s
     {
         m_feeder->Default(1.0);
 
@@ -267,7 +267,7 @@ bool TwoBallAuto::Iteration(const uint counter) noexcept
     }
 
     // Take second, buzzer beater shot!
-    if (counter <= 140) // 12.0 - 14.0s
+    if (counter <= 150) // 13.0 - 15.0s
     {
         m_feeder->Fire();
 
