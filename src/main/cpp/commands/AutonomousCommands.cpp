@@ -118,7 +118,7 @@ bool OneBallAuto::Iteration(const uint counter) noexcept
 
         m_feeder->Default(0.0);
 
-        m_shooter->Default(1.0, 930.0);
+        m_shooter->Default(1.0, 1125.0);
 
         m_infrastructure->SetLEDPattern(82);
 
@@ -209,8 +209,8 @@ bool TwoBallAuto::Iteration(const uint counter) noexcept
         return false;
     }
 
-    // Turn around.
-    if (counter < 70) // 3.5 - 7.0s
+    // Turn around and spin up shooter.
+    if (counter < 85) // 3.5 - 8.5s
     {
         if (m_drive->SetTurnToAngle(180_deg))
         {
@@ -221,9 +221,11 @@ bool TwoBallAuto::Iteration(const uint counter) noexcept
             m_infrastructure->SetLEDPattern(84);
         }
 
+        m_shooter->Default(1.0, 1125.0);
+
         return false;
     }
-    else if (counter == 70)
+    else if (counter == 85)
     {
         m_drive->Drive(0_mps, 0_mps, 0_deg_per_s, false);
         m_drive->ResetDrive();
@@ -231,13 +233,15 @@ bool TwoBallAuto::Iteration(const uint counter) noexcept
 
         m_infrastructure->SetLEDPattern(86);
 
+        m_shooter->Default(1.0, 1125.0);
+
         return false;
     }
 
     // Spin up shooter.
-    if (counter <= 90) // 7.0 - 9.0s
+    if (counter <= 90) // 8.5 - 9.0s
     {
-        m_shooter->Default(1.0, 930.0);
+        m_shooter->Default(1.0, 1125.0);
 
         m_feeder->Default(0.0);
 

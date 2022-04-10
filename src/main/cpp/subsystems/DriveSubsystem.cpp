@@ -153,7 +153,17 @@ void DriveSubsystem::Periodic() noexcept
 
   // Compute value to apply to correct robot orientation, or to follow rotation
   // profile.
-  m_theta = m_orientationController->Calculate(botRot.Degrees());
+  double theta = m_orientationController->Calculate(botRot.Degrees());
+
+  if (theta > 0.0)
+  {
+    theta += pidf::kDriveThetaF;
+  }
+  else if (theta < 0.0)
+  {
+    theta -= pidf::kDriveThetaF;
+  }
+  m_theta = theta;
 
   m_odometry->Update(botRot, m_frontLeftSwerveModule->GetState(),
                      m_frontRightSwerveModule->GetState(), m_rearLeftSwerveModule->GetState(),
@@ -882,18 +892,7 @@ bool DriveSubsystem::SetTurnToAngle(units::degree_t angle) noexcept
 
   // return SetDriveDistance(angle / 360_deg * physical::kDriveMetersPerTurningCircle);
 
-  double theta = m_theta;
-
-  if (theta > 0.0)
-  {
-    theta += pidf::kDriveThetaF;
-  }
-  else if (theta < 0.0)
-  {
-    theta -= pidf::kDriveThetaF;
-  }
-
-  const units::meters_per_second_t linearVelocity = theta * physical::kMaxTurnRate / 360_deg * physical::kDriveMetersPerTurningCircle;
+  const units::meters_per_second_t linearVelocity = m_theta * physical::kMaxTurnRate / 360_deg * physical::kDriveMetersPerTurningCircle;
 
   m_frontLeftSwerveModule->SetDriveVelocity(linearVelocity);
   m_frontRightSwerveModule->SetDriveVelocity(linearVelocity);
