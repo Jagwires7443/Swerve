@@ -75,6 +75,19 @@ DriveSubsystem::DriveSubsystem() noexcept
 
   m_orientationController->EnableContinuousInput(-180_deg, +180_deg);
 
+  // This is precomputed and used in cases where there is close to a 180 degree
+  // error; needed to get things moving in some cases (rotate 180 degrees).
+  m_lagrange = m_orientationController->Calculate(+177.5_deg);
+  m_orientationController->Reset(0_deg);
+  if (m_lagrange > 0.0)
+  {
+    m_lagrange += pidf::kDriveThetaF;
+  }
+  else if (m_lagrange < 0.0)
+  {
+    m_lagrange -= pidf::kDriveThetaF;
+  }
+
   // Initial position (third parameter) defaulted to "frc::Pose2d()"; initial
   // angle (second parameter) is automatically zeroed by navX initialization.
   m_odometry = std::make_unique<frc::SwerveDriveOdometry<4>>(kDriveKinematics, 0_deg);
@@ -152,8 +165,10 @@ void DriveSubsystem::Periodic() noexcept
     } });
 
   // Compute value to apply to correct robot orientation, or to follow rotation
-  // profile.
+  // profile.  Since things wrap, 180 degrees is a sort of Lagrange Point and
+  // needs special handling, in the event no theta is otherwise calculated.
   double theta = m_orientationController->Calculate(botRot.Degrees());
+  units::angle::degree_t error = m_orientationController->GetPositionError();
 
   if (theta > 0.0)
   {
@@ -162,6 +177,10 @@ void DriveSubsystem::Periodic() noexcept
   else if (theta < 0.0)
   {
     theta -= pidf::kDriveThetaF;
+  }
+  else if (error < -2.5_deg || error > +2.5_deg)
+  {
+    theta = m_lagrange;
   }
   m_theta = theta;
 

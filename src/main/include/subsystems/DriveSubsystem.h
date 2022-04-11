@@ -264,6 +264,7 @@ private:
 
   // Theta controller (for keeping steady heading, or for rotating drive base).
   std::unique_ptr<frc::ProfiledPIDController<units::angle::degrees>> m_orientationController;
+  double m_lagrange{0.0};
 
   // Four swerve modules.
   std::unique_ptr<SwerveModule> m_frontLeftSwerveModule;
