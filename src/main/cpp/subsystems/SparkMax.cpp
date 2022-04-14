@@ -1103,6 +1103,7 @@ void SparkMax::SeekVelocity(const double velocity) noexcept
     position_ = 0.0;
     velocity_ = velocity;
 
+    // XXX SetReference(velocity, rev::ControlType::kSmartVelocity, 1, FeedForward)
     DoSafely("SeekVelocity", [&]() -> void
              { (void)AnyError(controller_->SetReference(velocity, rev::CANSparkMax::ControlType::kSmartVelocity, 1)); });
 }

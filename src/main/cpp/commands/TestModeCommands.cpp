@@ -6,36 +6,18 @@
 
 #include <cmath>
 
-ZeroCommand::ZeroCommand(DriveSubsystem *subsystem) noexcept
-    : m_subsystem{subsystem} { SetName("Zero"); }
-
-MaxVAndATurningCommand::MaxVAndATurningCommand(DriveSubsystem *subsystem) noexcept
-    : m_subsystem{subsystem} { SetName("MaxVAndATurning"); }
-
-MaxVAndADriveCommand::MaxVAndADriveCommand(DriveSubsystem *subsystem) noexcept
-    : m_subsystem{subsystem} { SetName("MaxVAndADrive"); }
-
-XsAndOsCommand::XsAndOsCommand(DriveSubsystem *subsystem) noexcept
-    : m_subsystem{subsystem} { SetName("Xs and Os"); }
-
-SquareCommand::SquareCommand(DriveSubsystem *subsystem) noexcept
-    : m_subsystem{subsystem} { SetName("Square"); }
-
-SpirographCommand::SpirographCommand(DriveSubsystem *subsystem) noexcept
-    : m_subsystem{subsystem} { SetName("Spirograph"); }
-
-OrbitCommand::OrbitCommand(DriveSubsystem *subsystem) noexcept
-    : m_subsystem{subsystem} { SetName("Orbit"); }
-
-PirouetteCommand::PirouetteCommand(DriveSubsystem *subsystem) noexcept
-    : m_subsystem{subsystem} { SetName("Pirouette"); }
-
 void ZeroCommand::Execute() noexcept { (void)m_subsystem->ZeroModules(); }
 
 void MaxVAndATurningCommand::Initialize() noexcept
 {
     m_iteration = 0;
 
+    m_subsystem->TestModeTurningVoltage(0.0);
+    m_subsystem->TestModeDriveVoltage(0.0);
+}
+
+void MaxVAndATurningCommand::End(bool interrupted) noexcept
+{
     m_subsystem->TestModeTurningVoltage(0.0);
     m_subsystem->TestModeDriveVoltage(0.0);
 }
@@ -58,7 +40,7 @@ void MaxVAndATurningCommand::Execute() noexcept
     }
 }
 
-void MaxVAndATurningCommand::End(bool interrupted) noexcept
+void MaxVAndADriveCommand::Initialize() noexcept
 {
     m_iteration = 0;
 
@@ -66,10 +48,8 @@ void MaxVAndATurningCommand::End(bool interrupted) noexcept
     m_subsystem->TestModeDriveVoltage(0.0);
 }
 
-void MaxVAndADriveCommand::Initialize() noexcept
+void MaxVAndADriveCommand::End(bool interrupted) noexcept
 {
-    m_iteration = 0;
-
     m_subsystem->TestModeTurningVoltage(0.0);
     m_subsystem->TestModeDriveVoltage(0.0);
 }
@@ -92,19 +72,13 @@ void MaxVAndADriveCommand::Execute() noexcept
     }
 }
 
-void MaxVAndADriveCommand::End(bool interrupted) noexcept
-{
-    m_iteration = 0;
-
-    m_subsystem->TestModeTurningVoltage(0.0);
-    m_subsystem->TestModeDriveVoltage(0.0);
-}
-
 void XsAndOsCommand::Initialize() noexcept
 {
     m_iteration = 0;
+}
 
-    m_subsystem->SetDriveBrakeMode(true);
+void XsAndOsCommand::End(bool interrupted) noexcept
+{
 }
 
 void XsAndOsCommand::Execute() noexcept
@@ -125,17 +99,15 @@ void XsAndOsCommand::Execute() noexcept
     }
 }
 
-void XsAndOsCommand::End(bool interrupted) noexcept
-{
-    m_subsystem->SetDriveBrakeMode(false);
-}
-
 void SquareCommand::Initialize() noexcept
 {
     m_side = 0;
 
-    m_subsystem->SetDriveBrakeMode(true);
+    m_subsystem->ResetDrive();
+}
 
+void SquareCommand::End(bool interrupted) noexcept
+{
     m_subsystem->ResetDrive();
 }
 
@@ -165,19 +137,15 @@ void SquareCommand::Execute() noexcept
     }
 }
 
-void SquareCommand::End(bool interrupted) noexcept
-{
-    m_subsystem->SetDriveBrakeMode(false);
-
-    m_subsystem->ResetDrive();
-}
-
 void SpirographCommand::Initialize() noexcept
 {
     m_angle = 0;
 
-    m_subsystem->SetDriveBrakeMode(true);
+    m_subsystem->ResetDrive();
+}
 
+void SpirographCommand::End(bool interrupted) noexcept
+{
     m_subsystem->ResetDrive();
 }
 
@@ -208,13 +176,6 @@ void SpirographCommand::Execute() noexcept
     }
 }
 
-void SpirographCommand::End(bool interrupted) noexcept
-{
-    m_subsystem->SetDriveBrakeMode(false);
-
-    m_subsystem->ResetDrive();
-}
-
 void OrbitCommand::Execute() noexcept
 {
     m_subsystem->Drive(0_mps, 0_mps, 10_deg_per_s, false, 1_m, 0_m);
@@ -225,9 +186,11 @@ void PirouetteCommand::Initialize() noexcept
     // Arrange the origin and orientation of the coordinate system, so that the
     // robot is on the unit circle, at (1,0) and facing positive X.  (The robot
     // does not move here, the coordinate system itself moves.)
-    frc::Pose2d pose(1_m, 0_m, frc::Rotation2d(0_deg));
+    m_subsystem->ResetOdometry(frc::Pose2d(1_m, 0_m, frc::Rotation2d(0_deg)));
+}
 
-    m_subsystem->ResetOdometry(pose);
+void PirouetteCommand::End(bool interrupted) noexcept
+{
 }
 
 void PirouetteCommand::Execute() noexcept

@@ -36,13 +36,13 @@ namespace physical
     // This should be empirically determined!  This is just an initial guess.
     // This is used for both distance and velocity control.  If this is off, it
     // will throw off kMaxDriveSpeed and kMaxTurnRate, as well as drive values.
-    constexpr units::meter_t kDriveMetersPerRotation = 1_m / 25.57;
+    constexpr units::meter_t kDriveMetersPerRotation = 1.0_m / 25.57;
 
     // SDS Mk3 Standard (or Fast) Max Free Speed: 12.1 (or 14.4) feet/second;
     // This is an upper bound, for various reasons.  It needs to be empirically
     // measured.  Half of theoretical free speed is a reasonable starting value
     // (since something in the ballpark is needed here in order to to drive).
-    constexpr units::meters_per_second_t kMaxDriveSpeed = 12.1_fps / 2;
+    constexpr units::meters_per_second_t kMaxDriveSpeed = 12.1_fps / 2.0;
 
     // For a square drive base, with +/-11.25" x/y coordinates for each of four
     // swerve modules, the radius of the circle going through all modules is:
@@ -68,7 +68,7 @@ namespace physical
     // / kDriveMetersPerTurningCircle * 360 degrees.  This should not need to
     // be empirically adjusted (but check).
     constexpr units::degrees_per_second_t kMaxTurnRate =
-        kMaxDriveSpeed / kDriveMetersPerTurningCircle * 360_deg;
+        kMaxDriveSpeed / kDriveMetersPerTurningCircle * 360.0_deg;
 
     // Drivebase geometry: distance between centers of right and left wheels on
     // robot; distance between centers of front and back wheels on robot.
@@ -101,8 +101,8 @@ namespace firmware
 
 namespace pidf
 {
-    constexpr units::degrees_per_second_t kTurningPositionMaxVelocity = 2750_deg_per_s;
-    constexpr units::degrees_per_second_squared_t kTurningPositionMaxAcceleration = 20000_deg_per_s_sq;
+    constexpr units::degrees_per_second_t kTurningPositionMaxVelocity = 2750.0_deg_per_s;
+    constexpr units::degrees_per_second_squared_t kTurningPositionMaxAcceleration = 20000.0_deg_per_s_sq;
     constexpr double kTurningPositionP = 0.006;
     constexpr double kTurningPositionI = 0.0;
     constexpr double kTurningPositionIZ = 0.0;
@@ -132,8 +132,8 @@ namespace pidf
     constexpr double kDriveVelocityDF = 0.0;
     constexpr double kDriveVelocityF = 0.0;
 
-    constexpr units::degrees_per_second_t kDriveThetaMaxVelocity = 45_deg_per_s;
-    constexpr units::degrees_per_second_squared_t kDriveThetaMaxAcceleration = 450_deg_per_s_sq;
+    constexpr units::degrees_per_second_t kDriveThetaMaxVelocity = 45.0_deg_per_s;
+    constexpr units::degrees_per_second_squared_t kDriveThetaMaxAcceleration = 450.0_deg_per_s_sq;
     constexpr double kDriveThetaP = 0.0055;
     constexpr double kDriveThetaI = 0.0;
     constexpr double kDriveThetaD = 0.0;

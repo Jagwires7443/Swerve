@@ -14,8 +14,10 @@ ShooterSubsystem::ShooterSubsystem() noexcept
         {"kIdleMode", uint{0}},
     };
 
-    m_shooterMotor = SparkMaxFactory::CreateSparkMax("Shooter", 13, false);
-    m_backspinMotor = SparkMaxFactory::CreateSparkMax("Backspin", 14, true);
+    m_shooterMotorBase = SparkMaxFactory::CreateSparkMax("Shooter", 13, false);
+    m_backspinMotorBase = SparkMaxFactory::CreateSparkMax("Backspin", 14, true);
+    m_shooterMotor = std::make_unique<SmartMotor<units::angle::turns>>(*m_shooterMotorBase);
+    m_backspinMotor = std::make_unique<SmartMotor<units::angle::turns>>(*m_backspinMotorBase);
 
     m_shooterMotor->SetConfig(config);
     m_backspinMotor->SetConfig(config);

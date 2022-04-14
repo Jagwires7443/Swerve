@@ -1,16 +1,15 @@
 #pragma once
 
 #include "Constants.h"
+#include "subsystems/PWMAngleSensor.h"
+#include "subsystems/ShuffleboardWidgets.h"
+#include "subsystems/SmartMotor.h"
+#include "subsystems/SparkMax.h"
 
-#include <frc/DigitalInput.h>
-#include <frc/DutyCycle.h>
 #include <frc/controller/ProfiledPIDController.h>
 #include <frc/kinematics/SwerveModuleState.h>
 #include <frc/shuffleboard/ComplexWidget.h>
 #include <frc/shuffleboard/SimpleWidget.h>
-#include <rev/CANEncoder.h>
-#include <rev/CANPIDController.h>
-#include <rev/CANSparkMax.h>
 #include <units/angle.h>
 #include <units/length.h>
 #include <units/velocity.h>
@@ -245,58 +244,15 @@ public:
   void DrivePositionPID(double P, double I, double IZ, double IM, double D, double DF, double F, double V, double A) noexcept;
   void DriveVelocityPID(double P, double I, double IZ, double IM, double D, double DF, double F, double V, double A) noexcept;
 
-  // Need to derive from abstract Sendable class in order to be able to use the
-  // Gyro UI element in Shuffleboard; note that this doesn't actually derive from
-  // frc::Gyro or frc::GyroBase -- it's all down to inheritance and properties.
-  class HeadingGyro : public wpi::Sendable, public wpi::SendableHelper<HeadingGyro>
-  {
-  public:
-    HeadingGyro() noexcept {}
-
-    HeadingGyro(const HeadingGyro &) = delete;
-    HeadingGyro &operator=(const HeadingGyro &) = delete;
-
-    void InitSendable(wpi::SendableBuilder &builder)
-    {
-      builder.SetSmartDashboardType("Gyro");
-      builder.AddDoubleProperty(
-          "Value", [&]() -> double
-          { return m_value; },
-          nullptr);
-    }
-
-    void Set(const double &value) noexcept { m_value = value; }
-
-  private:
-    double m_value{0.0};
-  };
-
 private:
-  std::optional<int> GetAbsolutePosition(const int frequency, const double output, const bool applyOffset) noexcept;
-  std::optional<units::angle::degree_t> GetAbsolutePosition() noexcept;
-
-  void DoSafeTurningMotor(const char *const what, std::function<void()> work) noexcept;
-  bool DidSafeTurningMotor(const char *const what, std::function<bool()> work) noexcept;
-  void DoSafeDriveMotor(const char *const what, std::function<void()> work) noexcept;
-  bool DidSafeDriveMotor(const char *const what, std::function<bool()> work) noexcept;
-
-  void ConstructTurningMotor() noexcept;
-  void ConstructDriveMotor() noexcept;
-
   void SetTurningPositionPID() noexcept;
   void SetDrivePositionPID() noexcept;
   void SetDriveVelocityPID() noexcept;
-
-  bool VerifyTurningMotorControllerConfig() noexcept;
-  bool VerifyDriveMotorControllerConfig() noexcept;
 
   void CreateTurningMotorControllerConfig() noexcept;
   void CreateDriveMotorControllerConfig() noexcept;
 
   const std::string m_name;
-  const int m_driveMotorCanID;
-  const int m_turningMotorCanID;
-  int m_alignmentOffset{0};
 
   // These are set based on the mechanical and electrical construction of the
   // robot, and are never expected to change.
@@ -341,16 +297,13 @@ private:
   double m_driveVelocity_V{pidf::kDriveVelocityMaxAcceleration};
   double m_driveVelocity_A{pidf::kDriveVelocityMaxJerk};
 
-  std::unique_ptr<frc::DigitalInput> m_turningPositionSource;
-  std::unique_ptr<frc::DutyCycle> m_turningPositionPWM;
+  std::unique_ptr<AngleSensor> m_turningPositionPWM;
 
-  std::unique_ptr<rev::CANSparkMax> m_turningMotor;
-  std::unique_ptr<rev::SparkMaxRelativeEncoder> m_turningEncoder;
-  std::unique_ptr<rev::SparkMaxPIDController> m_turningPID;
+  std::unique_ptr<SmartMotorBase> m_turningMotorBase;
+  std::unique_ptr<SmartMotor<units::angle::degrees>> m_turningMotor;
 
-  std::unique_ptr<rev::CANSparkMax> m_driveMotor;
-  std::unique_ptr<rev::SparkMaxRelativeEncoder> m_driveEncoder;
-  std::unique_ptr<rev::SparkMaxPIDController> m_drivePID;
+  std::unique_ptr<SmartMotorBase> m_driveMotorBase;
+  std::unique_ptr<SmartMotor<units::length::meters>> m_driveMotor;
 
   std::chrono::steady_clock::time_point m_verifyMotorControllersWhen;
   bool m_turningMotorControllerValidated{true};
@@ -387,43 +340,8 @@ private:
   double m_processFirstDerivative{0.0};
   double m_processSecondDerivitive{0.0};
 
-  // Test Mode (only) instance of a "Gyro", needed for Shuffleboard UI.
-  HeadingGyro m_headingGyro;
-
-  // Test Mode (only) data, obtained but not owned.
-  frc::SimpleWidget *m_turningPositionStatus{nullptr};
-  frc::SimpleWidget *m_turningPositionFrequency{nullptr};
-  frc::SimpleWidget *m_turningPositionOutput{nullptr};
-  frc::SimpleWidget *m_turningPositionCommanded{nullptr};
-  frc::SimpleWidget *m_turningPositionCommandDiscrepancy{nullptr};
-  frc::SimpleWidget *m_turningPositionEncoderDiscrepancy{nullptr};
-  frc::SimpleWidget *m_turningPositionAlignment{nullptr};
-  frc::SimpleWidget *m_turningPositionPosition{nullptr};
-  frc::ComplexWidget *m_turningPositionHeading{nullptr};
-
-  frc::SimpleWidget *m_turningMotorStatus{nullptr};
-  frc::SimpleWidget *m_turningMotorTemperature{nullptr};
-  frc::SimpleWidget *m_turningMotorFaults{nullptr};
-  frc::SimpleWidget *m_turningMotorStickyFaults{nullptr};
-  frc::SimpleWidget *m_turningMotorVoltage{nullptr};
-  frc::SimpleWidget *m_turningMotorCurrent{nullptr};
-  frc::SimpleWidget *m_turningMotorSpeed{nullptr};
-  frc::SimpleWidget *m_turningMotorPercent{nullptr};
-  frc::SimpleWidget *m_turningMotorDistance{nullptr};
-  frc::SimpleWidget *m_turningMotorVelocity{nullptr};
-  frc::SimpleWidget *m_turningMotorControl{nullptr};
-  frc::SimpleWidget *m_turningMotorReset{nullptr};
-
-  frc::SimpleWidget *m_driveMotorStatus{nullptr};
-  frc::SimpleWidget *m_driveMotorTemperature{nullptr};
-  frc::SimpleWidget *m_driveMotorFaults{nullptr};
-  frc::SimpleWidget *m_driveMotorStickyFaults{nullptr};
-  frc::SimpleWidget *m_driveMotorVoltage{nullptr};
-  frc::SimpleWidget *m_driveMotorCurrent{nullptr};
-  frc::SimpleWidget *m_driveMotorSpeed{nullptr};
-  frc::SimpleWidget *m_driveMotorPercent{nullptr};
-  frc::SimpleWidget *m_driveMotorDistance{nullptr};
-  frc::SimpleWidget *m_driveMotorVelocity{nullptr};
-  frc::SimpleWidget *m_driveMotorControl{nullptr};
-  frc::SimpleWidget *m_driveMotorReset{nullptr};
+  double m_turningControlUI{0.0};
+  bool m_turningResetUI{false};
+  double m_driveControlUI{0.0};
+  bool m_driveResetUI{false};
 };

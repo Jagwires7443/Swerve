@@ -15,8 +15,8 @@ void AngleSensor::Periodic() noexcept
         return;
     }
 
-    units::angle::degree_t commandedPosition{0_deg};
-    units::angle::degree_t encoderPosition{0_deg};
+    units::angle::degree_t commandedPosition{0.0_deg};
+    units::angle::degree_t encoderPosition{0.0_deg};
 
     // If possible, obtain commanded and encoder positions.
     if (getCommandedAndEncoderPositionsF_)
@@ -134,6 +134,19 @@ std::optional<units::angle::degree_t> AngleSensor::GetAbsolutePosition() noexcep
     return units::angle::turn_t{static_cast<double>(position.value()) / 4096.0};
 }
 
+std::optional<int> AngleSensor::GetAbsolutePositionWithoutAlignment() noexcept
+{
+    return GetAbsolutePosition(dutyCycle_->GetFrequency(), dutyCycle_->GetOutput(), false);
+}
+
+// Calulate absolute turning position in the range [-2048, +2048), from the raw
+// absolute PWM encoder data.  No value is returned in the event the absolute
+// position sensor itself is not returning valid data.  The alignment offset is
+// optionally used to establish the zero position.
+
+// This is a low-level routine, meant to be used only by the version of
+// GetAbsolutePosition() with no arguments (above) or, from test mode.  It does
+// not use standardized units and leaks knowledge of the sensor output range.
 std::optional<int> AngleSensor::GetAbsolutePosition(const int frequency, const double output, const bool applyOffset) noexcept
 {
     // SRX MAG ENCODER chip seems to be AS5045B; from the datasheet, position

@@ -951,13 +951,6 @@ bool DriveSubsystem::SetDriveDistance(units::length::meter_t distance) noexcept
 
 void DriveSubsystem::Drive(units::meters_per_second_t xSpeed,
                            units::meters_per_second_t ySpeed, units::radians_per_second_t rot,
-                           bool fieldRelative) noexcept
-{
-  Drive(xSpeed, ySpeed, rot, fieldRelative, 0_m, 0_m);
-}
-
-void DriveSubsystem::Drive(units::meters_per_second_t xSpeed,
-                           units::meters_per_second_t ySpeed, units::radians_per_second_t rot,
                            bool fieldRelative, units::meter_t x_center, units::meter_t y_center) noexcept
 {
   m_rotation = rot / physical::kMaxTurnRate;

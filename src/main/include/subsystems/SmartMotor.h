@@ -1,12 +1,5 @@
 #pragma once
 
-#include <functional>
-#include <map>
-#include <memory>
-#include <string>
-#include <type_traits>
-#include <variant>
-
 #include <frc/shuffleboard/ShuffleboardContainer.h>
 #include <units/angle.h>
 #include <units/base.h>
@@ -14,6 +7,13 @@
 #include <units/length.h>
 #include <units/time.h>
 #include <units/voltage.h>
+
+#include <functional>
+#include <map>
+#include <memory>
+#include <string>
+#include <type_traits>
+#include <variant>
 
 // This is a C++ interface; it has only public pure virtual member functions,
 // no copy/move, and no data members.  Instances are obtained via a derived
@@ -39,6 +39,9 @@ public:
 
     SmartMotorBase(const SmartMotorBase &) = delete;
     SmartMotorBase &operator=(const SmartMotorBase &) = delete;
+
+    SmartMotorBase(SmartMotorBase &&) noexcept = default;
+    SmartMotorBase &operator=(SmartMotorBase &&) noexcept = default;
 
     // This displays a diagnostic and control panel (likely only used in test
     // mode).  Provides basic control of motor and sends telemetry of all major
@@ -300,6 +303,42 @@ public:
         base_.SetCurrent(current);
     }
 
+    void SpecifyPosition(const Position_t position) noexcept
+    {
+        base_.SpecifyPosition(position.value());
+    }
+
+    void SeekPosition(const Position_t position) noexcept
+    {
+        base_.SeekPosition(position.value());
+    }
+
+    bool CheckPosition(const Position_t tolerance) noexcept
+    {
+        return base_.CheckPosition(tolerance.value());
+    }
+
+    Position_t GetPosition() noexcept
+    {
+        return Position_t{base_.GetPositionRaw()};
+    }
+
+    void SeekVelocity(const Velocity_t velocity) noexcept
+    {
+        base_.SeekVelocity(velocity.value());
+    }
+
+    bool CheckVelocity(const Velocity_t tolerance) noexcept
+    {
+        return base_.CheckVelocity(tolerance.value());
+    }
+
+    Velocity_t GetVelocity() noexcept
+    {
+        return Velocity_t{base_.GetVelocityRaw()};
+    }
+
+protected:
     void SpecifyPosition(const double position) noexcept override
     {
         base_.SpecifyPosition(position);
@@ -331,41 +370,6 @@ public:
     }
 
     double GetVelocityRaw() noexcept override
-    {
-        return base_.GetVelocityRaw();
-    }
-
-    void SpecifyPosition(const Position_t position) noexcept
-    {
-        base_.SpecifyPosition(position());
-    }
-
-    void SeekPosition(const Position_t position) noexcept
-    {
-        base_.SeekPosition(position());
-    }
-
-    bool CheckPosition(const Position_t tolerance) noexcept
-    {
-        return base_.CheckPosition(tolerance());
-    }
-
-    Position_t GetPosition() noexcept
-    {
-        return base_.GetPositionRaw();
-    }
-
-    void SeekVelocity(const Velocity_t velocity) noexcept
-    {
-        base_.SeekVelocity(velocity());
-    }
-
-    bool CheckVelocity(const Velocity_t tolerance) noexcept
-    {
-        return base_.CheckVelocity(tolerance());
-    }
-
-    Velocity_t GetVelocity() noexcept
     {
         return base_.GetVelocityRaw();
     }

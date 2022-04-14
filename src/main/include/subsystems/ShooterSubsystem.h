@@ -26,6 +26,8 @@ public:
     void Stop() noexcept;
 
 private:
-    std::unique_ptr<SmartMotorBase> m_shooterMotor;
-    std::unique_ptr<SmartMotorBase> m_backspinMotor;
+    std::unique_ptr<SmartMotorBase> m_shooterMotorBase;
+    std::unique_ptr<SmartMotorBase> m_backspinMotorBase;
+    std::unique_ptr<SmartMotor<units::angle::turns>> m_shooterMotor;
+    std::unique_ptr<SmartMotor<units::angle::turns>> m_backspinMotor;
 };

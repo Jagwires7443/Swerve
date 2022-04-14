@@ -29,10 +29,14 @@ FeederSubsystem::FeederSubsystem() noexcept
         {"kSmartCurrentStallLimit", uint{30}}, // Amps
     };
 
-    m_intakeMotor = SparkMaxFactory::CreateSparkMax("Intake", 9, false);
-    m_elevatorMotor = SparkMaxFactory::CreateSparkMax("Elevator", 10, true);
-    m_feederMotor = SparkMaxFactory::CreateSparkMax("Feeder", 11, true);
-    m_climberMotor = SparkMaxFactory::CreateSparkMax("Climber", 12, false);
+    m_intakeMotorBase = SparkMaxFactory::CreateSparkMax("Intake", 9, false);
+    m_elevatorMotorBase = SparkMaxFactory::CreateSparkMax("Elevator", 10, true);
+    m_feederMotorBase = SparkMaxFactory::CreateSparkMax("Feeder", 11, true);
+    m_climberMotorBase = SparkMaxFactory::CreateSparkMax("Climber", 12, false);
+    m_intakeMotor = std::make_unique<SmartMotor<units::angle::turns>>(*m_intakeMotorBase);
+    m_elevatorMotor = std::make_unique<SmartMotor<units::angle::turns>>(*m_elevatorMotorBase);
+    m_feederMotor = std::make_unique<SmartMotor<units::angle::turns>>(*m_feederMotorBase);
+    m_climberMotor = std::make_unique<SmartMotor<units::angle::turns>>(*m_climberMotorBase);
 
     m_intakeRaise = std::make_unique<frc::DoubleSolenoid>(1, frc::PneumaticsModuleType::REVPH, 0, 1);
     m_intakeRelease = std::make_unique<frc::DoubleSolenoid>(1, frc::PneumaticsModuleType::REVPH, 13, 12);

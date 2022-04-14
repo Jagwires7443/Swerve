@@ -25,6 +25,7 @@ namespace SparkMaxFactory
 // any configuration parameter:
 
 // Periodic Frame Periods (see SetPeriodicFramePeriod)
+//   https://docs.revrobotics.com/sparkmax/operating-modes/control-interfaces#periodic-status-frames
 //   This is set on the SPARK MAX, but not persistently.  It could be handled
 //   by introducing some kind of "volatile" flag in the config information that
 //   would mean this had to be set reliably (there is no API to read this back,

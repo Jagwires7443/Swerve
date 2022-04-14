@@ -25,12 +25,16 @@ public:
     void ShuffleboardCreate(frc::ShuffleboardContainer &container,
                             std::function<std::pair<units::angle::degree_t, units::angle::degree_t>()> getCommandedAndEncoderPositions = nullptr) noexcept;
 
+    int GetAlignment() noexcept { return alignment_; }
+
     void SetAlignment(const int alignment) noexcept { alignment_ = alignment; }
 
     std::optional<units::angle::degree_t> GetAbsolutePosition() noexcept;
 
+    std::optional<int> GetAbsolutePositionWithoutAlignment() noexcept;
+
 private:
-    // Range is [0-4095].
+    // Range is [-2048, +2048).
     std::optional<int> GetAbsolutePosition(const int frequency, const double output, const bool applyOffset) noexcept;
 
     int alignment_{0};

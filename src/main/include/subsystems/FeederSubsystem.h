@@ -41,10 +41,14 @@ public:
     void LowerIntake() noexcept;
 
 private:
-    std::unique_ptr<SmartMotorBase> m_intakeMotor;
-    std::unique_ptr<SmartMotorBase> m_elevatorMotor;
-    std::unique_ptr<SmartMotorBase> m_feederMotor;
-    std::unique_ptr<SmartMotorBase> m_climberMotor;
+    std::unique_ptr<SmartMotorBase> m_intakeMotorBase;
+    std::unique_ptr<SmartMotorBase> m_elevatorMotorBase;
+    std::unique_ptr<SmartMotorBase> m_feederMotorBase;
+    std::unique_ptr<SmartMotorBase> m_climberMotorBase;
+    std::unique_ptr<SmartMotor<units::angle::turns>> m_intakeMotor;
+    std::unique_ptr<SmartMotor<units::angle::turns>> m_elevatorMotor;
+    std::unique_ptr<SmartMotor<units::angle::turns>> m_feederMotor;
+    std::unique_ptr<SmartMotor<units::angle::turns>> m_climberMotor;
 
     std::unique_ptr<frc::DoubleSolenoid> m_intakeRelease;
     std::unique_ptr<frc::DoubleSolenoid> m_intakeRaise;

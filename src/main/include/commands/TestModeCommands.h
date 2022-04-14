@@ -14,7 +14,8 @@ class ZeroCommand
     : public frc2::CommandHelper<frc2::CommandBase, ZeroCommand>
 {
 public:
-    explicit ZeroCommand(DriveSubsystem *subsystem) noexcept;
+    explicit ZeroCommand(DriveSubsystem *subsystem) noexcept
+        : m_subsystem{subsystem} { SetName("Zero"); }
 
     void Initialize() noexcept override {}
 
@@ -31,7 +32,8 @@ class MaxVAndATurningCommand
     : public frc2::CommandHelper<frc2::CommandBase, ZeroCommand>
 {
 public:
-    explicit MaxVAndATurningCommand(DriveSubsystem *subsystem) noexcept;
+    explicit MaxVAndATurningCommand(DriveSubsystem *subsystem) noexcept
+        : m_subsystem{subsystem} { SetName("MaxVAndATurning"); }
 
     void Initialize() noexcept override;
 
@@ -50,7 +52,8 @@ class MaxVAndADriveCommand
     : public frc2::CommandHelper<frc2::CommandBase, ZeroCommand>
 {
 public:
-    explicit MaxVAndADriveCommand(DriveSubsystem *subsystem) noexcept;
+    explicit MaxVAndADriveCommand(DriveSubsystem *subsystem) noexcept
+        : m_subsystem{subsystem} { SetName("MaxVAndADrive"); }
 
     void Initialize() noexcept override;
 
@@ -69,7 +72,8 @@ class XsAndOsCommand
     : public frc2::CommandHelper<frc2::CommandBase, XsAndOsCommand>
 {
 public:
-    explicit XsAndOsCommand(DriveSubsystem *subsystem) noexcept;
+    explicit XsAndOsCommand(DriveSubsystem *subsystem) noexcept
+        : m_subsystem{subsystem} { SetName("Xs and Os"); }
 
     void Initialize() noexcept override;
 
@@ -88,7 +92,8 @@ class SquareCommand
     : public frc2::CommandHelper<frc2::CommandBase, SquareCommand>
 {
 public:
-    explicit SquareCommand(DriveSubsystem *subsystem) noexcept;
+    explicit SquareCommand(DriveSubsystem *subsystem) noexcept
+        : m_subsystem{subsystem} { SetName("Square"); }
 
     void Initialize() noexcept override;
 
@@ -107,7 +112,8 @@ class SpirographCommand
     : public frc2::CommandHelper<frc2::CommandBase, SpirographCommand>
 {
 public:
-    explicit SpirographCommand(DriveSubsystem *subsystem) noexcept;
+    explicit SpirographCommand(DriveSubsystem *subsystem) noexcept
+        : m_subsystem{subsystem} { SetName("Spirograph"); }
 
     void Initialize() noexcept override;
 
@@ -126,7 +132,8 @@ class OrbitCommand
     : public frc2::CommandHelper<frc2::CommandBase, OrbitCommand>
 {
 public:
-    explicit OrbitCommand(DriveSubsystem *subsystem) noexcept;
+    explicit OrbitCommand(DriveSubsystem *subsystem) noexcept
+        : m_subsystem{subsystem} { SetName("Orbit"); }
 
     void Initialize() noexcept override {}
 
@@ -143,13 +150,14 @@ class PirouetteCommand
     : public frc2::CommandHelper<frc2::CommandBase, PirouetteCommand>
 {
 public:
-    explicit PirouetteCommand(DriveSubsystem *subsystem) noexcept;
+    explicit PirouetteCommand(DriveSubsystem *subsystem) noexcept
+        : m_subsystem{subsystem} { SetName("Pirouette"); }
 
     void Initialize() noexcept override;
 
     void Execute() noexcept override;
 
-    void End(bool interrupted) noexcept override {}
+    void End(bool interrupted) noexcept override;
 
 private:
     DriveSubsystem *m_subsystem{nullptr};
