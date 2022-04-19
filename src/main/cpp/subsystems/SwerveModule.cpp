@@ -82,7 +82,7 @@ SwerveModule::SwerveModule(
     });
     m_driveMotor->ApplyConfig(false);
 
-    ResetEncoders();
+    ResetEncoders(); // XXX might need to defer -- wait for status OK?
 
     std::printf(" OK.\n");
 }
