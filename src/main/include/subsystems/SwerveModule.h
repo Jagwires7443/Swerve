@@ -230,7 +230,11 @@ public:
 
   std::tuple<double, double, double, double> TestModeGraphData(const GraphSelection graphSelection) noexcept
   {
-    m_graphSelection = graphSelection;
+    if (graphSelection != m_graphSelection)
+    {
+      m_graphSelection = graphSelection;
+      SetStatusFramePeriods(m_graphSelection);
+    }
 
     return std::make_tuple(m_processVariable, m_processError, m_processFirstDerivative, m_processSecondDerivitive);
   }
@@ -248,6 +252,7 @@ private:
   void SetTurningPositionPID() noexcept;
   void SetDrivePositionPID() noexcept;
   void SetDriveVelocityPID() noexcept;
+  void SetStatusFramePeriods(GraphSelection graphSelection) noexcept;
 
   void CreateTurningMotorControllerConfig() noexcept;
   void CreateDriveMotorControllerConfig() noexcept;

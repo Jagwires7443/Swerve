@@ -67,6 +67,9 @@ SwerveModule::SwerveModule(
     m_driveMotorBase = SparkMaxFactory::CreateSparkMax(m_name + std::string(" Drive"), driveMotorCanID, m_driveMotorInverted);
     m_driveMotor = std::make_unique<SmartMotor<units::length::meters>>(*m_driveMotorBase);
 
+    // kStatus1 includes velocity; kStatus2 includes position -- these are made
+    // more frequent when graphing but may normally have a longer period.
+
     // Motor is in turns and turns/minute (RPM), do degrees and degrees/second.
     m_turningMotor->AddConfig(SmartMotorBase::ConfigMap{
         {"kStatus1", uint{250}}, // ms
@@ -718,8 +721,8 @@ void SwerveModule::TestPeriodic() noexcept
         switch (m_graphSelection)
         {
         case GraphSelection::kTurningRotation:
-            m_processFirstDerivative /= pidf::kTurningPositionMaxVelocity.to<double>();
-            m_processSecondDerivitive /= pidf::kTurningPositionMaxAcceleration.to<double>();
+            m_processFirstDerivative /= pidf::kTurningPositionMaxVelocity.to<double>() / 180.0;
+            m_processSecondDerivitive /= pidf::kTurningPositionMaxAcceleration.to<double>() / 180.0;
             break;
         case GraphSelection::kDrivePosition:
             m_processFirstDerivative /= pidf::kDrivePositionMaxVelocity;
@@ -843,6 +846,42 @@ void SwerveModule::SetDriveVelocityPID() noexcept
         {"kSmartMotionAccelStrategy_1", uint{1}}, // Doc says this is double.
     });
 
+    m_driveMotor->ApplyConfig(false);
+}
+
+void SwerveModule::SetStatusFramePeriods(GraphSelection graphSelection) noexcept
+{
+    const SmartMotorBase::ConfigMap slow{
+        {"kStatus1", uint{250}}, // ms
+        {"kStatus2", uint{250}}, // ms
+    };
+
+    const SmartMotorBase::ConfigMap fast{
+        {"kStatus1", uint{10}}, // ms
+        {"kStatus2", uint{10}}, // ms
+    };
+
+    switch (m_graphSelection)
+    {
+    case GraphSelection::kTurningRotation:
+        m_turningMotor->AddConfig(fast);
+        m_driveMotor->AddConfig(slow);
+        break;
+    case GraphSelection::kDrivePosition:
+        m_turningMotor->AddConfig(slow);
+        m_driveMotor->AddConfig(fast);
+        break;
+    case GraphSelection::kDriveVelocity:
+        m_turningMotor->AddConfig(slow);
+        m_driveMotor->AddConfig(fast);
+        break;
+    case GraphSelection::kNone:
+        m_turningMotor->AddConfig(slow);
+        m_driveMotor->AddConfig(slow);
+        break;
+    }
+
+    m_turningMotor->ApplyConfig(false);
     m_driveMotor->ApplyConfig(false);
 }
 
