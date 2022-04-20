@@ -67,13 +67,16 @@ SwerveModule::SwerveModule(
     m_driveMotorBase = SparkMaxFactory::CreateSparkMax(m_name + std::string(" Drive"), driveMotorCanID, m_driveMotorInverted);
     m_driveMotor = std::make_unique<SmartMotor<units::length::meters>>(*m_driveMotorBase);
 
+    // Motor is in turns and turns/minute (RPM), do degrees and degrees/second.
     m_turningMotor->AddConfig(SmartMotorBase::ConfigMap{
         {"kStatus1", uint{250}}, // ms
         {"kStatus2", uint{250}}, // ms
+        {"kPositionConversionFactor", double{360.0}},
+        {"kVelocityConversionFactor", double{360.0 / 60.0}},
     });
     m_turningMotor->ApplyConfig(false);
 
-    // GetVelocity() returns revolutions per minute, need meters per second
+    // Motor is in turns and turns/minute (RPM), do meters and meters/second.
     m_driveMotor->AddConfig(SmartMotorBase::ConfigMap{
         {"kStatus1", uint{250}}, // ms
         {"kStatus2", uint{250}}, // ms
@@ -233,10 +236,8 @@ void SwerveModule::ResetTurning() noexcept
         return;
     }
 
-    // Turning position is in rotations.  Any under/overflow should
-    // be wrapped but, in any case, a reset will place things
-    // within [-0.5, +0.5).
-    m_turningMotor->SpecifyPosition(position.value());
+    m_turningPosition = position.value();
+    m_turningMotor->SpecifyPosition(m_turningPosition);
 }
 
 void SwerveModule::ResetDrive() noexcept
@@ -250,7 +251,9 @@ units::angle::degree_t SwerveModule::GetTurningPosition() noexcept
 
     if (position.has_value())
     {
-        return position.value();
+        m_turningPosition = position.value();
+
+        return m_turningPosition;
     }
 
     // Absolute encoder is strongly preferred -- it has very low latency,
@@ -272,7 +275,7 @@ units::angle::degree_t SwerveModule::GetTurningPosition() noexcept
 
     m_turningPosition = encoderPosition;
 
-    return encoderPosition;
+    return m_turningPosition;
 }
 
 void SwerveModule::SetTurningPosition(const units::angle::degree_t position) noexcept
@@ -417,7 +420,8 @@ void SwerveModule::SetDesiredState(const frc::SwerveModuleState &referenceState)
 
     if (position.has_value())
     {
-        state = frc::SwerveModuleState::Optimize(referenceState, frc::Rotation2d(position.value()));
+        m_turningPosition = position.value();
+        state = frc::SwerveModuleState::Optimize(referenceState, frc::Rotation2d(m_turningPosition));
     }
 
     SetTurningPosition(state.angle.Degrees());
@@ -483,7 +487,7 @@ void SwerveModule::TestInit() noexcept
     m_turningPositionPWM->ShuffleboardCreate(
         shuffleboardLayoutTurningPosition,
         [&]() -> std::pair<units::angle::degree_t, units::angle::degree_t>
-        { return std::make_pair(m_turningPosition, m_turningMotor->GetPosition()); });
+        { return std::make_pair(m_commandedHeading, m_turningMotor->GetPosition()); });
 
     m_turningMotor->ShuffleboardCreate(
         shuffleboardLayoutTurningMotor,
@@ -562,6 +566,7 @@ void SwerveModule::TestPeriodic() noexcept
 
             m_turningPositionPWM->SetAlignment(alignmentOffset);
             position = 0;
+            m_turningPosition = 0.0_deg;
         }
         else
         {
@@ -575,6 +580,7 @@ void SwerveModule::TestPeriodic() noexcept
             {
                 position = position.value() + 4096;
             }
+            m_turningPosition = position.value() / 2048.0 * 180.0_deg;
         }
     }
 
@@ -708,7 +714,7 @@ void SwerveModule::TestPeriodic() noexcept
             m_processSecondDerivitive = deltaFirstDerivative / deltaTime;
         }
 
-        // Scale velocity and acceleration based on maximums.
+        // Scale velocity and acceleration based on maximums.  XXX?
         switch (m_graphSelection)
         {
         case GraphSelection::kTurningRotation:
