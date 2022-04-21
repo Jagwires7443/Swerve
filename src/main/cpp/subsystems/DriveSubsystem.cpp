@@ -73,24 +73,16 @@ DriveSubsystem::DriveSubsystem() noexcept
           pidf::kDriveThetaMaxVelocity,
           pidf::kDriveThetaMaxAcceleration}));
 
-  m_orientationController->EnableContinuousInput(-180_deg, +180_deg);
+  m_orientationController->EnableContinuousInput(-180.0_deg, +180.0_deg);
 
   // This is precomputed and used in cases where there is close to a 180 degree
   // error; needed to get things moving in some cases (rotate 180 degrees).
   m_lagrange = m_orientationController->Calculate(+177.5_deg);
-  m_orientationController->Reset(0_deg);
-  if (m_lagrange > 0.0)
-  {
-    m_lagrange += pidf::kDriveThetaF;
-  }
-  else if (m_lagrange < 0.0)
-  {
-    m_lagrange -= pidf::kDriveThetaF;
-  }
+  m_orientationController->Reset(0.0_deg);
 
   // Initial position (third parameter) defaulted to "frc::Pose2d()"; initial
   // angle (second parameter) is automatically zeroed by navX initialization.
-  m_odometry = std::make_unique<frc::SwerveDriveOdometry<4>>(kDriveKinematics, 0_deg);
+  m_odometry = std::make_unique<frc::SwerveDriveOdometry<4>>(kDriveKinematics, 0.0_deg);
 
   // These are last, so there can be no movement from the swerve modules.
   m_frontLeftSwerveModule = std::make_unique<SwerveModule>(
@@ -166,9 +158,18 @@ void DriveSubsystem::Periodic() noexcept
 
   // Compute value to apply to correct robot orientation, or to follow rotation
   // profile.  Since things wrap, 180 degrees is a sort of Lagrange Point and
-  // needs special handling, in the event no theta is otherwise calculated.
+  // needs special handling, using precomputed theta.
   double theta = m_orientationController->Calculate(botRot.Degrees());
   units::angle::degree_t error = m_orientationController->GetPositionError();
+
+  if (error > +177.5_deg)
+  {
+    theta = +m_lagrange;
+  }
+  else if (error < -177.5_deg)
+  {
+    theta = -m_lagrange;
+  }
 
   if (theta > 0.0)
   {
@@ -177,10 +178,6 @@ void DriveSubsystem::Periodic() noexcept
   else if (theta < 0.0)
   {
     theta -= pidf::kDriveThetaF;
-  }
-  else if (error < -2.5_deg || error > +2.5_deg)
-  {
-    theta = m_lagrange;
   }
   m_theta = theta;
 
@@ -333,7 +330,7 @@ void DriveSubsystem::UpdateGraphTab(SwerveModule::GraphSelection graphSelection)
 
       if (!fr.SetBoolean(m_run) || !fl.SetBoolean(m_run) || !rr.SetBoolean(m_run) || !rl.SetBoolean(m_run))
       {
-        std::printf("Graph Scroll Control Error.\n");
+        std::printf("**** Graph Scroll Control Error.\n");
       }
     }
   }
@@ -550,10 +547,10 @@ void DriveSubsystem::TestPeriodic() noexcept
   if (m_displayMode->GetEntry().GetBoolean(true))
   {
     // Display commanded information.
-    m_frontLeftGyro.Set(m_commandedStateFrontLeft.angle.Degrees() / 1_deg);
-    m_frontRightGyro.Set(m_commandedStateFrontRight.angle.Degrees() / 1_deg);
-    m_rearLeftGyro.Set(m_commandedStateRearLeft.angle.Degrees() / 1_deg);
-    m_rearRightGyro.Set(m_commandedStateRearRight.angle.Degrees() / 1_deg);
+    m_frontLeftGyro.Set(m_commandedStateFrontLeft.angle.Degrees() / 1.0_deg);
+    m_frontRightGyro.Set(m_commandedStateFrontRight.angle.Degrees() / 1.0_deg);
+    m_rearLeftGyro.Set(m_commandedStateRearLeft.angle.Degrees() / 1.0_deg);
+    m_rearRightGyro.Set(m_commandedStateRearRight.angle.Degrees() / 1.0_deg);
 
     m_frontLeftDrive->GetEntry().SetDouble(m_commandedStateFrontLeft.speed / physical::kMaxDriveSpeed);
     m_frontRightDrive->GetEntry().SetDouble(m_commandedStateFrontRight.speed / physical::kMaxDriveSpeed);
@@ -563,10 +560,10 @@ void DriveSubsystem::TestPeriodic() noexcept
   else
   {
     // Display actual information (as read by sensors).
-    double frontLeftTurn = m_frontLeftSwerveModule->GetTurningPosition() / 1_deg;
-    double frontRightTurn = m_frontRightSwerveModule->GetTurningPosition() / 1_deg;
-    double rearLeftTurn = m_rearLeftSwerveModule->GetTurningPosition() / 1_deg;
-    double rearRightTurn = m_rearRightSwerveModule->GetTurningPosition() / 1_deg;
+    double frontLeftTurn = m_frontLeftSwerveModule->GetTurningPosition() / 1.0_deg;
+    double frontRightTurn = m_frontRightSwerveModule->GetTurningPosition() / 1.0_deg;
+    double rearLeftTurn = m_rearLeftSwerveModule->GetTurningPosition() / 1.0_deg;
+    double rearRightTurn = m_rearRightSwerveModule->GetTurningPosition() / 1.0_deg;
 
     double frontLeftSpeed = m_frontLeftSwerveModule->GetDriveVelocity() / physical::kMaxDriveSpeed;
     double frontRightSpeed = m_frontRightSwerveModule->GetDriveVelocity() / physical::kMaxDriveSpeed;
@@ -792,7 +789,7 @@ void DriveSubsystem::SetDriveBrakeMode(bool brake) noexcept
   m_rearRightSwerveModule->SetDriveBrakeMode(brake);
 }
 
-bool DriveSubsystem::ZeroModules() noexcept { return SetTurningPosition(0_deg); }
+bool DriveSubsystem::ZeroModules() noexcept { return SetTurningPosition(0.0_deg); }
 
 bool DriveSubsystem::SetTurnInPlace() noexcept
 {
@@ -802,14 +799,14 @@ bool DriveSubsystem::SetTurnInPlace() noexcept
 
   // Set all wheels tangent, at the given module.
   const wpi::array<frc::SwerveModuleState, 4> states = kDriveKinematics.ToSwerveModuleStates(
-      frc::ChassisSpeeds{0_mps, 0_mps, physical::kMaxTurnRate});
+      frc::ChassisSpeeds{0.0_mps, 0.0_mps, physical::kMaxTurnRate});
 
   auto [frontLeft, frontRight, rearLeft, rearRight] = states;
 
-  frontLeft.speed = 0_mps;
-  frontRight.speed = 0_mps;
-  rearLeft.speed = 0_mps;
-  rearRight.speed = 0_mps;
+  frontLeft.speed = 0.0_mps;
+  frontRight.speed = 0.0_mps;
+  rearLeft.speed = 0.0_mps;
+  rearRight.speed = 0.0_mps;
 
   m_commandedStateFrontLeft = frontLeft;
   m_commandedStateFrontRight = frontRight;
@@ -839,19 +836,19 @@ bool DriveSubsystem::SetLockWheelsX() noexcept
   // an "X", so the wheels resist being pushed (do not attempt to drive in this
   // configuration).
   const wpi::array<frc::SwerveModuleState, 4> states = kDriveKinematics.ToSwerveModuleStates(
-      frc::ChassisSpeeds{0_mps, 0_mps, physical::kMaxTurnRate});
+      frc::ChassisSpeeds{0.0_mps, 0.0_mps, physical::kMaxTurnRate});
 
   auto [frontLeft, frontRight, rearLeft, rearRight] = states;
 
-  frontLeft.speed = 0_mps;
-  frontRight.speed = 0_mps;
-  rearLeft.speed = 0_mps;
-  rearRight.speed = 0_mps;
+  frontLeft.speed = 0.0_mps;
+  frontRight.speed = 0.0_mps;
+  rearLeft.speed = 0.0_mps;
+  rearRight.speed = 0.0_mps;
 
-  frontLeft.angle = frontLeft.angle + frc::Rotation2d(90_deg);
-  frontRight.angle = frontRight.angle + frc::Rotation2d(90_deg);
-  rearLeft.angle = rearLeft.angle + frc::Rotation2d(90_deg);
-  rearRight.angle = rearRight.angle + frc::Rotation2d(90_deg);
+  frontLeft.angle = frontLeft.angle + frc::Rotation2d(90.0_deg);
+  frontRight.angle = frontRight.angle + frc::Rotation2d(90.0_deg);
+  rearLeft.angle = rearLeft.angle + frc::Rotation2d(90.0_deg);
+  rearRight.angle = rearRight.angle + frc::Rotation2d(90.0_deg);
 
   m_commandedStateFrontLeft = frontLeft;
   m_commandedStateFrontRight = frontRight;
@@ -877,10 +874,10 @@ bool DriveSubsystem::SetTurningPosition(const units::angle::degree_t position) n
   m_x = std::sin(units::angle::radian_t{position}.to<double>());
   m_y = std::cos(units::angle::radian_t{position}.to<double>());
 
-  m_commandedStateFrontLeft.speed = 0_mps;
-  m_commandedStateFrontRight.speed = 0_mps;
-  m_commandedStateRearLeft.speed = 0_mps;
-  m_commandedStateRearRight.speed = 0_mps;
+  m_commandedStateFrontLeft.speed = 0.0_mps;
+  m_commandedStateFrontRight.speed = 0.0_mps;
+  m_commandedStateRearLeft.speed = 0.0_mps;
+  m_commandedStateRearRight.speed = 0.0_mps;
 
   m_commandedStateFrontLeft.angle = frc::Rotation2d(position);
   m_commandedStateFrontRight.angle = frc::Rotation2d(position);
@@ -909,9 +906,9 @@ bool DriveSubsystem::SetTurnToAngle(units::degree_t angle) noexcept
     return false;
   }
 
-  // return SetDriveDistance(angle / 360_deg * physical::kDriveMetersPerTurningCircle);
+  // return SetDriveDistance(angle / 360.0_deg * physical::kDriveMetersPerTurningCircle);
 
-  const units::meters_per_second_t linearVelocity = m_theta * physical::kMaxTurnRate / 360_deg * physical::kDriveMetersPerTurningCircle;
+  const units::meters_per_second_t linearVelocity = m_theta * physical::kMaxTurnRate / 360.0_deg * physical::kDriveMetersPerTurningCircle;
 
   m_frontLeftSwerveModule->SetDriveVelocity(linearVelocity);
   m_frontRightSwerveModule->SetDriveVelocity(linearVelocity);
@@ -1006,15 +1003,15 @@ void DriveSubsystem::SetModuleStates(wpi::array<frc::SwerveModuleState, 4> &desi
   // joystick input.  This check causes them to stay where they are, which is
   // no worse and saves energy, wear, and, potentially, time.  This is done
   // before applying m_limit (intentionally).
-  if (frontLeft.speed == 0_mps &&
-      frontRight.speed == 0_mps &&
-      rearLeft.speed == 0_mps &&
-      rearRight.speed == 0_mps)
+  if (frontLeft.speed == 0.0_mps &&
+      frontRight.speed == 0.0_mps &&
+      rearLeft.speed == 0.0_mps &&
+      rearRight.speed == 0.0_mps)
   {
-    m_frontLeftSwerveModule->SetDriveVelocity(0_mps);
-    m_frontRightSwerveModule->SetDriveVelocity(0_mps);
-    m_rearLeftSwerveModule->SetDriveVelocity(0_mps);
-    m_rearRightSwerveModule->SetDriveVelocity(0_mps);
+    m_frontLeftSwerveModule->SetDriveVelocity(0.0_mps);
+    m_frontRightSwerveModule->SetDriveVelocity(0.0_mps);
+    m_rearLeftSwerveModule->SetDriveVelocity(0.0_mps);
+    m_rearRightSwerveModule->SetDriveVelocity(0.0_mps);
 
     return;
   }
@@ -1052,7 +1049,7 @@ void DriveSubsystem::SetModuleStates(wpi::array<frc::SwerveModuleState, 4> &desi
 
 units::degree_t DriveSubsystem::GetHeading() noexcept
 {
-  units::degree_t heading{0};
+  units::degree_t heading{0.0};
 
   DoSafeIMU("GetAngle()", [&]() -> void
             {
