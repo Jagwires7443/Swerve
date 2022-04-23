@@ -81,7 +81,8 @@
     "thread": "cpp",
     "cinttypes": "cpp",
     "typeinfo": "cpp",
-    "variant": "cpp"
+    "variant": "cpp",
+    "*.inc": "cpp"
   },
   "wpilib.skipTests": true,
   "wpilib.autoSaveOnDeploy": true

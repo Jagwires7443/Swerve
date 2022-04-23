@@ -244,7 +244,7 @@ public:
   void TestPeriodic() noexcept;
 
   // Provide PID settings used for all motion control (besides from test mode).
-  void TurningPositionPID(double P, double I, double IZ, double IM, double D, double DF, double F) noexcept;
+  void TurningPositionPID(double P, double I, double IZ, double IM, double D, double DF, double F, double V, double A) noexcept;
   void DrivePositionPID(double P, double I, double IZ, double IM, double D, double DF, double F, double V, double A) noexcept;
   void DriveVelocityPID(double P, double I, double IZ, double IM, double D, double DF, double F, double V, double A) noexcept;
 
@@ -279,6 +279,8 @@ private:
   double m_turningPosition_D{pidf::kTurningPositionD};
   double m_turningPosition_DF{pidf::kTurningPositionDF};
   double m_turningPosition_F{pidf::kTurningPositionF};
+  double m_turningPosition_V{pidf::kTurningPositionMaxVelocity};
+  double m_turningPosition_A{pidf::kTurningPositionMaxAcceleration};
 
   // Drive position PID
   double m_drivePosition_P{pidf::kDrivePositionP};

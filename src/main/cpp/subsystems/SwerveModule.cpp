@@ -750,9 +750,12 @@ void SwerveModule::TestPeriodic() noexcept
     }
 }
 
-void SwerveModule::TurningPositionPID(double P, double I, double IZ, double IM, double D, double DF, double F) noexcept
+void SwerveModule::TurningPositionPID(double P, double I, double IZ, double IM, double D, double DF, double F, double V, double A) noexcept
 {
     m_rioPIDController->SetPID(P, I, D);
+    m_rioPIDController->SetConstraints(frc::TrapezoidProfile<units::angle::degrees>::Constraints{
+        units::angular_velocity::degrees_per_second_t{V},
+        units::angular_acceleration::degrees_per_second_squared_t{A}});
     m_rioPID_F = F;
 
     m_turningPosition_P = P;
@@ -762,6 +765,8 @@ void SwerveModule::TurningPositionPID(double P, double I, double IZ, double IM, 
     m_turningPosition_D = D;
     m_turningPosition_DF = DF;
     m_turningPosition_F = F;
+    m_turningPosition_V = V;
+    m_turningPosition_A = A;
 
     SetTurningPositionPID();
 }
@@ -807,9 +812,9 @@ void SwerveModule::SetTurningPositionPID() noexcept
         {"kIZone_0", double{m_turningPosition_IZ}},
         {"kIMaxAccum_0", double{m_turningPosition_IM}},
         {"kDFilter_0", double{m_turningPosition_DF}},
-        {"kSmartMotionMaxVelocity_0", double{pidf::kTurningPositionMaxVelocity.value()}},
-        {"kSmartMotionMaxAccel_0", double{pidf::kTurningPositionMaxAcceleration.value()}},
-        {"kSmartMotionAccelStrategy_0", uint{0}}, // Doc says this is double.
+        {"kSmartMotionMaxVelocity_0", double{m_turningPosition_V}},
+        {"kSmartMotionMaxAccel_0", double{m_turningPosition_A}},
+        {"kSmartMotionAccelStrategy_0", uint{0}},
     });
 
     m_turningMotor->ApplyConfig(false);
@@ -827,7 +832,7 @@ void SwerveModule::SetDrivePositionPID() noexcept
         {"kDFilter_0", double{m_drivePosition_DF}},
         {"kSmartMotionMaxVelocity_0", double{m_drivePosition_V}},
         {"kSmartMotionMaxAccel_0", double{m_drivePosition_A}},
-        {"kSmartMotionAccelStrategy_0", uint{0}}, // Doc says this is double.
+        {"kSmartMotionAccelStrategy_0", uint{0}},
     });
 
     m_driveMotor->ApplyConfig(false);
@@ -845,7 +850,7 @@ void SwerveModule::SetDriveVelocityPID() noexcept
         {"kDFilter_1", double{m_driveVelocity_DF}},
         {"kSmartMotionMaxVelocity_1", double{m_driveVelocity_V}},
         {"kSmartMotionMaxAccel_1", double{m_driveVelocity_A}},
-        {"kSmartMotionAccelStrategy_1", uint{1}}, // Doc says this is double.
+        {"kSmartMotionAccelStrategy_1", uint{1}},
     });
 
     m_driveMotor->ApplyConfig(false);

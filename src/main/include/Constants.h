@@ -104,40 +104,40 @@ namespace pidf
     constexpr units::degrees_per_second_t kTurningPositionMaxVelocity = 2750.0_deg_per_s;
     constexpr units::degrees_per_second_squared_t kTurningPositionMaxAcceleration = 20000.0_deg_per_s_sq;
     constexpr double kTurningPositionP = 0.006;
+    constexpr double kTurningPositionF = 0.003;
     constexpr double kTurningPositionI = 0.0;
     constexpr double kTurningPositionIZ = 0.0;
     constexpr double kTurningPositionIM = 0.0;
     constexpr double kTurningPositionD = 0.0;
     constexpr double kTurningPositionDF = 0.0;
-    constexpr double kTurningPositionF = 0.003;
 
     constexpr double kDrivePositionMaxVelocity = 5700.0;     // Rotations per minute.
     constexpr double kDrivePositionMaxAcceleration = 1000.0; // Rotations per minute per second.
     constexpr double kDrivePositionP = 0.004;
+    constexpr double kDrivePositionF = 0.0;
     constexpr double kDrivePositionI = 0.0;
     constexpr double kDrivePositionIZ = 0.0;
     constexpr double kDrivePositionIM = 0.0;
     constexpr double kDrivePositionD = 0.0;
     constexpr double kDrivePositionDF = 0.0;
-    constexpr double kDrivePositionF = 0.0;
 
     constexpr double kDriveVelocityMaxVelocity = 5700.0;
     constexpr double kDriveVelocityMaxAcceleration = 1000.0;
     constexpr double kDriveVelocityMaxJerk = 1.0;
     constexpr double kDriveVelocityP = 0.0;
+    constexpr double kDriveVelocityF = 0.0;
     constexpr double kDriveVelocityI = 0.0;
     constexpr double kDriveVelocityIZ = 0.0;
     constexpr double kDriveVelocityIM = 0.0;
     constexpr double kDriveVelocityD = 0.0;
     constexpr double kDriveVelocityDF = 0.0;
-    constexpr double kDriveVelocityF = 0.0;
 
     constexpr units::degrees_per_second_t kDriveThetaMaxVelocity = 45.0_deg_per_s;
     constexpr units::degrees_per_second_squared_t kDriveThetaMaxAcceleration = 450.0_deg_per_s_sq;
     constexpr double kDriveThetaP = 0.0055;
+    constexpr double kDriveThetaF = 0.0025;
     constexpr double kDriveThetaI = 0.0;
     constexpr double kDriveThetaD = 0.0;
-    constexpr double kDriveThetaF = 0.0025;
 }
 
 namespace nonDrive

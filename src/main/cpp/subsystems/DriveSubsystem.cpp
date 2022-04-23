@@ -216,7 +216,7 @@ void DriveSubsystem::CreateGraphTab(SwerveModule::GraphSelection graphSelection)
   wpi::span<double> fourZerosSpan(fourZerosVector);
   std::string path;
 
-  frc::ShuffleboardTab &shuffleboardTab = frc::Shuffleboard::GetTab("PID Tuning");
+  frc::ShuffleboardTab &shuffleboardTab = frc::Shuffleboard::GetTab("PID Tuning (PAVF)");
 
   m_frontLeftGraph = &shuffleboardTab.Add("Front Left", fourZerosSpan)
                           .WithPosition(0, 0)
@@ -652,78 +652,70 @@ void DriveSubsystem::TestPeriodic() noexcept
   if (m_turningPositionPIDController->GetE())
   {
     double p = m_turningPositionPIDController->GetP();
-    double i = m_turningPositionPIDController->GetI();
-    double d = m_turningPositionPIDController->GetD();
+    double a = m_turningPositionPIDController->GetI();
+    double v = m_turningPositionPIDController->GetD();
     double f = m_turningPositionPIDController->GetF();
 
     m_turningPositionPIDController->SetE(false);
 
-    std::printf("**** Turning Position PID: ( %f / %f / %f / %f )\n", p, i, d, f);
+    std::printf("**** Turning Position PID: ( %f / %f / %f / %f )\n", p, a, v, f);
 
     CreateGraphTab(SwerveModule::GraphSelection::kTurningRotation);
 
-    m_frontLeftSwerveModule->TurningPositionPID(p, i, pidf::kTurningPositionIM,
-                                                pidf::kTurningPositionIZ, d, pidf::kTurningPositionDF, f);
-    m_frontRightSwerveModule->TurningPositionPID(p, i, pidf::kTurningPositionIM,
-                                                 pidf::kTurningPositionIZ, d, pidf::kTurningPositionDF, f);
-    m_rearLeftSwerveModule->TurningPositionPID(p, i, pidf::kTurningPositionIM,
-                                               pidf::kTurningPositionIZ, d, pidf::kTurningPositionDF, f);
-    m_rearRightSwerveModule->TurningPositionPID(p, i, pidf::kTurningPositionIM,
-                                                pidf::kTurningPositionIZ, d, pidf::kTurningPositionDF, f);
+    m_frontLeftSwerveModule->TurningPositionPID(p, pidf::kTurningPositionI, pidf::kTurningPositionIZ, pidf::kTurningPositionIM,
+                                                pidf::kTurningPositionD, pidf::kTurningPositionDF, f, v, a);
+    m_frontRightSwerveModule->TurningPositionPID(p, pidf::kTurningPositionI, pidf::kTurningPositionIZ, pidf::kTurningPositionIM,
+                                                 pidf::kTurningPositionD, pidf::kTurningPositionDF, f, v, a);
+    m_rearLeftSwerveModule->TurningPositionPID(p, pidf::kTurningPositionI, pidf::kTurningPositionIZ, pidf::kTurningPositionIM,
+                                               pidf::kTurningPositionD, pidf::kTurningPositionDF, f, v, a);
+    m_rearRightSwerveModule->TurningPositionPID(p, pidf::kTurningPositionI, pidf::kTurningPositionIZ, pidf::kTurningPositionIM,
+                                                pidf::kTurningPositionD, pidf::kTurningPositionDF, f, v, a);
   }
 
   if (m_drivePositionPIDController->GetE())
   {
     double p = m_drivePositionPIDController->GetP();
-    double i = m_drivePositionPIDController->GetI();
-    double d = m_drivePositionPIDController->GetD();
+    double a = m_drivePositionPIDController->GetI();
+    double v = m_drivePositionPIDController->GetD();
     double f = m_drivePositionPIDController->GetF();
 
     m_drivePositionPIDController->SetE(false);
 
-    std::printf("**** Drive Position PID: ( %f / %f / %f / %f )\n", p, i, d, f);
+    std::printf("**** Drive Position PID: ( %f / %f / %f / %f )\n", p, a, v, f);
 
     CreateGraphTab(SwerveModule::GraphSelection::kDrivePosition);
 
-    m_frontLeftSwerveModule->DrivePositionPID(p, i, pidf::kDrivePositionIM,
-                                              pidf::kDrivePositionIZ, d, pidf::kDrivePositionDF, f,
-                                              pidf::kDrivePositionMaxVelocity, pidf::kDrivePositionMaxAcceleration);
-    m_frontRightSwerveModule->DrivePositionPID(p, i, pidf::kDrivePositionIM,
-                                               pidf::kDrivePositionIZ, d, pidf::kDrivePositionDF, f,
-                                               pidf::kDrivePositionMaxVelocity, pidf::kDrivePositionMaxAcceleration);
-    m_rearLeftSwerveModule->DrivePositionPID(p, i, pidf::kDrivePositionIM,
-                                             pidf::kDrivePositionIZ, d, pidf::kDrivePositionDF, f,
-                                             pidf::kDrivePositionMaxVelocity, pidf::kDrivePositionMaxAcceleration);
-    m_rearRightSwerveModule->DrivePositionPID(p, i, pidf::kDrivePositionIM,
-                                              pidf::kDrivePositionIZ, d, pidf::kDrivePositionDF, f,
-                                              pidf::kDrivePositionMaxVelocity, pidf::kDrivePositionMaxAcceleration);
+    m_frontLeftSwerveModule->DrivePositionPID(p, pidf::kDrivePositionI, pidf::kDrivePositionIZ, pidf::kDrivePositionIM,
+                                              pidf::kDrivePositionD, pidf::kDrivePositionDF, f, v, a);
+    m_frontRightSwerveModule->DrivePositionPID(p, pidf::kDrivePositionI, pidf::kDrivePositionIZ, pidf::kDrivePositionIM,
+                                               pidf::kDrivePositionD, pidf::kDrivePositionDF, f, v, a);
+    m_rearLeftSwerveModule->DrivePositionPID(p, pidf::kDrivePositionI, pidf::kDrivePositionIZ, pidf::kDrivePositionIM,
+                                             pidf::kDrivePositionD, pidf::kDrivePositionDF, f, v, a);
+    m_rearRightSwerveModule->DrivePositionPID(p, pidf::kDrivePositionI, pidf::kDrivePositionIZ, pidf::kDrivePositionIM,
+                                              pidf::kDrivePositionD, pidf::kDrivePositionDF, f, v, a);
   }
 
   if (m_driveVelocityPIDController->GetE())
   {
     double p = m_driveVelocityPIDController->GetP();
-    double i = m_driveVelocityPIDController->GetI();
-    double d = m_driveVelocityPIDController->GetD();
+    double a = m_driveVelocityPIDController->GetI();
+    double v = m_driveVelocityPIDController->GetD();
     double f = m_driveVelocityPIDController->GetF();
 
     m_driveVelocityPIDController->SetE(false);
 
-    std::printf("**** Drive Velocity PID: ( %f / %f / %f / %f )\n", p, i, d, f);
+    std::printf("**** Drive Velocity PID: ( %f / %f / %f / %f )\n", p, a, v, f);
 
     CreateGraphTab(SwerveModule::GraphSelection::kDriveVelocity);
 
-    m_frontLeftSwerveModule->DriveVelocityPID(p, i, pidf::kDriveVelocityIM,
-                                              pidf::kDriveVelocityIZ, d, pidf::kDriveVelocityDF, f,
-                                              pidf::kDriveVelocityMaxVelocity, pidf::kDriveVelocityMaxAcceleration);
-    m_frontRightSwerveModule->DriveVelocityPID(p, i, pidf::kDriveVelocityIM,
-                                               pidf::kDriveVelocityIZ, d, pidf::kDriveVelocityDF, f,
-                                               pidf::kDriveVelocityMaxVelocity, pidf::kDriveVelocityMaxAcceleration);
-    m_rearLeftSwerveModule->DriveVelocityPID(p, i, pidf::kDriveVelocityIM,
-                                             pidf::kDriveVelocityIZ, d, pidf::kDriveVelocityDF, f,
-                                             pidf::kDriveVelocityMaxVelocity, pidf::kDriveVelocityMaxAcceleration);
-    m_rearRightSwerveModule->DriveVelocityPID(p, i, pidf::kDriveVelocityIM,
-                                              pidf::kDriveVelocityIZ, d, pidf::kDriveVelocityDF, f,
-                                              pidf::kDriveVelocityMaxVelocity, pidf::kDriveVelocityMaxAcceleration);
+    m_frontLeftSwerveModule->DriveVelocityPID(p, pidf::kDriveVelocityI, pidf::kDriveVelocityIZ, pidf::kDriveVelocityIM,
+                                              pidf::kDriveVelocityD, pidf::kDriveVelocityDF, f, v, a);
+    m_frontRightSwerveModule->DriveVelocityPID(p, pidf::kDriveVelocityI, pidf::kDriveVelocityIZ, pidf::kDriveVelocityIM,
+                                               pidf::kDriveVelocityD, pidf::kDriveVelocityDF, f, v, a);
+    m_rearLeftSwerveModule->DriveVelocityPID(p, pidf::kDriveVelocityI, pidf::kDriveVelocityIZ, pidf::kDriveVelocityIM,
+                                             pidf::kDriveVelocityD, pidf::kDriveVelocityDF, f, v, a);
+    m_rearRightSwerveModule->DriveVelocityPID(p, pidf::kDriveVelocityI, pidf::kDriveVelocityIZ, pidf::kDriveVelocityIM,
+                                              pidf::kDriveVelocityD, pidf::kDriveVelocityDF, f, v, a);
   }
 
   // Now, run any selected command.  First, if in low-level Test Mode, cancel
