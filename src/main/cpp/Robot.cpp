@@ -42,6 +42,11 @@ void Robot::DisabledInit() noexcept
 
 void Robot::DisabledPeriodic() noexcept {}
 
+void Robot::DisabledExit() noexcept
+{
+  m_container.DisabledExit();
+}
+
 /**
  * This autonomous runs the autonomous command selected by your {@link
  * RobotContainer} class.
@@ -61,6 +66,8 @@ void Robot::AutonomousInit() noexcept
 }
 
 void Robot::AutonomousPeriodic() noexcept {}
+
+void Robot::AutonomousExit() noexcept {}
 
 void Robot::TeleopInit() noexcept
 {
@@ -84,6 +91,8 @@ void Robot::TeleopInit() noexcept
  */
 void Robot::TeleopPeriodic() noexcept {}
 
+void Robot::TeleopExit() noexcept {}
+
 void Robot::TestInit() noexcept
 {
   m_container.TestInit();
@@ -98,6 +107,8 @@ void Robot::TestPeriodic() noexcept
 {
   m_container.TestPeriodic();
 }
+
+void Robot::TestExit() noexcept {}
 
 #ifndef RUNNING_FRC_TESTS
 int main()

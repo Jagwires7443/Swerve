@@ -88,8 +88,6 @@ SwerveModule::SwerveModule(
     });
     m_driveMotor->ApplyConfig(false);
 
-    ResetEncoders(); // XXX might need to defer -- wait for status OK?
-
     std::printf(" OK.\n");
 }
 
@@ -444,6 +442,8 @@ void SwerveModule::ResetEncoders() noexcept
 // programmatically.
 void SwerveModule::TestInit() noexcept
 {
+    ResetEncoders();
+
     m_testModeControl = true;
     m_turningMotorControllerValidated = false;
     m_driveMotorControllerValidated = false;

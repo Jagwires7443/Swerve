@@ -16,12 +16,16 @@ public:
   void RobotPeriodic() noexcept override;
   void DisabledInit() noexcept override;
   void DisabledPeriodic() noexcept override;
+  void DisabledExit() noexcept override;
   void AutonomousInit() noexcept override;
   void AutonomousPeriodic() noexcept override;
+  void AutonomousExit() noexcept override;
   void TeleopInit() noexcept override;
   void TeleopPeriodic() noexcept override;
+  void TeleopExit() noexcept override;
   void TestInit() noexcept override;
   void TestPeriodic() noexcept override;
+  void TestExit() noexcept override;
 
 private:
   // Have it null by default so that if testing teleop it

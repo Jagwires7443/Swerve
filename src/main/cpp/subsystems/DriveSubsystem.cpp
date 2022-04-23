@@ -757,6 +757,20 @@ void DriveSubsystem::TestPeriodic() noexcept
   }
 }
 
+void DriveSubsystem::DisabledInit() noexcept
+{
+  m_run = false;
+
+  UpdateGraphTab(m_graphSelection);
+}
+
+void DriveSubsystem::DisabledExit() noexcept
+{
+  m_run = true;
+
+  UpdateGraphTab(m_graphSelection);
+}
+
 bool DriveSubsystem::GetStatus() const noexcept
 {
   return m_ahrs &&

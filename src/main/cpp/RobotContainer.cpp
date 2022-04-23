@@ -321,4 +321,11 @@ void RobotContainer::DisabledInit() noexcept
 
   // Useful things may be done disabled... (construct, config, dashboard, etc.)
   frc2::CommandScheduler::GetInstance().Enable();
+
+  m_driveSubsystem.DisabledInit();
+}
+
+void RobotContainer::DisabledExit() noexcept
+{
+  m_driveSubsystem.DisabledExit();
 }

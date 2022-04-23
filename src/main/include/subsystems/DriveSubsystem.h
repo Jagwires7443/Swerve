@@ -47,6 +47,8 @@ public:
   void TestInit() noexcept;
   void TestExit() noexcept;
   void TestPeriodic() noexcept;
+  void DisabledInit() noexcept;
+  void DisabledExit() noexcept;
 
   // Obtain a non-owning pointer to the Command chooser, in the Test Mode UI.
   // Valid and unchanging, from return of TestInit() through destruction of

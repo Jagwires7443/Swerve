@@ -41,6 +41,7 @@ public:
   void TestPeriodic() noexcept;
 
   void DisabledInit() noexcept;
+  void DisabledExit() noexcept;
   void AutonomousInit() noexcept;
   void TeleopInit() noexcept;
 
