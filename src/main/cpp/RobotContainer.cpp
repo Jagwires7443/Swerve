@@ -78,6 +78,8 @@ RobotContainer::RobotContainer() noexcept
 
 void RobotContainer::AutonomousInit() noexcept
 {
+  m_driveSubsystem.ResetEncoders();
+
   m_driveSubsystem.SetDefaultCommand(frc2::RunCommand([&]() -> void {},
                                                       {&m_driveSubsystem}));
   m_feederSubsystem.SetDefaultCommand(frc2::RunCommand([&]() -> void {},
@@ -90,6 +92,8 @@ void RobotContainer::AutonomousInit() noexcept
 
 void RobotContainer::TeleopInit() noexcept
 {
+  m_driveSubsystem.ResetEncoders();
+
   m_driveSubsystem.SetDefaultCommand(*m_driveCommand);
   m_feederSubsystem.SetDefaultCommand(frc2::RunCommand([&]() -> void
                                                        { m_feederSubsystem.Default(m_xbox.GetRightTriggerAxis()); },
