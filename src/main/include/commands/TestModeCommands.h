@@ -162,3 +162,24 @@ public:
 private:
     DriveSubsystem *m_subsystem{nullptr};
 };
+
+// Excersize theta (spin) controller.
+class SpinCommand
+    : public frc2::CommandHelper<frc2::CommandBase, SpinCommand>
+{
+public:
+    explicit SpinCommand(DriveSubsystem *subsystem) noexcept
+        : m_subsystem{subsystem} { SetName("Spin"); }
+
+    void Initialize() noexcept override;
+
+    void Execute() noexcept override;
+
+    void End(bool interrupted) noexcept override;
+
+private:
+    DriveSubsystem *m_subsystem{nullptr};
+
+    unsigned m_angle{0};
+    unsigned m_delay{0};
+};

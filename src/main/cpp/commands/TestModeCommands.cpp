@@ -234,3 +234,49 @@ void PirouetteCommand::Execute() noexcept
     // applies.
     m_subsystem->Drive(major_angle.Sin() * 1_mps, major_angle.Cos() * 1_mps, 10_deg_per_s, true);
 }
+
+void SpinCommand::Initialize() noexcept
+{
+    m_angle = 0;
+    m_delay = 0;
+
+    m_subsystem->ResetDrive();
+}
+
+void SpinCommand::Execute() noexcept
+{
+    if (!m_subsystem->SetTurnInPlace())
+    {
+        return;
+    }
+
+    if (!m_subsystem->SetTurnToAngle(units::angle::degree_t{m_angle}))
+    {
+        return;
+    }
+
+    // Reached desired angle; delay for 2.5s.
+    if (++m_delay < 25)
+    {
+        return;
+    }
+    m_delay = 0;
+
+    if (m_angle == 0)
+    {
+        m_angle = 90;
+    }
+    else if (m_angle == 90)
+    {
+        m_angle = 270;
+    }
+    else if (m_angle == 270)
+    {
+        m_angle = 0;
+    }
+}
+
+void SpinCommand::End(bool interrupted) noexcept
+{
+    m_subsystem->ResetDrive();
+}

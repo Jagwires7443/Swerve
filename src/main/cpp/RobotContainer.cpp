@@ -74,6 +74,7 @@ RobotContainer::RobotContainer() noexcept
   m_spirographCommand = std::make_unique<SpirographCommand>(&m_driveSubsystem);
   m_orbitCommand = std::make_unique<OrbitCommand>(&m_driveSubsystem);
   m_pirouetteCommand = std::make_unique<PirouetteCommand>(&m_driveSubsystem);
+  m_spinCommand = std::make_unique<SpinCommand>(&m_driveSubsystem);
 }
 
 void RobotContainer::AutonomousInit() noexcept
@@ -295,6 +296,7 @@ void RobotContainer::TestInit() noexcept
   chooser->AddOption("Orbit", m_orbitCommand.get());
   chooser->AddOption("Pirouette", m_pirouetteCommand.get());
   chooser->AddOption("Drive", m_driveCommand.get());
+  chooser->AddOption("Spin", m_spinCommand.get());
 
   frc2::CommandScheduler::GetInstance().Enable();
 }

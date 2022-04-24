@@ -77,6 +77,7 @@ private:
   std::unique_ptr<SpirographCommand> m_spirographCommand;
   std::unique_ptr<OrbitCommand> m_orbitCommand;
   std::unique_ptr<PirouetteCommand> m_pirouetteCommand;
+  std::unique_ptr<SpinCommand> m_spinCommand;
 
   frc::XboxController m_xbox{0};
   frc::GenericHID m_buttonBoard{1};
