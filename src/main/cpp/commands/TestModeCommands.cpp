@@ -250,7 +250,7 @@ void SpinCommand::Execute() noexcept
         return;
     }
 
-    if (!m_subsystem->SetTurnToAngle(units::angle::degree_t{m_angle}))
+    if (!m_subsystem->SetTurnToAngle(1_deg * m_angle))
     {
         return;
     }
