@@ -154,6 +154,10 @@ public:
     m_testModeDriveVoltage = voltage;
   }
 
+  void ThetaPID(double P, double I, double D, double F, double V, double A) noexcept;
+
+  void BurnConfig() noexcept;
+
   // Front: +x, Rear: -x; Left: +y, Right -y.  Zero heading is to the front
   // and +rotation is counter-clockwise.  This is all standard, although it
   // means the robot's front is along the x-axis, which is often pointed to
@@ -177,6 +181,7 @@ private:
   // Theta controller (for keeping steady heading, or for rotating drive base).
   std::unique_ptr<frc::ProfiledPIDController<units::angle::degrees>> m_orientationController;
   double m_lagrange{0.0};
+  double m_thetaF{pidf::kDriveThetaF};
 
   // Four swerve modules.
   std::unique_ptr<SwerveModule> m_frontLeftSwerveModule;

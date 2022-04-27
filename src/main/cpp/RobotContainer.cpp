@@ -267,7 +267,7 @@ std::tuple<double, double, double, bool> RobotContainer::GetDriveTeleopControls(
     z *= 0.40;
   }
   else
-  {
+  { // XXX Still needed?
     x *= 2.0;
     y *= 2.0;
     z *= 1.6;

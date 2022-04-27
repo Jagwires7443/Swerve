@@ -147,3 +147,11 @@ void FeederSubsystem::LowerIntake() noexcept
 {
     m_intakeRaise->Set(frc::DoubleSolenoid::Value::kReverse);
 }
+
+void FeederSubsystem::BurnConfig() noexcept
+{
+    m_intakeMotor->ApplyConfig(true);
+    m_elevatorMotor->ApplyConfig(true);
+    m_feederMotor->ApplyConfig(true);
+    m_climberMotor->ApplyConfig(true);
+}

@@ -173,11 +173,11 @@ void DriveSubsystem::Periodic() noexcept
 
   if (theta > 0.0)
   {
-    theta += pidf::kDriveThetaF;
+    theta += m_thetaF;
   }
   else if (theta < 0.0)
   {
-    theta -= pidf::kDriveThetaF;
+    theta -= m_thetaF;
   }
   m_theta = theta;
 
@@ -1089,4 +1089,22 @@ double DriveSubsystem::GetTurnRate() noexcept
     } });
 
   return rate;
+}
+
+void DriveSubsystem::ThetaPID(double P, double I, double D, double F, double V, double A) noexcept
+{
+  m_thetaF = F;
+
+  m_orientationController->SetPID(P, I, D);
+  m_orientationController->SetConstraints(std::move(frc::TrapezoidProfile<units::angle::degrees>::Constraints{
+      units::angular_velocity::degrees_per_second_t{V},
+      units::angular_acceleration::degrees_per_second_squared_t{A}}));
+}
+
+void DriveSubsystem::BurnConfig() noexcept
+{
+  m_frontLeftSwerveModule->BurnConfig();
+  m_frontRightSwerveModule->BurnConfig();
+  m_rearLeftSwerveModule->BurnConfig();
+  m_rearRightSwerveModule->BurnConfig();
 }

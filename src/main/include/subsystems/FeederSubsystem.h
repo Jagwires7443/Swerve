@@ -40,6 +40,8 @@ public:
 
     void LowerIntake() noexcept;
 
+    void BurnConfig() noexcept;
+
 private:
     std::unique_ptr<SmartMotorBase> m_intakeMotorBase;
     std::unique_ptr<SmartMotorBase> m_elevatorMotorBase;

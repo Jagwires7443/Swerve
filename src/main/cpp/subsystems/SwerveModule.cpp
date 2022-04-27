@@ -738,16 +738,6 @@ void SwerveModule::TestPeriodic() noexcept
             break;
         }
     }
-
-    if (zeroTurning && !m_turningMotorControllerValidated)
-    {
-        CreateTurningMotorControllerConfig();
-    }
-
-    if (zeroDrive && !m_driveMotorControllerValidated)
-    {
-        CreateDriveMotorControllerConfig();
-    }
 }
 
 void SwerveModule::TurningPositionPID(double P, double I, double IZ, double IM, double D, double DF, double F, double V, double A) noexcept
@@ -892,12 +882,8 @@ void SwerveModule::SetStatusFramePeriods(GraphSelection graphSelection) noexcept
     m_driveMotor->ApplyConfig(false);
 }
 
-void SwerveModule::CreateTurningMotorControllerConfig() noexcept
+void SwerveModule::BurnConfig() noexcept
 {
     m_turningMotor->ApplyConfig(true);
-}
-
-void SwerveModule::CreateDriveMotorControllerConfig() noexcept
-{
     m_driveMotor->ApplyConfig(true);
 }

@@ -85,3 +85,9 @@ void ShooterSubsystem::Stop() noexcept
     m_shooterMotor->Stop();
     m_backspinMotor->Stop();
 }
+
+void ShooterSubsystem::BurnConfig() noexcept
+{
+    m_shooterMotor->ApplyConfig(true);
+    m_backspinMotor->ApplyConfig(true);
+}

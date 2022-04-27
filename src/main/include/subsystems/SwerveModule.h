@@ -248,14 +248,13 @@ public:
   void DrivePositionPID(double P, double I, double IZ, double IM, double D, double DF, double F, double V, double A) noexcept;
   void DriveVelocityPID(double P, double I, double IZ, double IM, double D, double DF, double F, double V, double A) noexcept;
 
+  void BurnConfig() noexcept;
+
 private:
   void SetTurningPositionPID() noexcept;
   void SetDrivePositionPID() noexcept;
   void SetDriveVelocityPID() noexcept;
   void SetStatusFramePeriods(GraphSelection graphSelection) noexcept;
-
-  void CreateTurningMotorControllerConfig() noexcept;
-  void CreateDriveMotorControllerConfig() noexcept;
 
   const std::string m_name;
 

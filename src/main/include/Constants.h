@@ -134,8 +134,8 @@ namespace pidf
 
     constexpr units::degrees_per_second_t kDriveThetaMaxVelocity = 45.0_deg_per_s;
     constexpr units::degrees_per_second_squared_t kDriveThetaMaxAcceleration = 450.0_deg_per_s_sq;
-    constexpr double kDriveThetaP = 0.0055;
-    constexpr double kDriveThetaF = 0.0025;
+    constexpr double kDriveThetaP = 0.10;
+    constexpr double kDriveThetaF = 0.005;
     constexpr double kDriveThetaI = 0.0;
     constexpr double kDriveThetaD = 0.0;
 }
