@@ -344,9 +344,11 @@ void SparkMax::ShuffleboardCreate(frc::ShuffleboardContainer &container,
 {
     temperatureUI_ = &container.Add("Temperature", 0.0)
                           .WithPosition(0, 0);
+
     statusUI_ = &container.Add("Status", false)
                      .WithPosition(0, 1)
                      .WithWidget(frc::BuiltInWidgets::kBooleanBox);
+
     faultsUI_ = &container.Add("Faults", "")
                      .WithPosition(1, 0);
 
@@ -395,22 +397,6 @@ void SparkMax::ShuffleboardPeriodic() noexcept
         resetUI_->GetEntry().SetBoolean(false);
         controlUI_->GetEntry().SetDouble(0.0);
         control = 0.0;
-
-        // Note that "SpecifyPosition(0.0);" is called below.
-        if (resetF_)
-        {
-            resetF_();
-        }
-    }
-
-    if (control != previousControl_)
-    {
-        previousControl_ = control;
-
-        if (controlF_)
-        {
-            controlF_(control);
-        }
     }
 
     double temperature = 0.0;
@@ -443,13 +429,6 @@ void SparkMax::ShuffleboardPeriodic() noexcept
             velocity = encoder_->GetVelocity() / 60.0; // Rotations per second
         } });
 
-    if (reset)
-    {
-        // Logic above ensures that `position` is now zero; reset the
-        // turning motor encoder to reflect this.
-        SpecifyPosition(0.0);
-    }
-
     temperatureUI_->GetEntry().SetDouble(temperature);
     statusUI_->GetEntry().SetBoolean(motor_ && encoder_ && controller_ && configGood_ && faults == 0);
     faultsUI_->GetEntry().SetString(FaultInfo(faults));
@@ -460,34 +439,50 @@ void SparkMax::ShuffleboardPeriodic() noexcept
     speedUI_->GetEntry().SetDouble(speed);
     distanceUI_->GetEntry().SetDouble(distance);
     velocityUI_->GetEntry().SetDouble(velocity);
+
+    if (reset)
+    {
+        Stop();
+
+        if (resetF_)
+        {
+            resetF_();
+        }
+        else
+        {
+            // Logic above ensures that `position` is now zero; reset the
+            // turning motor encoder to reflect this.
+            SpecifyPosition(0.0);
+            ClearFaults();
+        }
+    }
+
+    if (control != previousControl_)
+    {
+        previousControl_ = control;
+
+        if (controlF_)
+        {
+            controlF_(control);
+        }
+        else
+        {
+            Set(control);
+        }
+    }
 }
 
 // Config parameters are managed via a state machine, in order to spread slow
-// calls out across multiple iterations of ConfigPeriodic().  CheckConfig()
+// calls out across multiple iterations of ConfigPeriodic().  GetStatus()
 // will return false until all requested operations have been completed; note
 // that the only requested operations are ApplyConfig(), with the Boolean
-// argument set each way.  This is because checking is done on an ongoing
-// basis, so long as ConfigPeriodic() is being called.  CheckConfig() reports
-// true only when there are no ongoing updates of config parameters and a
+// argument set each way, and CheckConfig() -- a subset of ApplyConfig().
+// GetStatus() reports true only when there are no ongoing updates, and a
 // check of all parameters has been completed subsequent to any update.
 // ApplyConfig() simply resets the state machine and has no status to report.
 // Both CheckConfig() and ApplyConfig() use `config_`, which holds the result
 // of any/all prior calls to SetConfig() and/or AddConfig().  Note that the
 // state maintained via Periodic() is also important in this context.
-
-// XXX
-// start (X = check, Y = apply (X + Y), Z = apply and burn (X + Y + Z))
-// Y: block out normal operations which could affect config, block out Z
-// Z: block out all normal operations, Y has no effect
-// Z: 1) RestoreFactoryDefaults()
-// Z: 2) redo ctor logic?
-// X: 3) if encoderCount_ != 0 (alt encoder), verify GetCountsPerRevolution() matches
-// 4) loop over parameters
-//     X: check one param
-//     Y: update one param, as needed
-// X: update string and status value
-// Y: update apply string
-// Z: 5) BurnFlash()
 
 // Periodic() normally runs at 50Hz, but this is a default and it is possible
 // that this is running at another rate.  So, GetFPGATime() is used to work
@@ -562,7 +557,7 @@ void SparkMax::ConfigPeriodic() noexcept
                 throw std::runtime_error("motor_");
             }
 
-            // Does not get sent to the motor controller, done locally.
+            // Does not get sent to the motor controller, done locally?
             motor_->SetInverted(inverted_); });
 
         return;
@@ -593,7 +588,6 @@ void SparkMax::ConfigPeriodic() noexcept
     }
 
     // XXX SetInverted here?
-    // No config parameters have been used up to here -- canId_, MotorType, SetInverted
 
     // Second stage of state machine, as above.  Might or might not be slow, so
     // give it a stage to cover worst case.
@@ -649,7 +643,7 @@ void SparkMax::ConfigPeriodic() noexcept
     if (configReboot_)
     {
         // Optimized for setting periodic frame period, not appropriate for
-        // general cofig parameters.  Relies on particulars of these config
+        // general config parameters.  Relies on particulars for these config
         // parameters, which isn't great, but is documented behavior.
         auto periodicFramePeriod = [&](const std::string_view k, const uint v) -> bool
         {
@@ -896,7 +890,7 @@ void SparkMax::PersistentConfigPeriodic() noexcept
 
     if (configBurn_)
     {
-        DoSafely("RestoreFactoryDefaults", [&]() -> void
+        DoSafely("BurnFlash", [&]() -> void
                  {
             if (AnyError(motor_->BurnFlash()))
                 {
@@ -1054,14 +1048,14 @@ void SparkMax::SetCurrent(const units::ampere_t current) noexcept
     velocity_ = 0.0;
 
     DoSafely("SetCurrent", [&]() -> void
-             { if (!controller_ || AnyError(controller_->SetReference(current.to<double>(), rev::CANSparkMax::ControlType::kCurrent, 0))); });
+             { if (!controller_ || AnyError(controller_->SetReference(current.to<double>(), rev::CANSparkMax::ControlType::kCurrent, 0))) {} });
 }
 
 // Note that any error is tracked, but is not propagated from this context.
 void SparkMax::SpecifyPosition(const double position) noexcept
 {
     DoSafely("SpecifyPosition", [&]() -> void
-             { if (!encoder_ || AnyError(encoder_->SetPosition(position))); });
+             { if (!encoder_ || AnyError(encoder_->SetPosition(position))) {} });
 }
 
 void SparkMax::SeekPosition(const double position) noexcept
@@ -1069,8 +1063,9 @@ void SparkMax::SeekPosition(const double position) noexcept
     position_ = position;
     velocity_ = 0.0;
 
+    // XXX FeedForward
     DoSafely("SeekPosition", [&]() -> void
-             { if (!controller_ || AnyError(controller_->SetReference(position, rev::CANSparkMax::ControlType::kSmartMotion, 0))); });
+             { if (!controller_ || AnyError(controller_->SetReference(position, rev::CANSparkMax::ControlType::kSmartMotion, 0))) {} });
 }
 
 bool SparkMax::CheckPosition(const double tolerance) noexcept
@@ -1095,9 +1090,9 @@ void SparkMax::SeekVelocity(const double velocity) noexcept
     position_ = 0.0;
     velocity_ = velocity;
 
-    // XXX SetReference(velocity, rev::ControlType::kSmartVelocity, 1, FeedForward)
+    // XXX FeedForward
     DoSafely("SeekVelocity", [&]() -> void
-             { if (!controller_ || AnyError(controller_->SetReference(velocity, rev::CANSparkMax::ControlType::kSmartVelocity, 1))); });
+             { if (!controller_ || AnyError(controller_->SetReference(velocity, rev::CANSparkMax::ControlType::kSmartVelocity, 1))) {} });
 }
 
 bool SparkMax::CheckVelocity(const double tolerance) noexcept
@@ -1736,6 +1731,8 @@ std::tuple<bool, bool, std::string> SparkMax::VerifyConfig(const std::string_vie
     return std::make_tuple(equal_actual, !equal_default, name);
 }
 
+// Set a single configuration parameter to a specific value; returns message,
+// if there was some problem (or empty string, if not).
 std::string SparkMax::ApplyConfig(const std::string_view key, const ConfigValue &value) noexcept
 {
     const auto kv = SparkMaxFactory::configDefaults.find(std::string(key));

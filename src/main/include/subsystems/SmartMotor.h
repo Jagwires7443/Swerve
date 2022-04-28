@@ -65,7 +65,7 @@ public:
     // The default control() simply calls Set() with the given value, meaning
     // percent control.  Other types of control require supplying the control()
     // parameter.  The default reset() calls SpecifyPosition(0.0) and
-    // ClearStatus().
+    // ClearFaults().
     virtual void ShuffleboardCreate(frc::ShuffleboardContainer &container,
                                     std::function<void(double)> control = nullptr,
                                     std::function<void()> reset = nullptr) noexcept = 0;
