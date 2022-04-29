@@ -1,5 +1,3 @@
-// XXX use count, instead of bool for cumulative counts, include reset count
-
 #include "subsystems/SparkMax.h"
 
 #include <bitset>
@@ -122,7 +120,34 @@ namespace
             }
         }
 
-        void ClearFaults() noexcept override { faultBits_.reset(); }
+        void ClearFaults() noexcept override
+        {
+            faultBits_.reset();
+
+            resets_ = 0;
+            throws_ = 0;
+            catches_ = 0;
+            kError_ = 0;
+            kTimeout_ = 0;
+            kNotImplemented_ = 0;
+            kHALError_ = 0;
+            kCantFindFirmware_ = 0;
+            kFirmwareTooOld_ = 0;
+            kFirmwareTooNew_ = 0;
+            kParamInvalidID_ = 0;
+            kParamMismatchType_ = 0;
+            kParamAccessMode_ = 0;
+            kParamInvalid_ = 0;
+            kParamNotImplementedDeprecated_ = 0;
+            kFollowConfigMismatch_ = 0;
+            kInvalid_ = 0;
+            kSetpointOutOfRange_ = 0;
+            kUnknown_ = 0;
+            kCANDisconnected_ = 0;
+            kDuplicateCANId_ = 0;
+            kInvalidCANId_ = 0;
+            kSparkMaxDataPortAlreadyConfiguredDifferently_ = 0;
+        }
 
         bool GetStatus() noexcept override
         {
@@ -236,25 +261,49 @@ namespace
 
         // The next two data members are used to implement pacing of the config
         // state machines.
-        uint64_t FPGATime_ = frc::RobotController::GetFPGATime();
-        int iteration_ = 0;
+        uint64_t FPGATime_{frc::RobotController::GetFPGATime()};
+        int iteration_{0};
 
         // The inner state config machine uses motor_, encoder_, controller_,
         // forward_, reverse_, configReboot_, and sequence_ to track state.
-        bool configReboot_ = true;
-        uint sequence_ = 0;
+        bool configReboot_{true};
+        uint sequence_{0};
 
         std::bitset<16> faultBits_;
-        bool configGood_ = false;
+        bool configGood_{false};
 
-        bool configLock_ = false;
-        bool configRead_ = false;
-        bool configPush_ = false;
-        bool configBurn_ = false;
-        bool configRest_ = false;
+        bool configLock_{false};
+        bool configRead_{false};
+        bool configPush_{false};
+        bool configBurn_{false};
+        bool configRest_{false};
 
-        double position_ = 0.0;
-        double velocity_ = 0.0;
+        double position_{0.0};
+        double velocity_{0.0};
+
+        uint resets_{0};
+        uint throws_{0};
+        uint catches_{0};
+        uint kError_{0};
+        uint kTimeout_{0};
+        uint kNotImplemented_{0};
+        uint kHALError_{0};
+        uint kCantFindFirmware_{0};
+        uint kFirmwareTooOld_{0};
+        uint kFirmwareTooNew_{0};
+        uint kParamInvalidID_{0};
+        uint kParamMismatchType_{0};
+        uint kParamAccessMode_{0};
+        uint kParamInvalid_{0};
+        uint kParamNotImplementedDeprecated_{0};
+        uint kFollowConfigMismatch_{0};
+        uint kInvalid_{0};
+        uint kSetpointOutOfRange_{0};
+        uint kUnknown_{0};
+        uint kCANDisconnected_{0};
+        uint kDuplicateCANId_{0};
+        uint kInvalidCANId_{0};
+        uint kSparkMaxDataPortAlreadyConfiguredDifferently_{0};
 
         void ShuffleboardPeriodic() noexcept;
         void ConfigPeriodic() noexcept;
@@ -399,15 +448,15 @@ void SparkMax::ShuffleboardPeriodic() noexcept
         control = 0.0;
     }
 
-    double temperature = 0.0;
-    uint16_t faults = 0;
-    uint16_t stickyFaults = 0;
-    double voltage = 0.0;
-    double current = 0.0;
-    double percent = 0.0;
-    double speed = 0.0;
-    double distance = 0.0;
-    double velocity = 0.0;
+    double temperature{0.0};
+    uint16_t faults{0};
+    uint16_t stickyFaults{0};
+    double voltage{0.0};
+    double current{0.0};
+    double percent{0.0};
+    double speed{0.0};
+    double distance{0.0};
+    double velocity{0.0};
 
     // Obtain raw data from CANSparkMax and set the output.
     DoSafely("ShuffleboardPeriodic", [&]() -> void
@@ -527,8 +576,6 @@ void SparkMax::Periodic() noexcept
         faultBits_ |= std::bitset<16>(motor_->GetStickyFaults());
     }
 
-    // XXX Keep counters from faultBits (no underscore), these persist and are reported...
-
     ConfigPeriodic();
 }
 
@@ -553,7 +600,7 @@ void SparkMax::ConfigPeriodic() noexcept
             motor_ = std::make_unique<rev::CANSparkMax>(canId_, rev::CANSparkMaxLowLevel::MotorType::kBrushless);
             if (!motor_)
             {
-                // XXX count this (and other throws, below)!
+                ++throws_;
                 throw std::runtime_error("motor_");
             }
 
@@ -587,8 +634,6 @@ void SparkMax::ConfigPeriodic() noexcept
         return;
     }
 
-    // XXX SetInverted here?
-
     // Second stage of state machine, as above.  Might or might not be slow, so
     // give it a stage to cover worst case.
     if (!encoder_)
@@ -605,6 +650,7 @@ void SparkMax::ConfigPeriodic() noexcept
             }
             if (!encoder_)
             {
+                ++throws_;
                 throw std::runtime_error("encoder_");
             } });
 
@@ -619,6 +665,7 @@ void SparkMax::ConfigPeriodic() noexcept
             controller_ = std::make_unique<rev::SparkMaxPIDController>(motor_->GetPIDController());
             if (!controller_)
             {
+                ++throws_;
                 throw std::runtime_error("controller_");
             } });
 
@@ -635,7 +682,8 @@ void SparkMax::ConfigPeriodic() noexcept
         configReboot_ = true;
         configGood_ = false;
         sequence_ = 0;
-        // XXX reset everything?
+
+        ++resets_;
     }
 
     // Now the three main objects exist;, so (re)establish volatile motor
@@ -689,6 +737,7 @@ void SparkMax::ConfigPeriodic() noexcept
                          {
                     if (AnyError(controller_->SetFeedbackDevice(*encoder_)))
                     {
+                        ++throws_;
                         throw std::runtime_error("SetFeedbackDevice()");
                     } });
             }
@@ -707,6 +756,7 @@ void SparkMax::ConfigPeriodic() noexcept
                 forward_ = std::make_unique<rev::SparkMaxLimitSwitch>(motor_->GetForwardLimitSwitch(polarity));
                 if (!forward_)
                 {
+                    ++throws_;
                     throw std::runtime_error("forward_");
                 } });
             }
@@ -722,6 +772,7 @@ void SparkMax::ConfigPeriodic() noexcept
                          {
                     if (encoderCounts_ < 0 || static_cast<uint32_t>(encoderCounts_) != encoder_->GetCountsPerRevolution())
                     {
+                        ++throws_;
                         throw std::runtime_error("GetCountsPerRevolution()");
                     } });
             }
@@ -740,6 +791,7 @@ void SparkMax::ConfigPeriodic() noexcept
                 reverse_ = std::make_unique<rev::SparkMaxLimitSwitch>(motor_->GetReverseLimitSwitch(polarity));
                 if (!reverse_)
                 {
+                    ++throws_;
                     throw std::runtime_error("reverse_");
                 } });
             }
@@ -1063,7 +1115,7 @@ void SparkMax::SeekPosition(const double position) noexcept
     position_ = position;
     velocity_ = 0.0;
 
-    // XXX FeedForward
+    // Add dynamic FeedForward (from parameter)?
     DoSafely("SeekPosition", [&]() -> void
              { if (!controller_ || AnyError(controller_->SetReference(position, rev::CANSparkMax::ControlType::kSmartMotion, 0))) {} });
 }
@@ -1090,7 +1142,7 @@ void SparkMax::SeekVelocity(const double velocity) noexcept
     position_ = 0.0;
     velocity_ = velocity;
 
-    // XXX FeedForward
+    // Add dynamic FeedForward (from parameter)?
     DoSafely("SeekVelocity", [&]() -> void
              { if (!controller_ || AnyError(controller_->SetReference(velocity, rev::CANSparkMax::ControlType::kSmartVelocity, 1))) {} });
 }
@@ -1114,50 +1166,69 @@ double SparkMax::GetVelocityRaw() noexcept
 
 bool SparkMax::AnyError(const rev::REVLibError returnCode) noexcept
 {
-    // XXX track errors
     switch (returnCode)
     {
     case rev::REVLibError::kOk:
         return false;
     case rev::REVLibError::kError:
+        ++kError_;
         break;
     case rev::REVLibError::kTimeout:
+        ++kTimeout_;
         break;
     case rev::REVLibError::kNotImplemented:
+        ++kNotImplemented_;
         break;
     case rev::REVLibError::kHALError:
+        ++kHALError_;
         break;
     case rev::REVLibError::kCantFindFirmware:
+        ++kCantFindFirmware_;
         break;
     case rev::REVLibError::kFirmwareTooOld:
+        ++kFirmwareTooOld_;
         break;
     case rev::REVLibError::kFirmwareTooNew:
+        ++kFirmwareTooNew_;
         break;
     case rev::REVLibError::kParamInvalidID:
+        ++kParamInvalidID_;
         break;
     case rev::REVLibError::kParamMismatchType:
+        ++kParamMismatchType_;
         break;
     case rev::REVLibError::kParamAccessMode:
+        ++kParamAccessMode_;
         break;
     case rev::REVLibError::kParamInvalid:
+        ++kParamInvalid_;
         break;
     case rev::REVLibError::kParamNotImplementedDeprecated:
+        ++kParamNotImplementedDeprecated_;
         break;
     case rev::REVLibError::kFollowConfigMismatch:
+        ++kFollowConfigMismatch_;
         break;
     case rev::REVLibError::kInvalid:
+        ++kInvalid_;
         break;
     case rev::REVLibError::kSetpointOutOfRange:
+        ++kSetpointOutOfRange_;
         break;
     case rev::REVLibError::kUnknown:
+        ++kUnknown_;
         break;
     case rev::REVLibError::kCANDisconnected:
+        ++kCANDisconnected_;
         break;
     case rev::REVLibError::kDuplicateCANId:
+        ++kDuplicateCANId_;
         break;
     case rev::REVLibError::kInvalidCANId:
+        ++kInvalidCANId_;
         break;
     case rev::REVLibError::kSparkMaxDataPortAlreadyConfiguredDifferently:
+        ++kSparkMaxDataPortAlreadyConfiguredDifferently_;
         break;
     }
 
@@ -1179,6 +1250,8 @@ void SparkMax::DoSafely(const char *const what, std::function<void()> work) noex
         reverse_ = nullptr;
         sequence_ = 0;
 
+        ++catches_;
+
         std::printf("SparkMax[%i] %s %s exception: %s.\n", canId_, name_.c_str(), what, e.what());
     }
     catch (...)
@@ -1189,6 +1262,8 @@ void SparkMax::DoSafely(const char *const what, std::function<void()> work) noex
         forward_ = nullptr;
         reverse_ = nullptr;
         sequence_ = 0;
+
+        ++catches_;
 
         std::printf("SparkMax[%i] %s %s unknown exception.\n", canId_, name_.c_str(), what);
     }
@@ -1815,17 +1890,9 @@ std::string SparkMax::ApplyConfig(const std::string_view key, const ConfigValue 
         break;
     case 29:
         name = "LimitSwitchFwdPolarity";
-        if (puint && forward_)
-        {
-            // XXX save ctor polarity and compare?
-        }
         break;
     case 28:
         name = "LimitSwitchRevPolarity";
-        if (puint && reverse_)
-        {
-            // XXX save ctor polarity and compare?
-        }
         break;
     case 38:
         name = "HardLimitFwdEn";
