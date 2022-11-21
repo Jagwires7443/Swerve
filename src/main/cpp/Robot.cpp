@@ -9,6 +9,7 @@
 
 void Robot::RobotInit() noexcept
 {
+  frc::LiveWindow::SetEnabled(false);
   frc::LiveWindow::DisableAllTelemetry();
 }
 
