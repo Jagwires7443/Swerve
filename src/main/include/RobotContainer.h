@@ -73,6 +73,7 @@ private:
   std::unique_ptr<MaxVAndATurningCommand> m_maxVAndATurningCommand;
   std::unique_ptr<MaxVAndADriveCommand> m_maxVAndADriveCommand;
   std::unique_ptr<XsAndOsCommand> m_xsAndOsCommand;
+  std::unique_ptr<RotateModulesCommand> m_rotateModulesCommand;
   std::unique_ptr<SquareCommand> m_squareCommand;
   std::unique_ptr<SpirographCommand> m_spirographCommand;
   std::unique_ptr<OrbitCommand> m_orbitCommand;

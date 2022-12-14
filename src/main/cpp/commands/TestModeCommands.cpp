@@ -99,6 +99,29 @@ void XsAndOsCommand::Execute() noexcept
     }
 }
 
+void RotateModulesCommand::Initialize() noexcept
+{
+    m_iteration = 0;
+}
+
+void RotateModulesCommand::End(bool interrupted) noexcept
+{
+}
+
+void RotateModulesCommand::Execute() noexcept
+{
+    // This is expected to run at ~20Hz.  So 100 iterations is ~5s.
+    if (!m_subsystem->SetTurningPosition(1_deg * m_iteration))
+    {
+        return;
+    }
+
+    if (++m_iteration >= 360)
+    {
+        m_iteration = 0;
+    }
+}
+
 void SquareCommand::Initialize() noexcept
 {
     m_side = 0;

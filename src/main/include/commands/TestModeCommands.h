@@ -87,6 +87,26 @@ private:
     unsigned m_iteration{0};
 };
 
+// Command swerve modules to slowly rotate together (spin).
+class RotateModulesCommand
+    : public frc2::CommandHelper<frc2::CommandBase, RotateModulesCommand>
+{
+public:
+    explicit RotateModulesCommand(DriveSubsystem *subsystem) noexcept
+        : m_subsystem{subsystem} { SetName("Rotate Modules"); }
+
+    void Initialize() noexcept override;
+
+    void Execute() noexcept override;
+
+    void End(bool interrupted) noexcept override;
+
+private:
+    DriveSubsystem *m_subsystem{nullptr};
+
+    unsigned m_iteration{0};
+};
+
 // Drive in a square.
 class SquareCommand
     : public frc2::CommandHelper<frc2::CommandBase, SquareCommand>

@@ -70,6 +70,7 @@ RobotContainer::RobotContainer() noexcept
   m_maxVAndATurningCommand = std::make_unique<MaxVAndATurningCommand>(&m_driveSubsystem);
   m_maxVAndADriveCommand = std::make_unique<MaxVAndADriveCommand>(&m_driveSubsystem);
   m_xsAndOsCommand = std::make_unique<XsAndOsCommand>(&m_driveSubsystem);
+  m_rotateModulesCommand = std::make_unique<RotateModulesCommand>(&m_driveSubsystem);
   m_squareCommand = std::make_unique<SquareCommand>(&m_driveSubsystem);
   m_spirographCommand = std::make_unique<SpirographCommand>(&m_driveSubsystem);
   m_orbitCommand = std::make_unique<OrbitCommand>(&m_driveSubsystem);
@@ -302,6 +303,7 @@ void RobotContainer::TestInit() noexcept
   chooser->AddOption("Turning Max", m_maxVAndATurningCommand.get());
   chooser->AddOption("Drive Max", m_maxVAndADriveCommand.get());
   chooser->AddOption("Xs and Os", m_xsAndOsCommand.get());
+  chooser->AddOption("RotateModules", m_rotateModulesCommand.get());
   chooser->AddOption("Point", m_pointCommand.get());
   chooser->AddOption("Square", m_squareCommand.get());
   chooser->AddOption("Spirograph", m_spirographCommand.get());
