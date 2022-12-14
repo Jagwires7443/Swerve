@@ -887,3 +887,9 @@ void SwerveModule::BurnConfig() noexcept
     m_turningMotor->ApplyConfig(true);
     m_driveMotor->ApplyConfig(true);
 }
+
+void SwerveModule::ClearFaults() noexcept
+{
+    m_turningMotor->ClearFaults();
+    m_driveMotor->ClearFaults();
+}

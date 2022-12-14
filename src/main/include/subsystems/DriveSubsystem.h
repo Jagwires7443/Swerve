@@ -158,6 +158,8 @@ public:
 
   void BurnConfig() noexcept;
 
+  void ClearFaults() noexcept;
+
   // Front: +x, Rear: -x; Left: +y, Right -y.  Zero heading is to the front
   // and +rotation is counter-clockwise.  This is all standard, although it
   // means the robot's front is along the x-axis, which is often pointed to

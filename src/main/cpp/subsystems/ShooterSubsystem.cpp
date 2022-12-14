@@ -91,3 +91,9 @@ void ShooterSubsystem::BurnConfig() noexcept
     m_shooterMotor->ApplyConfig(true);
     m_backspinMotor->ApplyConfig(true);
 }
+
+void ShooterSubsystem::ClearFaults() noexcept
+{
+    m_shooterMotor->ClearFaults();
+    m_backspinMotor->ClearFaults();
+}

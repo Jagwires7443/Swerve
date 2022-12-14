@@ -249,6 +249,7 @@ public:
   void DriveVelocityPID(double P, double I, double IZ, double IM, double D, double DF, double F, double V, double A) noexcept;
 
   void BurnConfig() noexcept;
+  void ClearFaults() noexcept;
 
 private:
   void SetTurningPositionPID() noexcept;

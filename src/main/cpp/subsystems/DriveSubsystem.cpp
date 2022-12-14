@@ -1108,3 +1108,11 @@ void DriveSubsystem::BurnConfig() noexcept
   m_rearLeftSwerveModule->BurnConfig();
   m_rearRightSwerveModule->BurnConfig();
 }
+
+void DriveSubsystem::ClearFaults() noexcept
+{
+  m_frontLeftSwerveModule->ClearFaults();
+  m_frontRightSwerveModule->ClearFaults();
+  m_rearLeftSwerveModule->ClearFaults();
+  m_rearRightSwerveModule->ClearFaults();
+}

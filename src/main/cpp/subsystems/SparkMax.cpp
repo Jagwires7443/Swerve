@@ -120,38 +120,11 @@ namespace
             }
         }
 
-        void ClearFaults() noexcept override
-        {
-            faultBits_.reset();
-
-            resets_ = 0;
-            throws_ = 0;
-            catches_ = 0;
-            kError_ = 0;
-            kTimeout_ = 0;
-            kNotImplemented_ = 0;
-            kHALError_ = 0;
-            kCantFindFirmware_ = 0;
-            kFirmwareTooOld_ = 0;
-            kFirmwareTooNew_ = 0;
-            kParamInvalidID_ = 0;
-            kParamMismatchType_ = 0;
-            kParamAccessMode_ = 0;
-            kParamInvalid_ = 0;
-            kParamNotImplementedDeprecated_ = 0;
-            kFollowConfigMismatch_ = 0;
-            kInvalid_ = 0;
-            kSetpointOutOfRange_ = 0;
-            kUnknown_ = 0;
-            kCANDisconnected_ = 0;
-            kDuplicateCANId_ = 0;
-            kInvalidCANId_ = 0;
-            kSparkMaxDataPortAlreadyConfiguredDifferently_ = 0;
-        }
+        void ClearFaults() noexcept override;
 
         bool GetStatus() noexcept override
         {
-            return motor_ && encoder_ && controller_ && faultBits_.none() && configGood_ && !configPush_ && !configBurn_;
+            return motor_ && encoder_ && controller_ && faultBits_.none() && configGood_ && !configLock_ && !configPush_ && !configBurn_;
         }
 
         // Every method listed above does any work it has via Periodic().
@@ -269,18 +242,24 @@ namespace
         bool configReboot_{true};
         uint sequence_{0};
 
+        // Cumulative faults (since last explicit clear).
         std::bitset<16> faultBits_;
+
+        // Current configuration verification status.
         bool configGood_{false};
 
+        // Configuration state machine state and actions.
         bool configLock_{false};
         bool configRead_{false};
         bool configPush_{false};
         bool configBurn_{false};
         bool configRest_{false};
 
+        // Last commanded position or velocity.
         double position_{0.0};
         double velocity_{0.0};
 
+        // Counters for all types of error (since last explicit clear).
         uint resets_{0};
         uint throws_{0};
         uint catches_{0};
@@ -387,6 +366,95 @@ std::unique_ptr<SmartMotorBase> SparkMaxFactory::CreateSparkMax(const std::strin
     return std::make_unique<SparkMax>(name, canId, inverted, encoderCounts);
 }
 
+void SparkMax::ClearFaults() noexcept
+{
+    if (faultBits_.none() &&
+        resets_ == 0 &&
+        throws_ == 0 &&
+        catches_ == 0 &&
+        kError_ == 0 &&
+        kTimeout_ == 0 &&
+        kNotImplemented_ == 0 &&
+        kHALError_ == 0 &&
+        kCantFindFirmware_ == 0 &&
+        kFirmwareTooOld_ == 0 &&
+        kFirmwareTooNew_ == 0 &&
+        kParamInvalidID_ == 0 &&
+        kParamMismatchType_ == 0 &&
+        kParamAccessMode_ == 0 &&
+        kParamInvalid_ == 0 &&
+        kParamNotImplementedDeprecated_ == 0 &&
+        kFollowConfigMismatch_ == 0 &&
+        kInvalid_ == 0 &&
+        kSetpointOutOfRange_ == 0 &&
+        kUnknown_ == 0 &&
+        kCANDisconnected_ == 0 &&
+        kDuplicateCANId_ == 0 &&
+        kInvalidCANId_ == 0 &&
+        kSparkMaxDataPortAlreadyConfiguredDifferently_ == 0)
+    {
+        return;
+    }
+
+    const bool status = GetStatus();
+    const std::string faultInfo = FaultInfo(faultBits_.to_ulong());
+
+    faultBits_.reset();
+
+    std::printf("SparkMax[%i] %s Status: %s[%s] %u/%u/%u/%u/%u/%u/%u/%u/%u/%u/%u/%u/%u/%u/%u/%u/%u/%u/%u/%u/%u/%u/%u.\n",
+                canId_,
+                name_.c_str(),
+                status ? "T" : "F",
+                faultInfo.c_str(),
+                resets_,
+                throws_,
+                catches_,
+                kError_,
+                kTimeout_,
+                kNotImplemented_,
+                kHALError_,
+                kCantFindFirmware_,
+                kFirmwareTooOld_,
+                kFirmwareTooNew_,
+                kParamInvalidID_,
+                kParamMismatchType_,
+                kParamAccessMode_,
+                kParamInvalid_,
+                kParamNotImplementedDeprecated_,
+                kFollowConfigMismatch_,
+                kInvalid_,
+                kSetpointOutOfRange_,
+                kUnknown_,
+                kCANDisconnected_,
+                kDuplicateCANId_,
+                kInvalidCANId_,
+                kSparkMaxDataPortAlreadyConfiguredDifferently_);
+
+    resets_ = 0;
+    throws_ = 0;
+    catches_ = 0;
+    kError_ = 0;
+    kTimeout_ = 0;
+    kNotImplemented_ = 0;
+    kHALError_ = 0;
+    kCantFindFirmware_ = 0;
+    kFirmwareTooOld_ = 0;
+    kFirmwareTooNew_ = 0;
+    kParamInvalidID_ = 0;
+    kParamMismatchType_ = 0;
+    kParamAccessMode_ = 0;
+    kParamInvalid_ = 0;
+    kParamNotImplementedDeprecated_ = 0;
+    kFollowConfigMismatch_ = 0;
+    kInvalid_ = 0;
+    kSetpointOutOfRange_ = 0;
+    kUnknown_ = 0;
+    kCANDisconnected_ = 0;
+    kDuplicateCANId_ = 0;
+    kInvalidCANId_ = 0;
+    kSparkMaxDataPortAlreadyConfiguredDifferently_ = 0;
+}
+
 void SparkMax::ShuffleboardCreate(frc::ShuffleboardContainer &container,
                                   std::function<void(double)> control,
                                   std::function<void()> reset) noexcept
@@ -432,6 +500,8 @@ void SparkMax::ShuffleboardCreate(frc::ShuffleboardContainer &container,
                     .WithPosition(5, 1)
                     .WithWidget(frc::BuiltInWidgets::kToggleButton);
 
+    controlF_ = control;
+    resetF_ = reset;
     shuffleboard_ = true;
 }
 
@@ -479,7 +549,7 @@ void SparkMax::ShuffleboardPeriodic() noexcept
         } });
 
     temperatureUI_->GetEntry().SetDouble(temperature);
-    statusUI_->GetEntry().SetBoolean(motor_ && encoder_ && controller_ && configGood_ && faults == 0);
+    statusUI_->GetEntry().SetBoolean(motor_ && encoder_ && controller_ && configGood_ && !configLock_ && faults == 0);
     faultsUI_->GetEntry().SetString(FaultInfo(faults));
     stickyFaultsUI_->GetEntry().SetString(FaultInfo(stickyFaults));
     voltageUI_->GetEntry().SetDouble(voltage);
@@ -544,6 +614,19 @@ void SparkMax::Periodic() noexcept
         ShuffleboardPeriodic();
     }
 
+    // This call should be safe and "free", in that it only reports information
+    // collected from periodic status frames.  To capture any transient events,
+    // GetStickyFaults() is used instead of GetFaults().  There is no
+    // expectation that fault information is instataeously accurate, it is only
+    // used for reporting and to detect any motor controller reboots.  Make
+    // things extra sticky using bitwise OR.  This is cleared by ClearFaults().
+    // This could lead to overcounting, but errors are cleared fairly quickly
+    // and it's not terrible to draw extra attention to any problems.
+    if (motor_)
+    {
+        faultBits_ |= std::bitset<16>(motor_->GetStickyFaults());
+    }
+
     // In microseconds.  At 50Hz, this will nominally tick by increments of 20.
     // The object here is too only continue at a rate of around 3Hz, and to
     // spread things around so that the aggregate work of all motor controllers
@@ -563,19 +646,6 @@ void SparkMax::Periodic() noexcept
     FPGATime_ = FPGATime;
     iteration_ = canId_ % 16;
 
-    // This call should be safe and "free", in that it only reports information
-    // collected from periodic status frames.  To capture any transient events,
-    // GetStickyFaults() is used instead of GetFaults().  There is no
-    // expectation that fault information is instataeously accurate, it is only
-    // used for reporting and to detect any motor controller reboots.  Make
-    // things extra sticky using bitwise OR.  This is cleared by ClearFaults().
-    // This could lead to overcounting, but errors are cleared fairly quickly
-    // and it's not terrible to draw extra attention to any problems.
-    if (motor_)
-    {
-        faultBits_ |= std::bitset<16>(motor_->GetStickyFaults());
-    }
-
     ConfigPeriodic();
 }
 
@@ -583,7 +653,7 @@ void SparkMax::Periodic() noexcept
 // the triple set of REV objects associated with this SparkMax, clear any motor
 // controller faults, and restore volatile state.  After things are at this
 // point, persistent config parameters are handled by another state machine, as
-// appropriate.  Also constructs limit switch REV objects as appropriate.
+// appropriate.  Also construct limit switch REV objects, as appropriate.
 void SparkMax::ConfigPeriodic() noexcept
 {
     // First stage of state machine; this has to be there before going further.
@@ -700,6 +770,7 @@ void SparkMax::ConfigPeriodic() noexcept
             // This is fast/"free", so it does not need it's own state.
             const std::tuple<bool, bool, std::string> verify = VerifyConfig(k, uint{v});
 
+            // If this needs to be set following reset of controller...
             if (std::get<1>(verify))
             {
                 // This isn't fast, so it consumes this Periodic() iteration.
@@ -946,8 +1017,12 @@ void SparkMax::PersistentConfigPeriodic() noexcept
                  {
             if (AnyError(motor_->BurnFlash()))
                 {
+                    std::printf("SparkMax[%i] %s burn config: FAIL!\n", canId_, name_.c_str());
+
                     return;
-                } });
+                }
+
+                std::printf("SparkMax[%i] %s burn config: OK.\n", canId_, name_.c_str()); });
     }
 
     // All done!  Force an explicit config read, to verify and update status.

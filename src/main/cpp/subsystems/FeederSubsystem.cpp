@@ -155,3 +155,11 @@ void FeederSubsystem::BurnConfig() noexcept
     m_feederMotor->ApplyConfig(true);
     m_climberMotor->ApplyConfig(true);
 }
+
+void FeederSubsystem::ClearFaults() noexcept
+{
+    m_intakeMotor->ClearFaults();
+    m_elevatorMotor->ClearFaults();
+    m_feederMotor->ClearFaults();
+    m_climberMotor->ClearFaults();
+}

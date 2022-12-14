@@ -79,6 +79,10 @@ RobotContainer::RobotContainer() noexcept
 
 void RobotContainer::AutonomousInit() noexcept
 {
+  m_driveSubsystem.ClearFaults();
+  m_feederSubsystem.ClearFaults();
+  m_shooterSubsystem.ClearFaults();
+
   m_driveSubsystem.ResetEncoders();
 
   m_driveSubsystem.SetDefaultCommand(frc2::RunCommand([&]() -> void {},
@@ -93,6 +97,10 @@ void RobotContainer::AutonomousInit() noexcept
 
 void RobotContainer::TeleopInit() noexcept
 {
+  m_driveSubsystem.ClearFaults();
+  m_feederSubsystem.ClearFaults();
+  m_shooterSubsystem.ClearFaults();
+
   m_driveSubsystem.ResetEncoders();
 
   m_driveSubsystem.SetDefaultCommand(*m_driveCommand);
@@ -280,6 +288,10 @@ void RobotContainer::TestInit() noexcept
 {
   frc2::CommandScheduler::GetInstance().CancelAll();
 
+  m_driveSubsystem.ClearFaults();
+  m_feederSubsystem.ClearFaults();
+  m_shooterSubsystem.ClearFaults();
+
   m_driveSubsystem.TestInit();
   m_feederSubsystem.TestInit();
   m_shooterSubsystem.TestInit();
@@ -305,6 +317,10 @@ void RobotContainer::TestExit() noexcept
 {
   frc2::CommandScheduler::GetInstance().CancelAll();
 
+  m_driveSubsystem.ClearFaults();
+  m_feederSubsystem.ClearFaults();
+  m_shooterSubsystem.ClearFaults();
+
   m_driveSubsystem.TestExit();
   m_feederSubsystem.TestExit();
   m_shooterSubsystem.TestExit();
@@ -321,6 +337,10 @@ void RobotContainer::DisabledInit() noexcept
 {
   frc2::CommandScheduler::GetInstance().CancelAll();
 
+  m_driveSubsystem.ClearFaults();
+  m_feederSubsystem.ClearFaults();
+  m_shooterSubsystem.ClearFaults();
+
   // Useful things may be done disabled... (construct, config, dashboard, etc.)
   frc2::CommandScheduler::GetInstance().Enable();
 
@@ -329,5 +349,9 @@ void RobotContainer::DisabledInit() noexcept
 
 void RobotContainer::DisabledExit() noexcept
 {
+  m_driveSubsystem.ClearFaults();
+  m_feederSubsystem.ClearFaults();
+  m_shooterSubsystem.ClearFaults();
+
   m_driveSubsystem.DisabledExit();
 }

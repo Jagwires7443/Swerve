@@ -27,6 +27,8 @@ public:
 
     void BurnConfig() noexcept;
 
+    void ClearFaults() noexcept;
+
 private:
     std::unique_ptr<SmartMotorBase> m_shooterMotorBase;
     std::unique_ptr<SmartMotorBase> m_backspinMotorBase;
