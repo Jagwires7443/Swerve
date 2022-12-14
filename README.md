@@ -1,5 +1,5 @@
 # Swerve (for Scrappy the Robot)
-C++ code for swerve drive: 2x SPARK MAX plus SRX MAG ENCODER per swerve module (i.e SDS Swerve Module); with Test Mode code.
+C++ code for swerve drive: 2x SPARK MAX/NEO plus SRX MAG ENCODER per swerve module (i.e SDS Swerve Module); with Test Mode code.
 
 See [SwerveSensorInterfaceBoard](https://github.com/Jagwires7443/SwerveSensorInterfaceBoard) for details on electrical connections.
 
@@ -18,6 +18,8 @@ Here are some of the features implemented in this code:
 * Logic to manage and save configuration of motor controller settings;
 * Primitives useful for autonomous driving;
 * Integrated with WPILib.
+
+Please see (and/or use) [shuffleboard.json](https://github.com/Jagwires7443/Swerve/blob/master/shuffleboard.json) for suggested Shuffleboard settings.
 
 ![alt text](https://github.com/Jagwires7443/Swerve/blob/master/TestMode1.PNG?raw=true)
 
