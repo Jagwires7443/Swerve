@@ -5,6 +5,7 @@
 #include <frc/DoubleSolenoid.h>
 #include <frc2/command/SubsystemBase.h>
 
+#include <chrono>
 #include <memory>
 
 class FeederSubsystem : public frc2::SubsystemBase
@@ -17,6 +18,8 @@ public:
     FeederSubsystem &operator=(const FeederSubsystem &) = delete;
 
     void Periodic() noexcept override;
+
+    bool GetStatus() const noexcept;
 
     void TestInit() noexcept;
     void TestExit() noexcept;
@@ -56,4 +59,6 @@ private:
 
     std::unique_ptr<frc::DoubleSolenoid> m_intakeRelease;
     std::unique_ptr<frc::DoubleSolenoid> m_intakeRaise;
+
+    std::chrono::steady_clock::time_point m_verifyMotorControllersWhen;
 };

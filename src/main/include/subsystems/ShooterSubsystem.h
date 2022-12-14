@@ -4,6 +4,7 @@
 
 #include <frc2/command/SubsystemBase.h>
 
+#include <chrono>
 #include <memory>
 
 class ShooterSubsystem : public frc2::SubsystemBase
@@ -16,6 +17,8 @@ public:
     ShooterSubsystem &operator=(const ShooterSubsystem &) = delete;
 
     void Periodic() noexcept override;
+
+    bool GetStatus() const noexcept;
 
     void TestInit() noexcept;
     void TestExit() noexcept;
@@ -34,4 +37,6 @@ private:
     std::unique_ptr<SmartMotorBase> m_backspinMotorBase;
     std::unique_ptr<SmartMotor<units::angle::turns>> m_shooterMotor;
     std::unique_ptr<SmartMotor<units::angle::turns>> m_backspinMotor;
+
+    std::chrono::steady_clock::time_point m_verifyMotorControllersWhen;
 };

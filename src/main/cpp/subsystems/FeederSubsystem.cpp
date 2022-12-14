@@ -63,9 +63,32 @@ void FeederSubsystem::Periodic() noexcept
     m_climberMotor->Periodic();
 }
 
+bool FeederSubsystem::GetStatus() const noexcept
+{
+    return m_intakeMotor->GetStatus() ||
+           m_elevatorMotor->GetStatus() ||
+           m_feederMotor->GetStatus() ||
+           m_climberMotor->GetStatus();
+}
+
 void FeederSubsystem::TestInit() noexcept {}
 void FeederSubsystem::TestExit() noexcept {}
-void FeederSubsystem::TestPeriodic() noexcept {}
+
+void FeederSubsystem::TestPeriodic() noexcept
+{
+    const std::chrono::time_point now = std::chrono::steady_clock::now();
+    if (now >= m_verifyMotorControllersWhen)
+    {
+        using namespace std::chrono_literals;
+
+        m_verifyMotorControllersWhen = now + 15s;
+
+        m_intakeMotor->CheckConfig();
+        m_elevatorMotor->CheckConfig();
+        m_feederMotor->CheckConfig();
+        m_climberMotor->CheckConfig();
+    }
+}
 
 void FeederSubsystem::Default(const double percent) noexcept
 {

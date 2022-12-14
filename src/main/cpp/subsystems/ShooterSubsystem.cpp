@@ -32,9 +32,27 @@ void ShooterSubsystem::Periodic() noexcept
     m_backspinMotor->Periodic();
 }
 
+bool ShooterSubsystem::GetStatus() const noexcept
+{
+    return m_shooterMotor->GetStatus() ||
+           m_backspinMotor->GetStatus();
+}
+
 void ShooterSubsystem::TestInit() noexcept {}
 void ShooterSubsystem::TestExit() noexcept {}
-void ShooterSubsystem::TestPeriodic() noexcept {}
+void ShooterSubsystem::TestPeriodic() noexcept
+{
+    const std::chrono::time_point now = std::chrono::steady_clock::now();
+    if (now >= m_verifyMotorControllersWhen)
+    {
+        using namespace std::chrono_literals;
+
+        m_verifyMotorControllersWhen = now + 15s;
+
+        m_shooterMotor->CheckConfig();
+        m_backspinMotor->CheckConfig();
+    }
+}
 
 void ShooterSubsystem::Default(const double percent, const double velocity) noexcept
 {
