@@ -1,0 +1,36 @@
+{
+  "tabPane": [
+    {
+      "title": "SmartDashboard",
+      "autoPopulate": true,
+      "autoPopulatePrefix": "SmartDashboard/",
+      "widgetPane": {
+        "gridSize": 48.0,
+        "showGrid": true,
+        "hgap": 0.0,
+        "vgap": 0.0,
+        "titleType": 1,
+        "tiles": {}
+      }
+    },
+    {
+      "title": "LiveWindow",
+      "autoPopulate": true,
+      "autoPopulatePrefix": "LiveWindow/",
+      "widgetPane": {
+        "gridSize": 48.0,
+        "showGrid": true,
+        "hgap": 0.0,
+        "vgap": 0.0,
+        "titleType": 1,
+        "tiles": {}
+      }
+    }
+  ],
+  "windowGeometry": {
+    "x": -8.0,
+    "y": -8.0,
+    "width": 1382.0,
+    "height": 784.0
+  }
+}
