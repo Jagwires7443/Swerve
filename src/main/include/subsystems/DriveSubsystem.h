@@ -25,6 +25,7 @@
 #include <units/length.h>
 #include <units/velocity.h>
 #include <wpi/array.h>
+#include <wpi/DataLog.h>
 #include <wpi/sendable/Sendable.h>
 #include <wpi/sendable/SendableBuilder.h>
 #include <wpi/sendable/SendableHelper.h>
@@ -176,6 +177,9 @@ private:
   // Test mode method to create graph tab for characterization.
   void CreateGraphTab(SwerveModule::GraphSelection graphSelection) noexcept;
   void UpdateGraphTab(SwerveModule::GraphSelection graphSelection) noexcept;
+
+  // Used for printf-style logging.
+  wpi::log::StringLogEntry m_stringLog;
 
   // The gyro sensor.
   std::unique_ptr<AHRS> m_ahrs;

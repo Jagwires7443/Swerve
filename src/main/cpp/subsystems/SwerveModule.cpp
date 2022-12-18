@@ -13,6 +13,7 @@
 #include "Constants.h"
 #include "subsystems/SwerveModule.h"
 
+#include <frc/DataLogManager.h>
 #include <frc/RobotController.h>
 #include <frc/shuffleboard/BuiltInWidgets.h>
 #include <frc/shuffleboard/Shuffleboard.h>
@@ -39,6 +40,11 @@ SwerveModule::SwerveModule(
     const int turningEncoderPort,
     const int alignmentOffset) noexcept : m_name{name}
 {
+    // Set up onboard printf-style logging.
+    std::string logName{"/SwerveModule/"};
+    logName += name;
+    m_stringLog = wpi::log::StringLogEntry(frc::DataLogManager::GetLog(), logName);
+
     std::printf("Swerve Module (%s) Initialization... ", m_name.c_str());
 
     // Construct turning position PID controller on the roboRIO; only used when

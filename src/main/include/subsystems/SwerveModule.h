@@ -13,6 +13,7 @@
 #include <units/angle.h>
 #include <units/length.h>
 #include <units/velocity.h>
+#include <wpi/DataLog.h>
 #include <wpi/sendable/Sendable.h>
 #include <wpi/sendable/SendableBuilder.h>
 #include <wpi/sendable/SendableHelper.h>
@@ -263,6 +264,9 @@ private:
   // robot, and are never expected to change.
   const bool m_driveMotorInverted{physical::kDriveMotorInverted};
   const bool m_turningMotorInverted{physical::kTurningMotorInverted};
+
+  // Used for printf-style logging.
+  wpi::log::StringLogEntry m_stringLog;
 
   // Until REV bug for continuous rotation is fixed, must do turning PID on the
   // roboRIO.  Setting m_rio false allows testing turning PID on the SPARK MAX.

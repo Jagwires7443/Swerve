@@ -1,9 +1,23 @@
 #include "subsystems/SparkMax.h"
 
+#include <frc/DataLogManager.h>
+#include <frc/RobotController.h>
+#include <frc/shuffleboard/ShuffleboardWidget.h>
+#include <wpi/DataLog.h>
+
+#include <rev/CANSparkMax.h>
+#include <rev/CANSparkMaxLowLevel.h>
+#include <rev/RelativeEncoder.h>
+#include <rev/REVLibError.h>
+#include <rev/SparkMaxLimitSwitch.h>
+#include <rev/SparkMaxPIDController.h>
+
 #include <bitset>
 #include <cmath>
 #include <cstddef>
+#include <cstdio>
 #include <exception>
+// #include <format> -- C++ 20 is coming for 2023!
 #include <functional>
 #include <iomanip>
 #include <ios>
@@ -14,16 +28,6 @@
 #include <string>
 #include <string_view>
 #include <tuple>
-
-#include <rev/CANSparkMax.h>
-#include <rev/CANSparkMaxLowLevel.h>
-#include <rev/RelativeEncoder.h>
-#include <rev/REVLibError.h>
-#include <rev/SparkMaxLimitSwitch.h>
-#include <rev/SparkMaxPIDController.h>
-
-#include <frc/RobotController.h>
-#include <frc/shuffleboard/ShuffleboardWidget.h>
 
 // Spark Max is a smart motor controller, which communicates via the CAN bus.
 // There are periodic packets which flow both to and from this controller.  API
@@ -47,85 +51,22 @@ namespace
     class SparkMax : public SmartMotorBase
     {
     public:
-        SparkMax(const std::string_view name, const int canId, const bool inverted, const int encoderCounts) noexcept : name_{name}, canId_{canId}, inverted_{inverted}, encoderCounts_{encoderCounts}
-        {
-            SetConfig(ConfigMap());
-        }
+        SparkMax(const std::string_view name, const int canId, const bool inverted, const int encoderCounts) noexcept;
 
         SparkMax(const SparkMax &) = delete;
         SparkMax &operator=(const SparkMax &) = delete;
 
-#if 0
-        // Print out string to index mapping (for updating switch/cases).
-        void ConfigIndex() noexcept
-        {
-            for (const auto &elem : SparkMaxFactory::configDefaults)
-            {
-                const auto kv = SparkMaxFactory::configDefaults.find(elem.first);
+        void SetConfig(const ConfigMap config) noexcept override;
 
-                const auto ndx = std::distance(kv, SparkMaxFactory::configDefaults.end());
+        void AddConfig(const ConfigMap config) noexcept override;
 
-                std::printf("Index: %s = %i\n", elem.first.c_str(), ndx);
-            }
-        }
-#endif
+        void CheckConfig() noexcept override;
 
-        void SetConfig(const ConfigMap config) noexcept override
-        {
-            ConfigMap tmp(config);
-
-            // Ensure at least these two config parameters are managed.
-            config_.clear();
-            config_["Firmware Version"] = std::get<uint>(SparkMaxFactory::configDefaults.at("Firmware Version"));
-            config_["kIdleMode"] = std::get<uint>(SparkMaxFactory::configDefaults.at("kIdleMode"));
-
-            // The order matters here, hence the somewhat convoluted logic.
-            tmp.merge(config_);
-            config_.swap(tmp);
-        }
-
-        void AddConfig(const ConfigMap config) noexcept override
-        {
-            ConfigMap tmp(config);
-
-            // The order matters here, hence the somewhat convoluted logic.
-            tmp.merge(config_);
-            config_.swap(tmp);
-        }
-
-        void CheckConfig() noexcept override
-        {
-            if (configLock_)
-            {
-                return;
-            }
-
-            configRead_ = true;
-        }
-
-        void ApplyConfig(bool burn) noexcept override
-        {
-            if (configLock_)
-            {
-                return;
-            }
-
-            configRead_ = true;
-            configPush_ = true;
-
-            if (burn)
-            {
-                configBurn_ = true;
-                configRest_ = true;
-            }
-        }
+        void ApplyConfig(bool burn) noexcept override;
 
         void ClearFaults() noexcept override;
 
-        bool GetStatus() noexcept override
-        {
-            return motor_ && encoder_ && controller_ && faultBits_.none() && configGood_ && !configLock_ && !configPush_ && !configBurn_;
-        }
+        bool GetStatus() noexcept override;
 
         // Every method listed above does any work it has via Periodic().
         // Alternatively, most of this work would be done in a different thread
@@ -171,11 +112,22 @@ namespace
         double GetVelocityRaw() noexcept override;
 
     private:
+        void ShuffleboardPeriodic() noexcept;
+        void ConfigPeriodic() noexcept;
+        void PersistentConfigPeriodic() noexcept;
+        void DoSafely(const char *const what, std::function<void()> work) noexcept;
+        bool AnyError(const rev::REVLibError returnCode) noexcept;
+        std::tuple<bool, bool, std::string> VerifyConfig(const std::string_view key, const ConfigValue &value) noexcept;
+        std::string ApplyConfig(const std::string_view key, const ConfigValue &value) noexcept;
+
         // Parameters supplied though ctor.
         const std::string name_;
         const int canId_;
         const bool inverted_;
         const int encoderCounts_;
+
+        // Used for printf-style logging.
+        wpi::log::StringLogEntry m_stringLog;
 
         // Underlying REV object holders.
         std::unique_ptr<rev::CANSparkMax> motor_;
@@ -283,14 +235,6 @@ namespace
         uint kDuplicateCANId_{0};
         uint kInvalidCANId_{0};
         uint kSparkMaxDataPortAlreadyConfiguredDifferently_{0};
-
-        void ShuffleboardPeriodic() noexcept;
-        void ConfigPeriodic() noexcept;
-        void PersistentConfigPeriodic() noexcept;
-        void DoSafely(const char *const what, std::function<void()> work) noexcept;
-        bool AnyError(const rev::REVLibError returnCode) noexcept;
-        std::tuple<bool, bool, std::string> VerifyConfig(const std::string_view key, const ConfigValue &value) noexcept;
-        std::string ApplyConfig(const std::string_view key, const ConfigValue &value) noexcept;
     };
 
     std::string FirmwareInfo(const uint32_t firmwareVersion, const std::string &firmwareString) noexcept
@@ -361,9 +305,84 @@ namespace
     }
 }
 
+void SparkMaxFactory::ConfigIndex() noexcept
+{
+    for (const auto &elem : configDefaults)
+    {
+        const auto kv = configDefaults.find(elem.first);
+
+        const auto ndx = std::distance(kv, configDefaults.end());
+
+        std::printf("Index: %s = %i\n", elem.first.c_str(), ndx);
+    }
+}
+
 std::unique_ptr<SmartMotorBase> SparkMaxFactory::CreateSparkMax(const std::string_view name, const int canId, const bool inverted, const int encoderCounts) noexcept
 {
     return std::make_unique<SparkMax>(name, canId, inverted, encoderCounts);
+}
+
+SparkMax::SparkMax(const std::string_view name, const int canId, const bool inverted, const int encoderCounts) noexcept : name_{name}, canId_{canId}, inverted_{inverted}, encoderCounts_{encoderCounts}
+{
+    // Set up onboard printf-style logging.
+    std::string logName{"/SparkMax/"};
+    logName += name;
+    logName += '[';
+    logName += canId;
+    logName += ']';
+    m_stringLog = wpi::log::StringLogEntry(frc::DataLogManager::GetLog(), logName);
+
+    SetConfig(ConfigMap());
+}
+
+void SparkMax::SetConfig(const ConfigMap config) noexcept
+{
+    ConfigMap tmp(config);
+
+    // Ensure at least these two config parameters are managed.
+    config_.clear();
+    config_["Firmware Version"] = std::get<uint>(SparkMaxFactory::configDefaults.at("Firmware Version"));
+    config_["kIdleMode"] = std::get<uint>(SparkMaxFactory::configDefaults.at("kIdleMode"));
+
+    // The order matters here, hence the somewhat convoluted logic.
+    tmp.merge(config_);
+    config_.swap(tmp);
+}
+
+void SparkMax::AddConfig(const ConfigMap config) noexcept
+{
+    ConfigMap tmp(config);
+
+    // The order matters here, hence the somewhat convoluted logic.
+    tmp.merge(config_);
+    config_.swap(tmp);
+}
+
+void SparkMax::CheckConfig() noexcept
+{
+    if (configLock_)
+    {
+        return;
+    }
+
+    configRead_ = true;
+}
+
+void SparkMax::ApplyConfig(bool burn) noexcept
+{
+    if (configLock_)
+    {
+        return;
+    }
+
+    configRead_ = true;
+    configPush_ = true;
+
+    if (burn)
+    {
+        configBurn_ = true;
+        configRest_ = true;
+    }
 }
 
 void SparkMax::ClearFaults() noexcept
@@ -453,6 +472,11 @@ void SparkMax::ClearFaults() noexcept
     kDuplicateCANId_ = 0;
     kInvalidCANId_ = 0;
     kSparkMaxDataPortAlreadyConfiguredDifferently_ = 0;
+}
+
+bool SparkMax::GetStatus() noexcept
+{
+    return motor_ && encoder_ && controller_ && faultBits_.none() && configGood_ && !configLock_ && !configPush_ && !configBurn_;
 }
 
 void SparkMax::ShuffleboardCreate(frc::ShuffleboardContainer &container,

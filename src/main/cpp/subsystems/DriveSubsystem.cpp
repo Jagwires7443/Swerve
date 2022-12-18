@@ -9,6 +9,7 @@
 #include "subsystems/DriveSubsystem.h"
 #include "subsystems/SwerveModule.h"
 
+#include <frc/DataLogManager.h>
 #include <frc/shuffleboard/BuiltInWidgets.h>
 #include <frc/shuffleboard/Shuffleboard.h>
 #include <frc/shuffleboard/ShuffleboardContainer.h>
@@ -32,6 +33,9 @@
 
 DriveSubsystem::DriveSubsystem() noexcept
 {
+  // Set up onboard printf-style logging.
+  m_stringLog = wpi::log::StringLogEntry(frc::DataLogManager::GetLog(), "/DriveSubsystem/");
+
   // Set up the "navX" IMU first, so there's more time before it is used later.
   // See https://pdocs.kauailabs.com/navx-mxp/guidance/gyroaccelcalibration/.
   // Allow up to 20 seconds for callibration; it is supposed to be much faster,
