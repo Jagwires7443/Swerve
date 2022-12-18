@@ -4,6 +4,8 @@
 
 #include "Robot.h"
 
+#include <frc/DataLogManager.h>
+#include <frc/DriverStation.h>
 #include <frc/livewindow/LiveWindow.h>
 #include <frc2/command/CommandScheduler.h>
 
@@ -11,6 +13,9 @@ void Robot::RobotInit() noexcept
 {
   frc::LiveWindow::SetEnabled(false);
   frc::LiveWindow::DisableAllTelemetry();
+
+  frc::DataLogManager::Start();
+  frc::DriverStation::StartDataLog(frc::DataLogManager::GetLog());
 }
 
 /**

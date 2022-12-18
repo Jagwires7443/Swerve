@@ -75,10 +75,13 @@ void MaxVAndADriveCommand::Execute() noexcept
 void XsAndOsCommand::Initialize() noexcept
 {
     m_iteration = 0;
+
+    m_subsystem->ResetDrive();
 }
 
 void XsAndOsCommand::End(bool interrupted) noexcept
 {
+    m_subsystem->ResetDrive();
 }
 
 void XsAndOsCommand::Execute() noexcept
@@ -102,10 +105,13 @@ void XsAndOsCommand::Execute() noexcept
 void RotateModulesCommand::Initialize() noexcept
 {
     m_iteration = 0;
+
+    m_subsystem->ResetDrive();
 }
 
 void RotateModulesCommand::End(bool interrupted) noexcept
 {
+    m_subsystem->ResetDrive();
 }
 
 void RotateModulesCommand::Execute() noexcept
