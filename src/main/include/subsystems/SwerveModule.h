@@ -7,6 +7,7 @@
 #include "subsystems/SparkMax.h"
 
 #include <frc/controller/ProfiledPIDController.h>
+// XXX  #include <frc/kinematics/SwerveModulePosition.h>
 #include <frc/kinematics/SwerveModuleState.h>
 #include <frc/shuffleboard/ComplexWidget.h>
 #include <frc/shuffleboard/SimpleWidget.h>
@@ -209,6 +210,7 @@ public:
   // Commands which combine the above functions, useful for teleop driving.
   void ResetEncoders() noexcept;
   const frc::SwerveModuleState GetState() noexcept;
+  // XXX  const frc::SwerveModulePosition GetPosition() noexcept;
   void SetDesiredState(const frc::SwerveModuleState &state) noexcept;
 
   // Fancy test mode!  TestModeControl(true) puts the swerve modules in
