@@ -293,6 +293,8 @@ void RobotContainer::TestInit() noexcept
   m_feederSubsystem.ClearFaults();
   m_shooterSubsystem.ClearFaults();
 
+  m_driveSubsystem.ResetEncoders();
+
   m_driveSubsystem.TestInit();
   m_feederSubsystem.TestInit();
   m_shooterSubsystem.TestInit();
@@ -323,6 +325,8 @@ void RobotContainer::TestExit() noexcept
   m_feederSubsystem.ClearFaults();
   m_shooterSubsystem.ClearFaults();
 
+  m_driveSubsystem.ResetEncoders();
+
   m_driveSubsystem.TestExit();
   m_feederSubsystem.TestExit();
   m_shooterSubsystem.TestExit();
@@ -343,6 +347,8 @@ void RobotContainer::DisabledInit() noexcept
   m_feederSubsystem.ClearFaults();
   m_shooterSubsystem.ClearFaults();
 
+  m_driveSubsystem.ResetEncoders();
+
   // Useful things may be done disabled... (construct, config, dashboard, etc.)
   frc2::CommandScheduler::GetInstance().Enable();
 
@@ -354,6 +360,8 @@ void RobotContainer::DisabledExit() noexcept
   m_driveSubsystem.ClearFaults();
   m_feederSubsystem.ClearFaults();
   m_shooterSubsystem.ClearFaults();
+
+  m_driveSubsystem.ResetEncoders();
 
   m_driveSubsystem.DisabledExit();
 }
