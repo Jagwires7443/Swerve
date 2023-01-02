@@ -20,7 +20,7 @@
 #include <networktables/NetworkTableEntry.h>
 #include <networktables/NetworkTableInstance.h>
 #include <networktables/NetworkTableValue.h>
-#include <wpi/span.h>
+#include <wpi/span.h> // XXX  #include <span>
 
 #include <algorithm>
 #include <chrono>
@@ -612,7 +612,7 @@ void DriveSubsystem::TestPeriodic() noexcept
   if (m_graphSelection != SwerveModule::GraphSelection::kNone)
   {
     std::vector<double> fourDatumsVector{0.0, 0.0, 0.0, 0.0};
-    wpi::span<double> fourDatumsSpan(fourDatumsVector);
+    wpi::span<double> fourDatumsSpan(fourDatumsVector); // XXX  std::span
 
     const auto fl = m_frontLeftSwerveModule->TestModeGraphData(m_graphSelection);
     const auto fr = m_frontRightSwerveModule->TestModeGraphData(m_graphSelection);
