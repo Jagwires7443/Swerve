@@ -1,6 +1,6 @@
-#include "subsystems/PWMAngleSensor.h"
+#include "infrastructure/PWMAngleSensor.h"
 
-#include "subsystems/ShuffleboardWidgets.h"
+#include "infrastructure/ShuffleboardWidgets.h"
 
 AngleSensor::AngleSensor(const int channel, const int alignment) noexcept : alignment_{alignment}
 {
@@ -73,14 +73,14 @@ void AngleSensor::Periodic() noexcept
         encoderError -= 360.0;
     }
 
-    frequencyUI_->GetEntry().SetDouble(static_cast<double>(frequency));
-    commandDiscrepancyUI_->GetEntry().SetDouble(commandedError);
-    statusUI_->GetEntry().SetBoolean(status);
-    commandedUI_->GetEntry().SetDouble(commandedPosition.to<double>());
-    positionUI_->GetEntry().SetDouble(static_cast<double>(reportPosition));
-    outputUI_->GetEntry().SetDouble(output);
-    encoderDiscrepancyUI_->GetEntry().SetDouble(encoderError);
-    alignmentUI_->GetEntry().SetDouble(static_cast<double>(alignment_));
+    frequencyUI_->GetEntry()->SetDouble(static_cast<double>(frequency));
+    commandDiscrepancyUI_->GetEntry()->SetDouble(commandedError);
+    statusUI_->GetEntry()->SetBoolean(status);
+    commandedUI_->GetEntry()->SetDouble(commandedPosition.to<double>());
+    positionUI_->GetEntry()->SetDouble(static_cast<double>(reportPosition));
+    outputUI_->GetEntry()->SetDouble(output);
+    encoderDiscrepancyUI_->GetEntry()->SetDouble(encoderError);
+    alignmentUI_->GetEntry()->SetDouble(static_cast<double>(alignment_));
 }
 
 void AngleSensor::ShuffleboardCreate(frc::ShuffleboardContainer &container,
@@ -99,7 +99,7 @@ void AngleSensor::ShuffleboardCreate(frc::ShuffleboardContainer &container,
     headingUI_ = &container.Add("Heading", headingGyro_)
                       .WithPosition(1, 0)
                       .WithWidget(frc::BuiltInWidgets::kGyro)
-                      .WithProperties(wpi::StringMap<std::shared_ptr<nt::Value>>{
+                      .WithProperties(wpi::StringMap<nt::Value>{
                           std::make_pair("Counter clockwise", nt::Value::MakeBoolean(true))});
 
     commandedUI_ = &container.Add("Commanded", 0)

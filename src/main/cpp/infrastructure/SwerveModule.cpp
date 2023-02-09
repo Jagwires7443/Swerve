@@ -11,7 +11,7 @@
 // to implement this either on the roboRIO or on the SPARK MAX.
 
 #include "Constants.h"
-#include "subsystems/SwerveModule.h"
+#include "infrastructure/SwerveModule.h"
 
 #include <frc/DataLogManager.h>
 #include <frc/RobotController.h>
@@ -420,6 +420,16 @@ const frc::SwerveModuleState SwerveModule::GetState() noexcept
     return result;
 }
 
+const frc::SwerveModulePosition SwerveModule::GetPosition() noexcept
+{
+    frc::SwerveModulePosition result;
+
+    result.angle = frc::Rotation2d(GetTurningPosition());
+    result.distance = GetDriveDistance();
+
+    return result;
+}
+
 #if 0 // XXX
 const frc::SwerveModulePosition SwerveModule::GetPosition() noexcept
 {
@@ -479,7 +489,7 @@ void SwerveModule::TestInit() noexcept
                                   frc::BuiltInLayouts::kGrid)
             .WithPosition(0, 0)
             .WithSize(8, 13)
-            .WithProperties(wpi::StringMap<std::shared_ptr<nt::Value>>{
+            .WithProperties(wpi::StringMap<nt::Value>{
                 std::make_pair("Number of columns", nt::Value::MakeDouble(3.0)),
                 std::make_pair("Number of rows", nt::Value::MakeDouble(3.0))});
 
@@ -488,7 +498,7 @@ void SwerveModule::TestInit() noexcept
                                   frc::BuiltInLayouts::kGrid)
             .WithPosition(8, 0)
             .WithSize(20, 6)
-            .WithProperties(wpi::StringMap<std::shared_ptr<nt::Value>>{
+            .WithProperties(wpi::StringMap<nt::Value>{
                 std::make_pair("Number of columns", nt::Value::MakeDouble(6.0)),
                 std::make_pair("Number of rows", nt::Value::MakeDouble(2.0))});
 
@@ -497,7 +507,7 @@ void SwerveModule::TestInit() noexcept
                                   frc::BuiltInLayouts::kGrid)
             .WithPosition(8, 7)
             .WithSize(20, 6)
-            .WithProperties(wpi::StringMap<std::shared_ptr<nt::Value>>{
+            .WithProperties(wpi::StringMap<nt::Value>{
                 std::make_pair("Number of columns", nt::Value::MakeDouble(6.0)),
                 std::make_pair("Number of rows", nt::Value::MakeDouble(2.0))});
 

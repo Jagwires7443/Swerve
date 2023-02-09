@@ -2,7 +2,7 @@
 
 #include <string_view>
 
-#include "subsystems/SmartMotor.h"
+#include "infrastructure/SmartMotor.h"
 
 namespace SparkMaxFactory
 {

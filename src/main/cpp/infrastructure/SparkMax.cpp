@@ -1,4 +1,4 @@
-#include "subsystems/SparkMax.h"
+#include "infrastructure/SparkMax.h"
 
 #include <frc/DataLogManager.h>
 #include <frc/RobotController.h>
@@ -17,7 +17,7 @@
 #include <cstddef>
 #include <cstdio>
 #include <exception>
-// #include <format> -- C++ 20 is coming for 2023!
+// #include <format> -- XXX C++ 20 is coming for 2023!
 #include <functional>
 #include <iomanip>
 #include <ios>
@@ -532,13 +532,13 @@ void SparkMax::ShuffleboardCreate(frc::ShuffleboardContainer &container,
 void SparkMax::ShuffleboardPeriodic() noexcept
 {
     // Read controls information from Shuffleboard and manage interactive UI.
-    const bool reset = resetUI_->GetEntry().GetBoolean(false);
-    double control = controlUI_->GetEntry().GetDouble(0.0);
+    const bool reset = resetUI_->GetEntry()->GetBoolean(false);
+    double control = controlUI_->GetEntry()->GetDouble(0.0);
 
     if (reset)
     {
-        resetUI_->GetEntry().SetBoolean(false);
-        controlUI_->GetEntry().SetDouble(0.0);
+        resetUI_->GetEntry()->SetBoolean(false);
+        controlUI_->GetEntry()->SetDouble(0.0);
         control = 0.0;
     }
 
@@ -572,16 +572,16 @@ void SparkMax::ShuffleboardPeriodic() noexcept
             velocity = encoder_->GetVelocity() / 60.0; // Rotations per second
         } });
 
-    temperatureUI_->GetEntry().SetDouble(temperature);
-    statusUI_->GetEntry().SetBoolean(motor_ && encoder_ && controller_ && configGood_ && !configLock_ && faults == 0);
-    faultsUI_->GetEntry().SetString(FaultInfo(faults));
-    stickyFaultsUI_->GetEntry().SetString(FaultInfo(stickyFaults));
-    voltageUI_->GetEntry().SetDouble(voltage);
-    currentUI_->GetEntry().SetDouble(current);
-    percentUI_->GetEntry().SetDouble(percent);
-    speedUI_->GetEntry().SetDouble(speed);
-    distanceUI_->GetEntry().SetDouble(distance);
-    velocityUI_->GetEntry().SetDouble(velocity);
+    temperatureUI_->GetEntry()->SetDouble(temperature);
+    statusUI_->GetEntry()->SetBoolean(motor_ && encoder_ && controller_ && configGood_ && !configLock_ && faults == 0);
+    faultsUI_->GetEntry()->SetString(FaultInfo(faults));
+    stickyFaultsUI_->GetEntry()->SetString(FaultInfo(stickyFaults));
+    voltageUI_->GetEntry()->SetDouble(voltage);
+    currentUI_->GetEntry()->SetDouble(current);
+    percentUI_->GetEntry()->SetDouble(percent);
+    speedUI_->GetEntry()->SetDouble(speed);
+    distanceUI_->GetEntry()->SetDouble(distance);
+    velocityUI_->GetEntry()->SetDouble(velocity);
 
     if (reset)
     {

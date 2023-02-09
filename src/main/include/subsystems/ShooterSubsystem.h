@@ -1,6 +1,6 @@
 #pragma once
 
-#include "subsystems/SparkMax.h"
+#include "infrastructure/SparkMax.h"
 
 #include <frc2/command/SubsystemBase.h>
 

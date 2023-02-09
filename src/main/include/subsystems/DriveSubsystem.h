@@ -5,7 +5,7 @@
 #pragma once
 
 #include "Constants.h"
-#include "subsystems/SwerveModule.h"
+#include "infrastructure/SwerveModule.h"
 
 #include <AHRS.h>
 #include <frc/controller/ProfiledPIDController.h>
@@ -14,11 +14,12 @@
 #include <frc/geometry/Translation2d.h>
 #include <frc/kinematics/SwerveDriveKinematics.h>
 #include <frc/kinematics/SwerveDriveOdometry.h>
+#include <frc/kinematics/SwerveModulePosition.h>
 #include <frc/kinematics/SwerveModuleState.h>
 #include <frc/shuffleboard/ComplexWidget.h>
 #include <frc/shuffleboard/SimpleWidget.h>
 #include <frc/smartdashboard/SendableChooser.h>
-#include <frc2/command/Command.h>
+#include <frc2/command/CommandPtr.h>
 #include <frc2/command/SubsystemBase.h>
 #include <units/angle.h>
 #include <units/angular_velocity.h>
@@ -30,7 +31,9 @@
 #include <wpi/sendable/SendableBuilder.h>
 #include <wpi/sendable/SendableHelper.h>
 
+#include <functional>
 #include <memory>
+#include <optional>
 
 class DriveSubsystem : public frc2::SubsystemBase
 {
@@ -55,7 +58,7 @@ public:
   // Valid and unchanging, from return of TestInit() through destruction of
   // the associated DriveSubsystem().  This provides a way to inject Commands
   // into Test Mode, interactively.  If nullptr, TestInit() was never called.
-  frc::SendableChooser<frc2::Command *> *TestModeChooser() noexcept { return m_chooser.get(); }
+  frc::SendableChooser<std::function<frc2::CommandPtr()>> *TestModeChooser() noexcept { return &m_chooser; }
 
   // Obtain status of the overall swerve drive subsystem.
   bool GetStatus() const noexcept;
@@ -141,6 +144,8 @@ public:
    */
   void ResetOdometry(frc::Pose2d pose) noexcept;
 
+  wpi::array<frc::SwerveModulePosition, 4> GetModulePositions() noexcept;
+
   // Test mode method to power turning motors for characterization.
   void TestModeTurningVoltage(const double voltage) noexcept
   {
@@ -225,8 +230,9 @@ private:
   double m_maxProcessSecondDerivative{0.0};
 
   // Test Mode (only) instance of test command chooser.
-  std::unique_ptr<frc::SendableChooser<frc2::Command *>> m_chooser;
-  frc2::Command *m_command{nullptr};
+  frc::SendableChooser<std::function<frc2::CommandPtr()>> m_chooser;
+  std::function<frc2::CommandPtr()> m_commandFactory;
+  std::optional<frc2::CommandPtr> m_command;
 
   // Last commanded drive inputs, for Test Mode display.
   double m_rotation{0.0};

@@ -7,7 +7,7 @@
 // See https://github.com/wpilibsuite/allwpilib/blob/main/wpilibcExamples/src/main/cpp/examples/SwerveControllerCommand/cpp/subsystems/DriveSubsystem.cpp.
 
 #include "subsystems/DriveSubsystem.h"
-#include "subsystems/SwerveModule.h"
+#include "infrastructure/SwerveModule.h"
 
 #include <frc/DataLogManager.h>
 #include <frc/shuffleboard/BuiltInWidgets.h>
@@ -16,16 +16,17 @@
 #include <frc/shuffleboard/ShuffleboardLayout.h>
 #include <frc/shuffleboard/ShuffleboardTab.h>
 #include <frc/shuffleboard/SimpleWidget.h>
+#include <frc2/command/CommandBase.h>
 #include <frc2/command/CommandScheduler.h>
 #include <networktables/NetworkTableEntry.h>
 #include <networktables/NetworkTableInstance.h>
 #include <networktables/NetworkTableValue.h>
-#include <wpi/span.h> // XXX  #include <span>
 
 #include <algorithm>
 #include <chrono>
 #include <cmath>
 #include <regex>
+#include <span>
 #include <string>
 #include <string_view>
 #include <thread>
@@ -84,10 +85,6 @@ DriveSubsystem::DriveSubsystem() noexcept
   m_lagrange = m_orientationController->Calculate(+177.5_deg);
   m_orientationController->Reset(0.0_deg);
 
-  // Initial position (third parameter) defaulted to "frc::Pose2d()"; initial
-  // angle (second parameter) is automatically zeroed by navX initialization.
-  m_odometry = std::make_unique<frc::SwerveDriveOdometry<4>>(kDriveKinematics, 0.0_deg);
-
   // These are last, so there can be no movement from the swerve modules.
   m_frontLeftSwerveModule = std::make_unique<SwerveModule>(
       "Front Left",
@@ -116,6 +113,19 @@ DriveSubsystem::DriveSubsystem() noexcept
       physical::kRearRightTurningMotorCanID,
       physical::kRearRightTurningEncoderPort,
       physical::kRearRightAlignmentOffset);
+
+  // Initial position (third parameter) defaulted to "frc::Pose2d()"; initial
+  // angle (second parameter) is automatically zeroed by navX initialization.
+  m_odometry = std::make_unique<frc::SwerveDriveOdometry<4>>(kDriveKinematics, GetHeading(), GetModulePositions());
+}
+
+wpi::array<frc::SwerveModulePosition, 4> DriveSubsystem::GetModulePositions() noexcept
+{
+  return {
+      m_frontLeftSwerveModule->GetPosition(),
+      m_frontRightSwerveModule->GetPosition(),
+      m_rearLeftSwerveModule->GetPosition(),
+      m_rearRightSwerveModule->GetPosition()};
 }
 
 void DriveSubsystem::DoSafeIMU(const char *const what, std::function<void()> work) noexcept
@@ -185,9 +195,7 @@ void DriveSubsystem::Periodic() noexcept
   }
   m_theta = theta;
 
-  m_odometry->Update(botRot, m_frontLeftSwerveModule->GetState(),
-                     m_frontRightSwerveModule->GetState(), m_rearLeftSwerveModule->GetState(),
-                     m_rearRightSwerveModule->GetState());
+  m_odometry->Update(botRot, GetModulePositions());
 }
 
 frc::Pose2d DriveSubsystem::GetPose() noexcept { return m_odometry->GetPose(); }
@@ -203,7 +211,7 @@ void DriveSubsystem::ResetOdometry(frc::Pose2d pose) noexcept
       botRot = -m_ahrs->GetRotation2d();
     } });
 
-  m_odometry->ResetPosition(pose, botRot);
+  m_odometry->ResetPosition(botRot, GetModulePositions(), pose);
 }
 
 void DriveSubsystem::CreateGraphTab(SwerveModule::GraphSelection graphSelection) noexcept
@@ -217,7 +225,7 @@ void DriveSubsystem::CreateGraphTab(SwerveModule::GraphSelection graphSelection)
   }
 
   std::vector<double> fourZerosVector{0.0, 0.0, 0.0, 0.0};
-  wpi::span<double> fourZerosSpan(fourZerosVector);
+  std::span<double> fourZerosSpan{fourZerosVector.data(), fourZerosVector.size()};
   std::string path;
 
   frc::ShuffleboardTab &shuffleboardTab = frc::Shuffleboard::GetTab("PID Tuning (PAVF)");
@@ -226,12 +234,12 @@ void DriveSubsystem::CreateGraphTab(SwerveModule::GraphSelection graphSelection)
                           .WithPosition(0, 0)
                           .WithSize(14, 6)
                           .WithWidget(frc::BuiltInWidgets::kGraph)
-                          .WithProperties(wpi::StringMap<std::shared_ptr<nt::Value>>{
+                          .WithProperties(wpi::StringMap<nt::Value>{
                               std::make_pair("Visible time", nt::Value::MakeDouble(5.0)),
                               std::make_pair("Unit", nt::Value::MakeString("")),
                               std::make_pair("X-axis auto scrolling", nt::Value::MakeBoolean(false))});
 
-  path = m_frontLeftGraph->GetEntry().GetName();
+  path = m_frontLeftGraph->GetEntry()->GetTopic().GetName();
   path = std::regex_replace(path, std::regex("^\\/Shuffleboard\\/"), "/Shuffleboard/.metadata/");
   path += "/Properties/X-axis auto scrolling";
   m_frontLeftGraphScroll = path;
@@ -240,12 +248,12 @@ void DriveSubsystem::CreateGraphTab(SwerveModule::GraphSelection graphSelection)
                            .WithPosition(14, 0)
                            .WithSize(14, 6)
                            .WithWidget(frc::BuiltInWidgets::kGraph)
-                           .WithProperties(wpi::StringMap<std::shared_ptr<nt::Value>>{
+                           .WithProperties(wpi::StringMap<nt::Value>{
                                std::make_pair("Visible time", nt::Value::MakeDouble(5.0)),
                                std::make_pair("Unit", nt::Value::MakeString("")),
                                std::make_pair("X-axis auto scrolling", nt::Value::MakeBoolean(false))});
 
-  path = m_frontRightGraph->GetEntry().GetName();
+  path = m_frontRightGraph->GetEntry()->GetTopic().GetName();
   path = std::regex_replace(path, std::regex("^\\/Shuffleboard\\/"), "/Shuffleboard/.metadata/");
   path += "/Properties/X-axis auto scrolling";
   m_frontRightGraphScroll = path;
@@ -254,12 +262,12 @@ void DriveSubsystem::CreateGraphTab(SwerveModule::GraphSelection graphSelection)
                          .WithPosition(0, 6)
                          .WithSize(14, 6)
                          .WithWidget(frc::BuiltInWidgets::kGraph)
-                         .WithProperties(wpi::StringMap<std::shared_ptr<nt::Value>>{
+                         .WithProperties(wpi::StringMap<nt::Value>{
                              std::make_pair("Visible time", nt::Value::MakeDouble(5.0)),
                              std::make_pair("Unit", nt::Value::MakeString("")),
                              std::make_pair("X-axis auto scrolling", nt::Value::MakeBoolean(false))});
 
-  path = m_rearLeftGraph->GetEntry().GetName();
+  path = m_rearLeftGraph->GetEntry()->GetTopic().GetName();
   path = std::regex_replace(path, std::regex("^\\/Shuffleboard\\/"), "/Shuffleboard/.metadata/");
   path += "/Properties/X-axis auto scrolling";
   m_rearLeftGraphScroll = path;
@@ -268,12 +276,12 @@ void DriveSubsystem::CreateGraphTab(SwerveModule::GraphSelection graphSelection)
                           .WithPosition(14, 6)
                           .WithSize(14, 6)
                           .WithWidget(frc::BuiltInWidgets::kGraph)
-                          .WithProperties(wpi::StringMap<std::shared_ptr<nt::Value>>{
+                          .WithProperties(wpi::StringMap<nt::Value>{
                               std::make_pair("Visible time", nt::Value::MakeDouble(5.0)),
                               std::make_pair("Unit", nt::Value::MakeString("")),
                               std::make_pair("X-axis auto scrolling", nt::Value::MakeBoolean(false))});
 
-  path = m_rearRightGraph->GetEntry().GetName();
+  path = m_rearRightGraph->GetEntry()->GetTopic().GetName();
   path = std::regex_replace(path, std::regex("^\\/Shuffleboard\\/"), "/Shuffleboard/.metadata/");
   path += "/Properties/X-axis auto scrolling";
   m_rearRightGraphScroll = path;
@@ -379,8 +387,6 @@ void DriveSubsystem::TestInit() noexcept
                                                              pidf::kDriveVelocityD,
                                                              pidf::kDrivePositionF);
 
-  m_chooser = std::make_unique<frc::SendableChooser<frc2::Command *>>();
-
   frc::ShuffleboardTab &shuffleboardTab = frc::Shuffleboard::GetTab("Swerve");
 
   frc::ShuffleboardLayout &shuffleboardLayoutSwerveTurning =
@@ -388,7 +394,7 @@ void DriveSubsystem::TestInit() noexcept
                                 frc::BuiltInLayouts::kGrid)
           .WithPosition(0, 0)
           .WithSize(9, 13)
-          .WithProperties(wpi::StringMap<std::shared_ptr<nt::Value>>{
+          .WithProperties(wpi::StringMap<nt::Value>{
               std::make_pair("Number of columns", nt::Value::MakeDouble(2.0)),
               std::make_pair("Number of rows", nt::Value::MakeDouble(2.0))});
 
@@ -397,7 +403,7 @@ void DriveSubsystem::TestInit() noexcept
                                 frc::BuiltInLayouts::kGrid)
           .WithPosition(9, 0)
           .WithSize(19, 7)
-          .WithProperties(wpi::StringMap<std::shared_ptr<nt::Value>>{
+          .WithProperties(wpi::StringMap<nt::Value>{
               std::make_pair("Number of columns", nt::Value::MakeDouble(3.0)),
               std::make_pair("Number of rows", nt::Value::MakeDouble(1.0))});
 
@@ -406,7 +412,7 @@ void DriveSubsystem::TestInit() noexcept
                                 frc::BuiltInLayouts::kGrid)
           .WithPosition(9, 7)
           .WithSize(7, 6)
-          .WithProperties(wpi::StringMap<std::shared_ptr<nt::Value>>{
+          .WithProperties(wpi::StringMap<nt::Value>{
               std::make_pair("Number of columns", nt::Value::MakeDouble(2.0)),
               std::make_pair("Number of rows", nt::Value::MakeDouble(2.0))});
 
@@ -415,29 +421,29 @@ void DriveSubsystem::TestInit() noexcept
                                 frc::BuiltInLayouts::kGrid)
           .WithPosition(16, 7)
           .WithSize(12, 6)
-          .WithProperties(wpi::StringMap<std::shared_ptr<nt::Value>>{
+          .WithProperties(wpi::StringMap<nt::Value>{
               std::make_pair("Number of columns", nt::Value::MakeDouble(4.0)),
               std::make_pair("Number of rows", nt::Value::MakeDouble(2.0))});
 
   m_frontLeftTurning = &shuffleboardLayoutSwerveTurning.Add("Front Left", m_frontLeftGyro)
                             .WithPosition(0, 0)
                             .WithWidget(frc::BuiltInWidgets::kGyro)
-                            .WithProperties(wpi::StringMap<std::shared_ptr<nt::Value>>{
+                            .WithProperties(wpi::StringMap<nt::Value>{
                                 std::make_pair("Counter clockwise", nt::Value::MakeBoolean(true))});
   m_frontRightTurning = &shuffleboardLayoutSwerveTurning.Add("Front Right", m_frontRightGyro)
                              .WithPosition(1, 0)
                              .WithWidget(frc::BuiltInWidgets::kGyro)
-                             .WithProperties(wpi::StringMap<std::shared_ptr<nt::Value>>{
+                             .WithProperties(wpi::StringMap<nt::Value>{
                                  std::make_pair("Counter clockwise", nt::Value::MakeBoolean(true))});
   m_rearLeftTurning = &shuffleboardLayoutSwerveTurning.Add("Rear Left", m_rearLeftGyro)
                            .WithPosition(0, 1)
                            .WithWidget(frc::BuiltInWidgets::kGyro)
-                           .WithProperties(wpi::StringMap<std::shared_ptr<nt::Value>>{
+                           .WithProperties(wpi::StringMap<nt::Value>{
                                std::make_pair("Counter clockwise", nt::Value::MakeBoolean(true))});
   m_rearRightTurning = &shuffleboardLayoutSwerveTurning.Add("Rear Right", m_rearRightGyro)
                             .WithPosition(1, 1)
                             .WithWidget(frc::BuiltInWidgets::kGyro)
-                            .WithProperties(wpi::StringMap<std::shared_ptr<nt::Value>>{
+                            .WithProperties(wpi::StringMap<nt::Value>{
                                 std::make_pair("Counter clockwise", nt::Value::MakeBoolean(true))});
 
   m_turningPositionPID = &shuffleboardLayoutPIDSettings.Add("Turning Position", *m_turningPositionPIDController)
@@ -453,25 +459,25 @@ void DriveSubsystem::TestInit() noexcept
   m_frontLeftDrive = &shuffleboardLayoutSwerveDrive.Add("Front Left", 0.0)
                           .WithPosition(0, 0)
                           .WithWidget(frc::BuiltInWidgets::kNumberBar)
-                          .WithProperties(wpi::StringMap<std::shared_ptr<nt::Value>>{
+                          .WithProperties(wpi::StringMap<nt::Value>{
                               std::make_pair("Min", nt::Value::MakeDouble(0.0)),
                               std::make_pair("Max", nt::Value::MakeDouble(1.0))});
   m_frontRightDrive = &shuffleboardLayoutSwerveDrive.Add("Front Right", 0.0)
                            .WithPosition(1, 0)
                            .WithWidget(frc::BuiltInWidgets::kNumberBar)
-                           .WithProperties(wpi::StringMap<std::shared_ptr<nt::Value>>{
+                           .WithProperties(wpi::StringMap<nt::Value>{
                                std::make_pair("Min", nt::Value::MakeDouble(0.0)),
                                std::make_pair("Max", nt::Value::MakeDouble(1.0))});
   m_rearLeftDrive = &shuffleboardLayoutSwerveDrive.Add("Rear Left", 0.0)
                          .WithPosition(0, 1)
                          .WithWidget(frc::BuiltInWidgets::kNumberBar)
-                         .WithProperties(wpi::StringMap<std::shared_ptr<nt::Value>>{
+                         .WithProperties(wpi::StringMap<nt::Value>{
                              std::make_pair("Min", nt::Value::MakeDouble(0.0)),
                              std::make_pair("Max", nt::Value::MakeDouble(1.0))});
   m_rearRightDrive = &shuffleboardLayoutSwerveDrive.Add("Rear Right", 0.0)
                           .WithPosition(1, 1)
                           .WithWidget(frc::BuiltInWidgets::kNumberBar)
-                          .WithProperties(wpi::StringMap<std::shared_ptr<nt::Value>>{
+                          .WithProperties(wpi::StringMap<nt::Value>{
                               std::make_pair("Min", nt::Value::MakeDouble(0.0)),
                               std::make_pair("Max", nt::Value::MakeDouble(1.0))});
 
@@ -490,7 +496,7 @@ void DriveSubsystem::TestInit() noexcept
   m_driveLimit = &shuffleboardLayoutControls.Add("Drive Limit", 0.1)
                       .WithPosition(2, 0)
                       .WithWidget(frc::BuiltInWidgets::kNumberSlider)
-                      .WithProperties(wpi::StringMap<std::shared_ptr<nt::Value>>{
+                      .WithProperties(wpi::StringMap<nt::Value>{
                           std::make_pair("Min", nt::Value::MakeDouble(0.0)),
                           std::make_pair("Max", nt::Value::MakeDouble(2.0))});
   m_displayMode = &shuffleboardLayoutControls.Add("Sense-Act", true)
@@ -499,7 +505,8 @@ void DriveSubsystem::TestInit() noexcept
   m_swerveEnable = &shuffleboardLayoutControls.Add("Run-Stop", false)
                         .WithPosition(3, 1)
                         .WithWidget(frc::BuiltInWidgets::kToggleButton);
-  m_commandChooser = &shuffleboardLayoutControls.Add("Command", *m_chooser)
+
+  m_commandChooser = &shuffleboardLayoutControls.Add("Command", m_chooser)
                           .WithPosition(2, 1)
                           .WithWidget(frc::BuiltInWidgets::kComboBoxChooser);
 
@@ -521,9 +528,9 @@ void DriveSubsystem::TestExit() noexcept
 
 void DriveSubsystem::TestPeriodic() noexcept
 {
-  const bool run = m_swerveEnable->GetEntry().GetBoolean(false);
+  const bool run = m_swerveEnable->GetEntry()->GetBoolean(false);
 
-  m_limit = m_driveLimit->GetEntry().GetDouble(0.1);
+  m_limit = m_driveLimit->GetEntry()->GetDouble(0.1);
 
   if (run != m_run)
   {
@@ -548,7 +555,7 @@ void DriveSubsystem::TestPeriodic() noexcept
   m_rearLeftSwerveModule->TestPeriodic();
   m_rearRightSwerveModule->TestPeriodic();
 
-  if (m_displayMode->GetEntry().GetBoolean(true))
+  if (m_displayMode->GetEntry()->GetBoolean(true))
   {
     // Display commanded information.
     m_frontLeftGyro.Set(m_commandedStateFrontLeft.angle.Degrees() / 1.0_deg);
@@ -556,10 +563,10 @@ void DriveSubsystem::TestPeriodic() noexcept
     m_rearLeftGyro.Set(m_commandedStateRearLeft.angle.Degrees() / 1.0_deg);
     m_rearRightGyro.Set(m_commandedStateRearRight.angle.Degrees() / 1.0_deg);
 
-    m_frontLeftDrive->GetEntry().SetDouble(m_commandedStateFrontLeft.speed / physical::kMaxDriveSpeed);
-    m_frontRightDrive->GetEntry().SetDouble(m_commandedStateFrontRight.speed / physical::kMaxDriveSpeed);
-    m_rearLeftDrive->GetEntry().SetDouble(m_commandedStateRearLeft.speed / physical::kMaxDriveSpeed);
-    m_rearRightDrive->GetEntry().SetDouble(m_commandedStateRearRight.speed / physical::kMaxDriveSpeed);
+    m_frontLeftDrive->GetEntry()->SetDouble(m_commandedStateFrontLeft.speed / physical::kMaxDriveSpeed);
+    m_frontRightDrive->GetEntry()->SetDouble(m_commandedStateFrontRight.speed / physical::kMaxDriveSpeed);
+    m_rearLeftDrive->GetEntry()->SetDouble(m_commandedStateRearLeft.speed / physical::kMaxDriveSpeed);
+    m_rearRightDrive->GetEntry()->SetDouble(m_commandedStateRearRight.speed / physical::kMaxDriveSpeed);
   }
   else
   {
@@ -598,21 +605,21 @@ void DriveSubsystem::TestPeriodic() noexcept
     m_rearLeftGyro.Set(rearLeftTurn);
     m_rearRightGyro.Set(rearRightTurn);
 
-    m_frontLeftDrive->GetEntry().SetDouble(frontLeftSpeed);
-    m_frontRightDrive->GetEntry().SetDouble(frontRightSpeed);
-    m_rearLeftDrive->GetEntry().SetDouble(rearLeftSpeed);
-    m_rearRightDrive->GetEntry().SetDouble(rearRightSpeed);
+    m_frontLeftDrive->GetEntry()->SetDouble(frontLeftSpeed);
+    m_frontRightDrive->GetEntry()->SetDouble(frontRightSpeed);
+    m_rearLeftDrive->GetEntry()->SetDouble(rearLeftSpeed);
+    m_rearRightDrive->GetEntry()->SetDouble(rearRightSpeed);
   }
 
-  m_swerveStatus->GetEntry().SetBoolean(GetStatus());
-  m_swerveRotation->GetEntry().SetDouble(m_rotation);
-  m_swerveX->GetEntry().SetDouble(m_x);
-  m_swerveY->GetEntry().SetDouble(m_y);
+  m_swerveStatus->GetEntry()->SetBoolean(GetStatus());
+  m_swerveRotation->GetEntry()->SetDouble(m_rotation);
+  m_swerveX->GetEntry()->SetDouble(m_x);
+  m_swerveY->GetEntry()->SetDouble(m_y);
 
   if (m_graphSelection != SwerveModule::GraphSelection::kNone)
   {
     std::vector<double> fourDatumsVector{0.0, 0.0, 0.0, 0.0};
-    wpi::span<double> fourDatumsSpan(fourDatumsVector); // XXX  std::span
+    std::span<double> fourDatumsSpan{fourDatumsVector.data(), fourDatumsVector.size()};
 
     const auto fl = m_frontLeftSwerveModule->TestModeGraphData(m_graphSelection);
     const auto fr = m_frontRightSwerveModule->TestModeGraphData(m_graphSelection);
@@ -632,25 +639,25 @@ void DriveSubsystem::TestPeriodic() noexcept
     fourDatumsVector[1] = std::get<1>(fl);
     fourDatumsVector[2] = std::get<2>(fl);
     fourDatumsVector[3] = std::get<3>(fl);
-    m_frontLeftGraph->GetEntry().SetDoubleArray(fourDatumsSpan);
+    m_frontLeftGraph->GetEntry()->SetDoubleArray(fourDatumsSpan);
 
     fourDatumsVector[0] = std::get<0>(fr);
     fourDatumsVector[1] = std::get<1>(fr);
     fourDatumsVector[2] = std::get<2>(fr);
     fourDatumsVector[3] = std::get<3>(fr);
-    m_frontRightGraph->GetEntry().SetDoubleArray(fourDatumsSpan);
+    m_frontRightGraph->GetEntry()->SetDoubleArray(fourDatumsSpan);
 
     fourDatumsVector[0] = std::get<0>(rl);
     fourDatumsVector[1] = std::get<1>(rl);
     fourDatumsVector[2] = std::get<2>(rl);
     fourDatumsVector[3] = std::get<3>(rl);
-    m_rearLeftGraph->GetEntry().SetDoubleArray(fourDatumsSpan);
+    m_rearLeftGraph->GetEntry()->SetDoubleArray(fourDatumsSpan);
 
     fourDatumsVector[0] = std::get<0>(rr);
     fourDatumsVector[1] = std::get<1>(rr);
     fourDatumsVector[2] = std::get<2>(rr);
     fourDatumsVector[3] = std::get<3>(rr);
-    m_rearRightGraph->GetEntry().SetDoubleArray(fourDatumsSpan);
+    m_rearRightGraph->GetEntry()->SetDoubleArray(fourDatumsSpan);
   }
 
   if (m_turningPositionPIDController->GetE())
@@ -730,25 +737,32 @@ void DriveSubsystem::TestPeriodic() noexcept
     {
       m_command->Cancel();
     }
-    m_command = nullptr;
+    m_command.reset();
 
     return;
   }
 
-  frc2::Command *command = m_chooser->GetSelected();
+  std::function<frc2::CommandPtr()> commandFactory = m_chooser.GetSelected();
 
   // If a new command has been selected, cancel any old one and then schedule
   // the new one.
-  if (m_command != command)
+  if (m_commandFactory.target_type() != commandFactory.target_type() || m_commandFactory.target<frc2::CommandPtr()>() != commandFactory.target<frc2::CommandPtr()>())
   {
     if (m_command)
     {
       m_command->Cancel();
+      m_command.reset();
     }
-    m_command = command;
+
+    if (m_commandFactory)
+    {
+      m_command = commandFactory();
+    }
+    m_commandFactory = commandFactory;
+
     if (m_command)
     {
-      m_command->Schedule(true);
+      m_command->Schedule();
     }
   }
 }

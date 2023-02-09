@@ -1,6 +1,6 @@
 #pragma once
 
-#include "subsystems/ShuffleboardWidgets.h"
+#include "infrastructure/ShuffleboardWidgets.h"
 
 #include <frc/DigitalInput.h>
 #include <frc/DutyCycle.h>

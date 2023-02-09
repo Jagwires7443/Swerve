@@ -16,7 +16,7 @@ public:
     HeadingGyro(const HeadingGyro &) = delete;
     HeadingGyro &operator=(const HeadingGyro &) = delete;
 
-    void InitSendable(wpi::SendableBuilder &builder)
+    void InitSendable(wpi::SendableBuilder &builder) noexcept override
     {
         builder.SetSmartDashboardType("Gyro");
         builder.AddDoubleProperty(
@@ -43,7 +43,7 @@ public:
     TuningPID(const TuningPID &) = delete;
     TuningPID &operator=(const TuningPID &) = delete;
 
-    void InitSendable(wpi::SendableBuilder &builder)
+    void InitSendable(wpi::SendableBuilder &builder) noexcept override
     {
         builder.SetSmartDashboardType("PIDController");
         builder.AddDoubleProperty(
