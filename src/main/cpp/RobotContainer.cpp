@@ -24,7 +24,7 @@ RobotContainer::RobotContainer() noexcept
   m_LEDPatternCount = m_infrastructureSubsystem.GetLEDPatternCount();
 
   // Configure the button bindings
-  ConfigureButtonBindings();
+  ConfigureBindings();
 }
 
 frc2::CommandPtr RobotContainer::DriveCommandFactory(RobotContainer *container) noexcept
@@ -112,7 +112,7 @@ void RobotContainer::TeleopInit() noexcept
                                                                {&m_infrastructureSubsystem}));
 }
 
-void RobotContainer::ConfigureButtonBindings() noexcept
+void RobotContainer::ConfigureBindings() noexcept
 {
   frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kA).OnTrue(frc2::InstantCommand([&]() -> void
                                                                                              { m_slow = true; },

@@ -6,7 +6,6 @@
 
 #include <frc/GenericHID.h>
 #include <frc/XboxController.h>
-#include <frc2/command/Command.h>
 #include <frc2/command/CommandPtr.h>
 
 #include "commands/AutonomousCommands.h"
@@ -51,7 +50,7 @@ private:
 
   std::tuple<double, double, double, bool> GetDriveTeleopControls() noexcept;
 
-  void ConfigureButtonBindings() noexcept;
+  void ConfigureBindings() noexcept;
 
   bool m_fieldOriented{false};
   bool m_lock{false};
