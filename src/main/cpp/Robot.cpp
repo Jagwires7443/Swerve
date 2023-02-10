@@ -86,7 +86,7 @@ void Robot::TeleopInit() noexcept
   if (m_autonomousCommand)
   {
     m_autonomousCommand->Cancel();
-    m_autonomousCommand = nullptr;
+    m_autonomousCommand.reset();
   }
 
   m_container.TeleopInit();

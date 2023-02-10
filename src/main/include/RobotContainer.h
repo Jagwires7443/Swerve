@@ -7,7 +7,7 @@
 #include <frc/GenericHID.h>
 #include <frc/XboxController.h>
 #include <frc2/command/Command.h>
-#include <frc2/command/RunCommand.h>
+#include <frc2/command/CommandPtr.h>
 
 #include "commands/AutonomousCommands.h"
 #include "commands/TestModeCommands.h"
@@ -34,7 +34,7 @@ public:
   RobotContainer(const RobotContainer &) = delete;
   RobotContainer &operator=(const RobotContainer &) = delete;
 
-  frc2::Command *GetAutonomousCommand() noexcept;
+  std::optional<frc2::CommandPtr> GetAutonomousCommand() noexcept;
 
   void TestInit() noexcept;
   void TestExit() noexcept;
@@ -46,6 +46,9 @@ public:
   void TeleopInit() noexcept;
 
 private:
+  static frc2::CommandPtr DriveCommandFactory(RobotContainer *container) noexcept;
+  static frc2::CommandPtr PointCommandFactory(RobotContainer *container) noexcept;
+
   std::tuple<double, double, double, bool> GetDriveTeleopControls() noexcept;
 
   void ConfigureButtonBindings() noexcept;
@@ -62,23 +65,6 @@ private:
   FeederSubsystem m_feederSubsystem;
   InfrastructureSubsystem m_infrastructureSubsystem;
   ShooterSubsystem m_shooterSubsystem;
-
-  std::unique_ptr<frc2::RunCommand> m_driveCommand;
-  std::unique_ptr<frc2::RunCommand> m_pointCommand;
-
-  std::unique_ptr<OneBallAuto> m_oneBallAuto;
-  std::unique_ptr<TwoBallAuto> m_twoBallAuto;
-
-  std::unique_ptr<ZeroCommand> m_zeroCommand;
-  std::unique_ptr<MaxVAndATurningCommand> m_maxVAndATurningCommand;
-  std::unique_ptr<MaxVAndADriveCommand> m_maxVAndADriveCommand;
-  std::unique_ptr<XsAndOsCommand> m_xsAndOsCommand;
-  std::unique_ptr<RotateModulesCommand> m_rotateModulesCommand;
-  std::unique_ptr<SquareCommand> m_squareCommand;
-  std::unique_ptr<SpirographCommand> m_spirographCommand;
-  std::unique_ptr<OrbitCommand> m_orbitCommand;
-  std::unique_ptr<PirouetteCommand> m_pirouetteCommand;
-  std::unique_ptr<SpinCommand> m_spinCommand;
 
   frc::XboxController m_xbox{0};
   frc::GenericHID m_buttonBoard{1};

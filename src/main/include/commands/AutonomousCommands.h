@@ -6,6 +6,7 @@
 
 #include <frc2/command/CommandBase.h>
 #include <frc2/command/CommandHelper.h>
+#include <frc2/command/CommandPtr.h>
 #include <frc/RobotController.h>
 
 #include "subsystems/DriveSubsystem.h"
@@ -13,6 +14,7 @@
 #include "subsystems/Infrastructure.h"
 #include "subsystems/ShooterSubsystem.h"
 
+#include <memory>
 #include <string_view>
 
 class TimedAutoBase : public frc2::CommandHelper<frc2::CommandBase, TimedAutoBase>
@@ -54,6 +56,11 @@ public:
       : TimedAutoBase(drive, feeder, infrastructure, shooter, "OneBallAuto") {}
 
   bool Iteration(const uint counter) noexcept override;
+
+  static frc2::CommandPtr OneBallAutoCommandFactory(DriveSubsystem *const drive, FeederSubsystem *const feeder, InfrastructureSubsystem *const infrastructure, ShooterSubsystem *const shooter) noexcept
+  {
+    return frc2::CommandPtr{std::make_unique<OneBallAuto>(drive, feeder, infrastructure, shooter)};
+  }
 };
 
 class TwoBallAuto : public TimedAutoBase
@@ -63,4 +70,9 @@ public:
       : TimedAutoBase(drive, feeder, infrastructure, shooter, "TwoBallAuto") {}
 
   bool Iteration(const uint counter) noexcept override;
+
+  static frc2::CommandPtr TwoBallAutoCommandFactory(DriveSubsystem *const drive, FeederSubsystem *const feeder, InfrastructureSubsystem *const infrastructure, ShooterSubsystem *const shooter) noexcept
+  {
+    return frc2::CommandPtr{std::make_unique<TwoBallAuto>(drive, feeder, infrastructure, shooter)};
+  }
 };

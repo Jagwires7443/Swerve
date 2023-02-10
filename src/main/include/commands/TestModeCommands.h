@@ -6,8 +6,11 @@
 
 #include <frc2/command/CommandBase.h>
 #include <frc2/command/CommandHelper.h>
+#include <frc2/command/CommandPtr.h>
 
 #include "subsystems/DriveSubsystem.h"
+
+#include <memory>
 
 // Home all swerve modules to zero heading.
 class ZeroCommand
@@ -22,6 +25,11 @@ public:
     void Execute() noexcept override;
 
     void End(bool interrupted) noexcept override {}
+
+    static frc2::CommandPtr ZeroCommandFactory(DriveSubsystem *subsystem) noexcept
+    {
+        return frc2::CommandPtr{std::make_unique<ZeroCommand>(subsystem)};
+    }
 
 private:
     DriveSubsystem *m_subsystem{nullptr};
@@ -40,6 +48,11 @@ public:
     void Execute() noexcept override;
 
     void End(bool interrupted) noexcept override;
+
+    static frc2::CommandPtr MaxVAndATurningCommandFactory(DriveSubsystem *subsystem) noexcept
+    {
+        return frc2::CommandPtr{std::make_unique<MaxVAndATurningCommand>(subsystem)};
+    }
 
 private:
     DriveSubsystem *m_subsystem{nullptr};
@@ -61,6 +74,11 @@ public:
 
     void End(bool interrupted) noexcept override;
 
+    static frc2::CommandPtr MaxVAndADriveCommandFactory(DriveSubsystem *subsystem) noexcept
+    {
+        return frc2::CommandPtr{std::make_unique<MaxVAndADriveCommand>(subsystem)};
+    }
+
 private:
     DriveSubsystem *m_subsystem{nullptr};
 
@@ -80,6 +98,11 @@ public:
     void Execute() noexcept override;
 
     void End(bool interrupted) noexcept override;
+
+    static frc2::CommandPtr XsAndOsCommandFactory(DriveSubsystem *subsystem) noexcept
+    {
+        return frc2::CommandPtr{std::make_unique<XsAndOsCommand>(subsystem)};
+    }
 
 private:
     DriveSubsystem *m_subsystem{nullptr};
@@ -101,6 +124,11 @@ public:
 
     void End(bool interrupted) noexcept override;
 
+    static frc2::CommandPtr RotateModulesCommandFactory(DriveSubsystem *subsystem) noexcept
+    {
+        return frc2::CommandPtr{std::make_unique<RotateModulesCommand>(subsystem)};
+    }
+
 private:
     DriveSubsystem *m_subsystem{nullptr};
 
@@ -120,6 +148,11 @@ public:
     void Execute() noexcept override;
 
     void End(bool interrupted) noexcept override;
+
+    static frc2::CommandPtr SquareCommandFactory(DriveSubsystem *subsystem) noexcept
+    {
+        return frc2::CommandPtr{std::make_unique<SquareCommand>(subsystem)};
+    }
 
 private:
     DriveSubsystem *m_subsystem{nullptr};
@@ -141,6 +174,11 @@ public:
 
     void End(bool interrupted) noexcept override;
 
+    static frc2::CommandPtr SpirographCommandFactory(DriveSubsystem *subsystem) noexcept
+    {
+        return frc2::CommandPtr{std::make_unique<SpirographCommand>(subsystem)};
+    }
+
 private:
     DriveSubsystem *m_subsystem{nullptr};
 
@@ -161,6 +199,11 @@ public:
 
     void End(bool interrupted) noexcept override {}
 
+    static frc2::CommandPtr OrbitCommandFactory(DriveSubsystem *subsystem) noexcept
+    {
+        return frc2::CommandPtr{std::make_unique<OrbitCommand>(subsystem)};
+    }
+
 private:
     DriveSubsystem *m_subsystem{nullptr};
 };
@@ -179,6 +222,11 @@ public:
 
     void End(bool interrupted) noexcept override;
 
+    static frc2::CommandPtr PirouetteCommandFactory(DriveSubsystem *subsystem) noexcept
+    {
+        return frc2::CommandPtr{std::make_unique<PirouetteCommand>(subsystem)};
+    }
+
 private:
     DriveSubsystem *m_subsystem{nullptr};
 };
@@ -196,6 +244,11 @@ public:
     void Execute() noexcept override;
 
     void End(bool interrupted) noexcept override;
+
+    static frc2::CommandPtr SpinCommandFactory(DriveSubsystem *subsystem) noexcept
+    {
+        return frc2::CommandPtr{std::make_unique<SpinCommand>(subsystem)};
+    }
 
 private:
     DriveSubsystem *m_subsystem{nullptr};
