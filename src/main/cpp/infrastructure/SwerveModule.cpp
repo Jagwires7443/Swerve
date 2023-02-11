@@ -430,13 +430,6 @@ const frc::SwerveModulePosition SwerveModule::GetPosition() noexcept
     return result;
 }
 
-#if 0 // XXX
-const frc::SwerveModulePosition SwerveModule::GetPosition() noexcept
-{
-    return {m_driveMotor->GetPosition(), m_turningMotor->GetPosition()};
-}
-#endif
-
 void SwerveModule::SetDesiredState(const frc::SwerveModuleState &referenceState) noexcept
 {
     // Optimize the reference state, to avoid spinning further than 90 degrees.

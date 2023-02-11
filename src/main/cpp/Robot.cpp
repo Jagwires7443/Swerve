@@ -114,7 +114,10 @@ void Robot::TestPeriodic() noexcept
   m_container.TestPeriodic();
 }
 
-void Robot::TestExit() noexcept {}
+void Robot::TestExit() noexcept
+{
+  m_container.TestExit();
+}
 
 #ifndef RUNNING_FRC_TESTS
 int main()

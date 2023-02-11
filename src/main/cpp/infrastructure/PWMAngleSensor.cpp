@@ -155,6 +155,11 @@ std::optional<int> AngleSensor::GetAbsolutePosition(const int frequency, const d
     //   if this result is 4096, set it to 4095.
     // This computation results in a position in the range [0, 4096).
 
+    // REV Through Bore Encoder chip is AEAT-8800-Q24, which has configurable
+    // PWM parameters.  However, it seems to be configured to match AS5045B, so
+    // it works without any changes.  A factory preset zero offset may allow no
+    // alignment (simply specify an alignment of zero).
+
     // If the frequency isn't within the range specified in the data sheet,
     // return an error.  This range is [220, 268], with a nominal value of 244.
     // A tolerance of 12 (~5% of nominal) is provided for any measurment error.

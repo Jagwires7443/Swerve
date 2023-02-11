@@ -17,7 +17,7 @@
 #include <cstddef>
 #include <cstdio>
 #include <exception>
-// #include <format> -- XXX C++ 20 is coming for 2023!
+// #include <format> -- Doesn't yet work?
 #include <functional>
 #include <iomanip>
 #include <ios>
