@@ -83,7 +83,7 @@ namespace physical
 
 namespace firmware
 {
-    constexpr int kSparkMaxFirmwareVersion = 0x1050002; // Version 1.5.2.
+    constexpr int kSparkMaxFirmwareVersion = 0x01060003; // Version 1.6.3.
 }
 
 namespace pidf
