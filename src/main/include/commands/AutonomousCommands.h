@@ -8,6 +8,7 @@
 #include <frc2/command/CommandHelper.h>
 #include <frc2/command/CommandPtr.h>
 #include <frc/RobotController.h>
+#include <frc/trajectory/Trajectory.h>
 
 #include "subsystems/DriveSubsystem.h"
 #include "subsystems/FeederSubsystem.h"
@@ -75,4 +76,9 @@ public:
   {
     return frc2::CommandPtr{std::make_unique<TwoBallAuto>(drive, feeder, infrastructure, shooter)};
   }
+};
+
+namespace TrajectoryAuto
+{
+  frc2::CommandPtr TrajectoryAutoCommandFactory(DriveSubsystem *const drive, std::string_view name, frc::Trajectory &trajectory) noexcept;
 };

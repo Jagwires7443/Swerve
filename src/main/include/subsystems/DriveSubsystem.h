@@ -25,12 +25,12 @@
 #include <units/angular_velocity.h>
 #include <units/length.h>
 #include <units/velocity.h>
-#include <wpi/array.h>
 #include <wpi/DataLog.h>
 #include <wpi/sendable/Sendable.h>
 #include <wpi/sendable/SendableBuilder.h>
 #include <wpi/sendable/SendableHelper.h>
 
+#include <array>
 #include <functional>
 #include <memory>
 #include <optional>
@@ -109,7 +109,7 @@ public:
    * Note that there is an essential ordering to everything to do with the four
    * swerve modules: Front Left, Front Right, Rear Left, and Rear Right.
    */
-  void SetModuleStates(wpi::array<frc::SwerveModuleState, 4> &desiredStates) noexcept;
+  void SetModuleStates(std::array<frc::SwerveModuleState, 4> &desiredStates) noexcept;
 
   /**
    * Returns the heading of the robot.
@@ -144,7 +144,7 @@ public:
    */
   void ResetOdometry(frc::Pose2d pose) noexcept;
 
-  wpi::array<frc::SwerveModulePosition, 4> GetModulePositions() noexcept;
+  std::array<frc::SwerveModulePosition, 4> GetModulePositions() noexcept;
 
   // Test mode method to power turning motors for characterization.
   void TestModeTurningVoltage(const double voltage) noexcept

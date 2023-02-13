@@ -21,6 +21,7 @@
 #include <networktables/NetworkTableEntry.h>
 #include <networktables/NetworkTableInstance.h>
 #include <networktables/NetworkTableValue.h>
+#include <wpi/array.h>
 
 #include <algorithm>
 #include <chrono>
@@ -119,7 +120,7 @@ DriveSubsystem::DriveSubsystem() noexcept
   m_odometry = std::make_unique<frc::SwerveDriveOdometry<4>>(kDriveKinematics, GetHeading(), GetModulePositions());
 }
 
-wpi::array<frc::SwerveModulePosition, 4> DriveSubsystem::GetModulePositions() noexcept
+std::array<frc::SwerveModulePosition, 4> DriveSubsystem::GetModulePositions() noexcept
 {
   return {
       m_frontLeftSwerveModule->GetPosition(),
@@ -822,7 +823,7 @@ bool DriveSubsystem::SetTurnInPlace() noexcept
   m_y = 0.0;
 
   // Set all wheels tangent, at the given module.
-  const wpi::array<frc::SwerveModuleState, 4> states = kDriveKinematics.ToSwerveModuleStates(
+  const std::array<frc::SwerveModuleState, 4> states = kDriveKinematics.ToSwerveModuleStates(
       frc::ChassisSpeeds{0.0_mps, 0.0_mps, physical::kMaxTurnRate});
 
   auto [frontLeft, frontRight, rearLeft, rearRight] = states;
@@ -859,7 +860,7 @@ bool DriveSubsystem::SetLockWheelsX() noexcept
   // Set all wheels at right angle to tangent, at the given module.  This forms
   // an "X", so the wheels resist being pushed (do not attempt to drive in this
   // configuration).
-  const wpi::array<frc::SwerveModuleState, 4> states = kDriveKinematics.ToSwerveModuleStates(
+  const std::array<frc::SwerveModuleState, 4> states = kDriveKinematics.ToSwerveModuleStates(
       frc::ChassisSpeeds{0.0_mps, 0.0_mps, physical::kMaxTurnRate});
 
   auto [frontLeft, frontRight, rearLeft, rearRight] = states;
@@ -1013,7 +1014,7 @@ void DriveSubsystem::ResetEncoders() noexcept
   m_rearRightSwerveModule->ResetEncoders();
 }
 
-void DriveSubsystem::SetModuleStates(wpi::array<frc::SwerveModuleState, 4> &desiredStates) noexcept
+void DriveSubsystem::SetModuleStates(std::array<frc::SwerveModuleState, 4> &desiredStates) noexcept
 {
   auto [frontLeft, frontRight, rearLeft, rearRight] = desiredStates;
 
