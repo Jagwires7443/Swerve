@@ -34,7 +34,7 @@ frc2::CommandPtr RobotContainer::DriveCommandFactory(RobotContainer *container) 
 
   // Drive, as commanded by operator joystick controls.
   return frc2::CommandPtr{std::make_unique<frc2::RunCommand>(
-      [&]() -> void
+      [container]() -> void
       {
         if (container->m_lock)
         {
@@ -61,7 +61,7 @@ frc2::CommandPtr RobotContainer::PointCommandFactory(RobotContainer *container) 
 
   // Point swerve modules, but do not actually drive.
   return frc2::CommandPtr{std::make_unique<frc2::RunCommand>(
-      [&]() -> void
+      [container]() -> void
       {
         const auto controls = container->GetDriveTeleopControls();
 
