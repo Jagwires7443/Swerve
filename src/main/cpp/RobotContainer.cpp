@@ -5,6 +5,12 @@
 #include "Constants.h"
 #include "RobotContainer.h"
 
+#include <frc/geometry/Pose2d.h>
+#include <frc/geometry/Rotation2d.h>
+#include <frc/kinematics/SwerveDriveKinematics.h>
+#include <frc/trajectory/Trajectory.h>
+#include <frc/trajectory/TrajectoryConfig.h>
+#include <frc/trajectory/TrajectoryGenerator.h>
 #include <frc2/command/button/JoystickButton.h>
 #include <frc2/command/button/POVButton.h>
 #include <frc2/command/Command.h>
@@ -16,6 +22,8 @@
 #include <cstdio>
 #include <functional>
 #include <string>
+#include <units/acceleration.h>
+#include <units/velocity.h>
 
 RobotContainer::RobotContainer() noexcept
 {
@@ -213,6 +221,7 @@ void RobotContainer::ConfigureBindings() noexcept
 
 std::optional<frc2::CommandPtr> RobotContainer::GetAutonomousCommand() noexcept
 {
+#if 0
   if (m_buttonBoard.GetRawButton(9))
   {
     return TwoBallAuto::TwoBallAutoCommandFactory(&m_driveSubsystem, &m_feederSubsystem, &m_infrastructureSubsystem, &m_shooterSubsystem);
@@ -221,6 +230,19 @@ std::optional<frc2::CommandPtr> RobotContainer::GetAutonomousCommand() noexcept
   {
     return OneBallAuto::OneBallAutoCommandFactory(&m_driveSubsystem, &m_feederSubsystem, &m_infrastructureSubsystem, &m_shooterSubsystem);
   }
+#endif
+
+  frc::TrajectoryConfig trajectoryConfig{4.0_mps, 2.0_mps_sq};
+  frc::SwerveDriveKinematics<4> kinematics{m_driveSubsystem.kDriveKinematics};
+
+  trajectoryConfig.SetKinematics(kinematics);
+
+  frc::Trajectory trajectory = frc::TrajectoryGenerator::GenerateTrajectory(
+      {frc::Pose2d{},
+       frc::Pose2d{1.0_m, 0.0_m, frc::Rotation2d{}}},
+      trajectoryConfig);
+
+  return TrajectoryAuto::TrajectoryAutoCommandFactory(&m_driveSubsystem, "Test Trajectory", trajectory);
 }
 
 std::tuple<double, double, double, bool> RobotContainer::GetDriveTeleopControls() noexcept
@@ -345,6 +367,10 @@ void RobotContainer::TestExit() noexcept
   m_driveSubsystem.TestExit();
   m_feederSubsystem.TestExit();
   m_shooterSubsystem.TestExit();
+
+  m_driveSubsystem.BurnConfig();
+  m_feederSubsystem.BurnConfig();
+  m_shooterSubsystem.BurnConfig();
 }
 
 void RobotContainer::TestPeriodic() noexcept

@@ -20,7 +20,8 @@ void InfrastructureSubsystem::Periodic() noexcept {}
 
 void InfrastructureSubsystem::Enable() noexcept
 {
-    ph_->EnableAnalog(80_psi, 100_psi);
+    // ph_->EnableAnalog(80_psi, 100_psi);
+    ph_->Disable(); // XXX
 }
 
 void InfrastructureSubsystem::Disable() noexcept
