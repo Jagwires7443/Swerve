@@ -15,31 +15,32 @@ namespace physical
     constexpr int kRearLeftAlignmentOffset = -16;
     constexpr int kRearRightAlignmentOffset = -201;
 
-    // SDS Mk3 Standard (or Fast) Gear Ratio: 8.16:1 (or 6.86:1);
+    // SDS MK4i Middle (L2) Gear Ratio: 6.75:1;
     // Nominal Wheel Diameter (4"): =0.1016m;
     // Nominal Wheel Circumference (pi * Diameter): ~0.3192m;
-    // 8.16 / 0.3192 => ~25.57.
+    // 6.75 / 0.3192 => ~21.15.
 
     // This should be empirically determined!  This is just an initial guess.
     // This is used for both distance and velocity control.  If this is off, it
     // will throw off kMaxDriveSpeed and kMaxTurnRate, as well as drive values.
-    constexpr units::meter_t kDriveMetersPerRotation = 1.0_m / 25.57;
+    constexpr units::meter_t kDriveMetersPerRotation = 1.0_m / 21.15;
 
-    // SDS Mk3 Standard (or Fast) Max Free Speed: 12.1 (or 14.4) feet/second;
+    // SDS MK4i Middle (L2) Max Free Speed: 14.5 feet/second;
     // This is an upper bound, for various reasons.  It needs to be empirically
     // measured.  Half of theoretical free speed is a reasonable starting value
     // (since something in the ballpark is needed here in order to to drive).
-    constexpr units::meters_per_second_t kMaxDriveSpeed = 12.1_fps / 1.25;
+    constexpr units::meters_per_second_t kMaxDriveSpeed = 14.5_fps / 1.25;
 
-    // For a square drive base, with +/-11.25" x/y coordinates for each of four
-    // swerve modules, the radius of the circle going through all modules is:
-    // sqrt((11.25")^2 + (11.25")^2) ~= 15.91"; the circumference of such a
-    // circle is 2*pi*15.91" ~= 99.96".
+    // For a square drive base, with +/-11.875" x/y coordinates for each of
+    // four swerve modules, the radius of the circle going through the turn
+    // point of all modules is:
+    // sqrt((11.875")^2 + (11.875")^2) ~= 16.79"; the circumference of such a
+    // circle is 2*pi*16.79" ~= 105.518".
 
     // This is used for rotating the robot in place, about it's center.  This
     // may need to be empirically adjusted, but check kDriveMetersPerRotation
     // before making any adjustment here.
-    constexpr units::meter_t kDriveMetersPerTurningCircle = 99.96_in;
+    constexpr units::meter_t kDriveMetersPerTurningCircle = 105.518_in;
 
     // This is the maximum rotational speed -- not of a swerve module, but of
     // the entire robot.  This is a function of the maximum drive speed and the
@@ -59,18 +60,19 @@ namespace physical
 
     // Drivebase geometry: distance between centers of right and left wheels on
     // robot; distance between centers of front and back wheels on robot.
-    constexpr units::meter_t kTrackWidth = 22.5_in;
-    constexpr units::meter_t kWheelBase = 22.5_in;
+    constexpr units::meter_t kTrackWidth = 23.75_in;
+    constexpr units::meter_t kWheelBase = 23.75_in;
 
     // CAN ID and Digital I/O Port assignments.
-    constexpr int kFrontLeftTurningMotorCanID = 1;
-    constexpr int kFrontLeftDriveMotorCanID = 2;
-    constexpr int kFrontRightTurningMotorCanID = 3;
-    constexpr int kFrontRightDriveMotorCanID = 4;
-    constexpr int kRearLeftTurningMotorCanID = 5;
-    constexpr int kRearLeftDriveMotorCanID = 6;
-    constexpr int kRearRightTurningMotorCanID = 7;
-    constexpr int kRearRightDriveMotorCanID = 8;
+    constexpr int kFrontLeftDriveMotorCanID = 1;
+    constexpr int kFrontLeftTurningMotorCanID = 2;
+    constexpr int kFrontRightDriveMotorCanID = 3;
+    constexpr int kFrontRightTurningMotorCanID = 4;
+    constexpr int kRearLeftDriveMotorCanID = 5;
+    constexpr int kRearLeftTurningMotorCanID = 6;
+    constexpr int kRearRightDriveMotorCanID = 7;
+    constexpr int kRearRightTurningMotorCanID = 8;
+
     constexpr int kFrontLeftTurningEncoderPort = 0;
     constexpr int kFrontRightTurningEncoderPort = 1;
     constexpr int kRearLeftTurningEncoderPort = 2;
@@ -129,8 +131,6 @@ namespace pidf
 
 namespace nonDrive
 {
-    constexpr int kFeederOneCanID = 11;
-    constexpr int kFeederTwoCanID = 12;
-    constexpr int kShooterOneCanID = 9;
-    constexpr int kShooterTwoCanID = 10;
+    constexpr int kShoulderCanID = 9;
+    constexpr int kElbowCanID = 10;
 }
