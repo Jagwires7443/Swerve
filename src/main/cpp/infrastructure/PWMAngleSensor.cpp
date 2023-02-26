@@ -73,14 +73,14 @@ void AngleSensor::Periodic() noexcept
         encoderError -= 360.0;
     }
 
-    frequencyUI_->GetEntry()->SetDouble(static_cast<double>(frequency));
+    frequencyUI_->GetEntry()->SetInteger(frequency);
     commandDiscrepancyUI_->GetEntry()->SetDouble(commandedError);
     statusUI_->GetEntry()->SetBoolean(status);
     commandedUI_->GetEntry()->SetDouble(commandedPosition.to<double>());
-    positionUI_->GetEntry()->SetDouble(static_cast<double>(reportPosition));
+    positionUI_->GetEntry()->SetInteger(reportPosition);
     outputUI_->GetEntry()->SetDouble(output);
     encoderDiscrepancyUI_->GetEntry()->SetDouble(encoderError);
-    alignmentUI_->GetEntry()->SetDouble(static_cast<double>(alignment_));
+    alignmentUI_->GetEntry()->SetInteger(alignment_);
 }
 
 void AngleSensor::ShuffleboardCreate(frc::ShuffleboardContainer &container,

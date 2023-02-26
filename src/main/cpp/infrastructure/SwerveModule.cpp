@@ -580,7 +580,7 @@ void SwerveModule::TestPeriodic() noexcept
         {
             // Work out new alignment so position becomes zero.
             int alignmentOffset = -position.value();
-            if (alignmentOffset == 2048)
+            if (alignmentOffset == +2048)
             {
                 alignmentOffset = -2048;
             }

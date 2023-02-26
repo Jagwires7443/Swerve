@@ -4,6 +4,7 @@
 #include <frc/motorcontrol/Spark.h>
 #include <frc/PowerDistribution.h>
 #include <frc2/command/SubsystemBase.h>
+
 #include <units/pressure.h>
 
 #include <memory>
