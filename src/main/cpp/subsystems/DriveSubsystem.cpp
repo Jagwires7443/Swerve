@@ -201,6 +201,19 @@ void DriveSubsystem::Periodic() noexcept
 
 frc::Pose2d DriveSubsystem::GetPose() noexcept { return m_odometry->GetPose(); }
 
+std::pair<double, double> DriveSubsystem::GetTilt() noexcept
+{
+  double x{0.0};
+  double y{0.0};
+
+  DoSafeIMU("GetPitch()/GetRoll()", [&]() -> void
+            {
+    x = m_ahrs->GetPitch();
+    y = m_ahrs->GetRoll(); });
+
+  return std::make_pair(x, y);
+}
+
 void DriveSubsystem::ResetOdometry(frc::Pose2d pose) noexcept
 {
   frc::Rotation2d botRot;

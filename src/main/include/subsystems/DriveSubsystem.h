@@ -34,6 +34,7 @@
 #include <functional>
 #include <memory>
 #include <optional>
+#include <utility>
 
 class DriveSubsystem : public frc2::SubsystemBase
 {
@@ -136,6 +137,11 @@ public:
    * @return The pose.
    */
   frc::Pose2d GetPose() noexcept;
+
+  /**
+   * Returns x and y components of tilt with-respect-to the horizontal plane.
+   */
+  std::pair<double, double> GetTilt() noexcept;
 
   /**
    * Resets the odometry to the specified pose.
