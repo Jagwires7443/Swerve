@@ -191,10 +191,10 @@ void RobotContainer::ConfigureBindings() noexcept
                                                                       {})
                                                      .ToPtr());
 
-  frc2::JoystickButton(&m_buttonBoard, 6).OnTrue(frc2::InstantCommand([&]() -> void
-                                                                      { m_lock = false; },
-                                                                      {})
-                                                     .ToPtr());
+  frc2::JoystickButton(&m_buttonBoard, 6).OnFalse(frc2::InstantCommand([&]() -> void
+                                                                       { m_lock = false; },
+                                                                       {})
+                                                      .ToPtr());
 
   frc2::JoystickButton(&m_buttonBoard, 10).OnTrue(frc2::InstantCommand([&]() -> void
                                                                        { m_shooterVelocity = 1320.0; },
