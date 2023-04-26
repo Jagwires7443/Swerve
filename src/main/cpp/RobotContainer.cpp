@@ -137,7 +137,7 @@ void RobotContainer::ConfigureBindings() noexcept
                         .ToPtr());
   m_xbox.Y().OnTrue(frc2::InstantCommand([&]() -> void
                                          { m_driveSubsystem.ZeroHeading();
-                                                                                            m_fieldOriented = true; },
+                                           m_fieldOriented = true; },
                                          {&m_driveSubsystem})
                         .ToPtr());
 
@@ -145,11 +145,19 @@ void RobotContainer::ConfigureBindings() noexcept
                                                      { m_feederSubsystem.Fire(); },
                                                      {&m_feederSubsystem})
                                     .ToPtr());
+  m_xbox.LeftBumper().OnFalse(frc2::InstantCommand([&]() -> void
+                                                   { m_feederSubsystem.NoFeed(); },
+                                                   {&m_feederSubsystem})
+                                  .ToPtr());
 
   m_xbox.RightBumper().WhileTrue(frc2::InstantCommand([&]() -> void
                                                       { m_feederSubsystem.Eject(); },
                                                       {&m_feederSubsystem})
                                      .ToPtr());
+  m_xbox.RightBumper().OnFalse(frc2::InstantCommand([&]() -> void
+                                                    { m_feederSubsystem.NoFeed(); },
+                                                    {&m_feederSubsystem})
+                                   .ToPtr());
 
   m_xbox.Start().WhileTrue(frc2::InstantCommand([&]() -> void
                                                 { m_feederSubsystem.Raise(); },
@@ -306,7 +314,7 @@ std::tuple<double, double, double, bool> RobotContainer::GetDriveTeleopControls(
   y = shape(y);
   z = shape(z, 0.0);
 
-  if (m_slow)
+  if (m_slow || m_buttonBoard.GetRawButton(9))
   {
     x *= 0.50;
     y *= 0.50;

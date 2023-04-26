@@ -95,11 +95,15 @@ void FeederSubsystem::Default(const double percent) noexcept
     m_intakeMotor->SetVoltage(percent * 12_V);
     m_elevatorMotor->SetVoltage(percent * 12_V);
 
-    m_feederMotor->Stop();
     m_climberMotor->Stop();
 
     m_intakeRelease->Set(frc::DoubleSolenoid::Value::kOff);
     m_intakeRaise->Set(frc::DoubleSolenoid::Value::kOff);
+}
+
+void FeederSubsystem::NoFeed() noexcept
+{
+    m_feederMotor->Stop();
 }
 
 void FeederSubsystem::Eject() noexcept

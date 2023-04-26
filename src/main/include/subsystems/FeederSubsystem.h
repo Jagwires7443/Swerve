@@ -26,6 +26,7 @@ public:
     void TestPeriodic() noexcept;
 
     void Default(const double percent) noexcept;
+    void NoFeed() noexcept;
 
     void Eject() noexcept;
 
