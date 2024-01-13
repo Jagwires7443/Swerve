@@ -29,10 +29,10 @@ FeederSubsystem::FeederSubsystem() noexcept
         {"kSmartCurrentStallLimit", uint{30}}, // Amps
     };
 
-    m_intakeMotorBase = SparkMaxFactory::CreateSparkMax("Intake", 9, false);
-    m_elevatorMotorBase = SparkMaxFactory::CreateSparkMax("Elevator", 10, true);
-    m_feederMotorBase = SparkMaxFactory::CreateSparkMax("Feeder", 11, true);
-    m_climberMotorBase = SparkMaxFactory::CreateSparkMax("Climber", 12, false);
+    m_intakeMotorBase = SparkFactory::CreateSparkMax("Intake", 9, false);
+    m_elevatorMotorBase = SparkFactory::CreateSparkMax("Elevator", 10, true);
+    m_feederMotorBase = SparkFactory::CreateSparkMax("Feeder", 11, true);
+    m_climberMotorBase = SparkFactory::CreateSparkMax("Climber", 12, false);
     m_intakeMotor = std::make_unique<SmartMotor<units::angle::turns>>(*m_intakeMotorBase);
     m_elevatorMotor = std::make_unique<SmartMotor<units::angle::turns>>(*m_elevatorMotorBase);
     m_feederMotor = std::make_unique<SmartMotor<units::angle::turns>>(*m_feederMotorBase);

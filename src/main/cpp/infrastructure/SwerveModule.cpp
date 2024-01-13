@@ -67,10 +67,10 @@ SwerveModule::SwerveModule(
 
     // Motor controller configurations are only checked (or saved) in test mode
     // but a minimal amount is set up in these methods.
-    m_turningMotorBase = SparkMaxFactory::CreateSparkMax(m_name + std::string(" Turning"), turningMotorCanID, m_turningMotorInverted);
+    m_turningMotorBase = SparkFactory::CreateSparkMax(m_name + std::string(" Turning"), turningMotorCanID, m_turningMotorInverted);
     m_turningMotor = std::make_unique<SmartMotor<units::angle::degrees>>(*m_turningMotorBase);
 
-    m_driveMotorBase = SparkMaxFactory::CreateSparkMax(m_name + std::string(" Drive"), driveMotorCanID, m_driveMotorInverted);
+    m_driveMotorBase = SparkFactory::CreateSparkMax(m_name + std::string(" Drive"), driveMotorCanID, m_driveMotorInverted);
     m_driveMotor = std::make_unique<SmartMotor<units::length::meters>>(*m_driveMotorBase);
 
     // kStatus1 includes velocity; kStatus2 includes position -- these are made

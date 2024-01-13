@@ -293,8 +293,8 @@ frc2::CommandPtr TrajectoryAuto::TrajectoryAutoCommandFactory(DriveSubsystem *co
         trajectory, [drive]() -> frc::Pose2d
         { return drive->GetPose(); },
         drive->kDriveKinematics,
-        frc2::PIDController{0.6, 0, 0},
-        frc2::PIDController{0.6, 0, 0},
+        frc::PIDController{0.6, 0, 0},
+        frc::PIDController{0.6, 0, 0},
         frc::ProfiledPIDController<units::radians>{pidf::kDriveThetaP, pidf::kDriveThetaI, pidf::kDriveThetaD, frc::TrapezoidProfile<units::angle::radians>::Constraints{pidf::kDriveThetaMaxVelocity, pidf::kDriveThetaMaxAcceleration}},
         // [drive]() -> frc::Rotation2d "desiredRotation"
         [drive](std::array<frc::SwerveModuleState, 4> states) -> void

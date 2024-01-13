@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <frc2/command/CommandBase.h>
+#include <frc2/command/Command.h>
 #include <frc2/command/CommandHelper.h>
 #include <frc2/command/CommandPtr.h>
 #include <frc/RobotController.h>
@@ -18,7 +18,7 @@
 #include <memory>
 #include <string_view>
 
-class TimedAutoBase : public frc2::CommandHelper<frc2::CommandBase, TimedAutoBase>
+class TimedAutoBase : public frc2::CommandHelper<frc2::Command, TimedAutoBase>
 {
 protected:
   TimedAutoBase(DriveSubsystem *const drive, FeederSubsystem *const feeder, InfrastructureSubsystem *const infrastructure, ShooterSubsystem *const shooter, std::string_view name) noexcept
