@@ -65,7 +65,7 @@ void Robot::AutonomousInit() noexcept
 
   if (m_autonomousCommand)
   {
-    m_autonomousCommand->Schedule();
+    //m_autonomousCommand->Schedule();----------------------------------------------------------UNCOMMENT TO REENABLE AUTONOMOUS
   }
 
   m_container.AutonomousInit();
