@@ -736,7 +736,10 @@ void SparkMax::ConfigPeriodic() noexcept
                  {
             if (encoderCounts_ == 0)
             {
-                encoder_ = std::make_unique<rev::SparkRelativeEncoder>(motor_->GetEncoder(rev::SparkRelativeEncoder::Type::kHallSensor, 42));
+                // FIXME: Once Rev updates the library to not include
+                // conflicting API definitions, the parameter to Get Encoder
+                // can be removed.
+                encoder_ = std::make_unique<rev::SparkRelativeEncoder>(motor_->GetEncoder(rev::SparkRelativeEncoder::Type::kHallSensor));
             }
             else
             {
