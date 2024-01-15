@@ -38,7 +38,7 @@ SwerveModule::SwerveModule(
     const int driveMotorCanID,
     const int turningMotorCanID,
     const int turningEncoderPort,
-    const int alignmentOffset) noexcept : m_name{name}
+    const units::turn_t alignmentOffset) noexcept : m_name{name}
 {
     // Set up onboard printf-style logging.
     std::string logName{"/SwerveModule/"};
@@ -570,8 +570,8 @@ void SwerveModule::TestPeriodic() noexcept
         m_driveMotor->CheckConfig();
     }
 
-    // [-2048, +2048)
-    std::optional<int> position = m_turningPositionPWM->GetAbsolutePositionWithoutAlignment();
+    // [-180, +180)
+    std::optional<units::degree_t> position = m_turningPositionPWM->GetAbsolutePositionWithoutAlignment();
 
     // This provides a rough means of zeroing the turning position.
     if (position.has_value())
@@ -579,29 +579,29 @@ void SwerveModule::TestPeriodic() noexcept
         if (zeroTurning)
         {
             // Work out new alignment so position becomes zero.
-            int alignmentOffset = -position.value();
-            if (alignmentOffset == +2048)
+            units::turn_t alignmentOffset = -position.value();
+            if (alignmentOffset == 180_deg)
             {
-                alignmentOffset = -2048;
+                alignmentOffset = -180_deg;
             }
 
             m_turningPositionPWM->SetAlignment(alignmentOffset);
-            position = 0;
+            position = 0.0_deg;
             m_turningPosition = 0.0_deg;
         }
         else
         {
             // Alignment is [-2048, +2048).
             position = position.value() + m_turningPositionPWM->GetAlignment();
-            if (position > 2047)
+            if (position > 180_deg)
             {
-                position = position.value() - 4096;
+                position = position.value() - 360_deg;
             }
-            if (position < -2048)
+            if (position < -180_deg)
             {
-                position = position.value() + 4096;
+                position = position.value() + 360_deg;
             }
-            m_turningPosition = position.value() / 2048.0 * 180.0_deg;
+            m_turningPosition = position.value();
         }
     }
 

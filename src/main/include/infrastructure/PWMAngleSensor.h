@@ -6,7 +6,7 @@
 #include <frc/DutyCycle.h>
 #include <frc/shuffleboard/ShuffleboardContainer.h>
 #include <units/angle.h>
-#include <ctre/phoenix/sensors/CANCoder.h>
+#include <ctre/phoenix6/CANCoder.hpp>
 
 #include <functional>
 #include <memory>
@@ -16,7 +16,7 @@
 class AngleSensor
 {
 public:
-    AngleSensor(int deviceID, int alignment) noexcept;
+    AngleSensor(int deviceID, units::turn_t alignment) noexcept;
 
     AngleSensor(const AngleSensor &) = delete;
     AngleSensor &operator=(const AngleSensor &) = delete;
@@ -26,23 +26,19 @@ public:
     void ShuffleboardCreate(frc::ShuffleboardContainer &container,
                             std::function<std::pair<units::angle::degree_t, units::angle::degree_t>()> getCommandedAndEncoderPositions = nullptr) noexcept;
 
-    int GetAlignment() noexcept { return alignment_; }
+    units::turn_t GetAlignment() noexcept;
 
-    void SetAlignment(const int alignment) noexcept { alignment_ = alignment; }
+    void SetAlignment(const units::turn_t alignment) noexcept;
 
     std::optional<units::angle::degree_t> GetAbsolutePosition() noexcept;
 
-    std::optional<int> GetAbsolutePositionWithoutAlignment() noexcept;
+    std::optional<units::angle::turn_t> GetAbsolutePositionWithoutAlignment() noexcept;
 
 private:
     // Range is [-2048, +2048).
-    std::optional<int> GetAbsolutePosition(const int frequency, const double output, const bool applyOffset) noexcept;
+    std::optional<units::angle::turn_t> GetAbsolutePosition(const int frequency, const double output, const bool applyOffset) noexcept;
 
-    ctre::phoenix::sensors::CANCoder canCoder_;
-    double alignment_{0};
-
-    std::unique_ptr<frc::DigitalInput> digitalInput_;
-    std::unique_ptr<frc::DutyCycle> dutyCycle_;
+    ctre::phoenix6::hardware::CANcoder canCoder_;
 
     std::function<std::pair<units::angle::degree_t, units::angle::degree_t>()> getCommandedAndEncoderPositionsF_{nullptr};
     HeadingGyro headingGyro_;

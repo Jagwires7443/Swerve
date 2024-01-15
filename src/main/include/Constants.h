@@ -10,10 +10,10 @@ namespace physical
 {
     // Alignment constants, for each swerve module.  Specified on [-2048, 2048)
     // "count" scale, in (dimensionless) angular units.
-    constexpr int kFrontLeftAlignmentOffset = -280;
-    constexpr int kFrontRightAlignmentOffset = -309;
-    constexpr int kRearLeftAlignmentOffset = -332;
-    constexpr int kRearRightAlignmentOffset = -276;
+    constexpr units::degree_t kFrontLeftAlignmentOffset = -280_deg;
+    constexpr units::degree_t kFrontRightAlignmentOffset = -309_deg;
+    constexpr units::degree_t kRearLeftAlignmentOffset = -332_deg;
+    constexpr units::degree_t kRearRightAlignmentOffset = -276_deg;
 
     // SDS Mk3 Standard (or Fast) Gear Ratio: 8.16:1 (or 6.86:1);
     // Nominal Wheel Diameter (4"): =0.1016m;
