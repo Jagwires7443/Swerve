@@ -2,10 +2,10 @@
 
 #include "infrastructure/ShuffleboardWidgets.h"
 
-AngleSensor::AngleSensor(int deviceID, int alignment) noexcept
+AngleSensor::AngleSensor(int deviceID, double alignment) noexcept
     : canCoder_(deviceID), alignment_(alignment) {
     // Configure the sensor range and other settings
-    canCoder_.ConfigAbsoluteSensorRange(ctre::phoenix::sensors::AbsoluteSensorRange::Unsigned_0_to_360);
+    canCoder_.ConfigAbsoluteSensorRange(ctre::phoenix::sensors::AbsoluteSensorRange::Signed_PlusMinus180);
     // Other configuration as needed...
 }
 

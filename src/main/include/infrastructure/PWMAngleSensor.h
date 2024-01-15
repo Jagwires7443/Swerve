@@ -16,7 +16,7 @@
 class AngleSensor
 {
 public:
-    AngleSensor(int deviceID, int alignment) noexcept;
+    AngleSensor(int deviceID, double alignment) noexcept;
 
     AngleSensor(const AngleSensor &) = delete;
     AngleSensor &operator=(const AngleSensor &) = delete;
@@ -39,7 +39,7 @@ private:
     std::optional<int> GetAbsolutePosition(const int frequency, const double output, const bool applyOffset) noexcept;
 
     ctre::phoenix::sensors::CANCoder canCoder_;
-    int alignment_{0};
+    double alignment_{0};
 
     std::unique_ptr<frc::DigitalInput> digitalInput_;
     std::unique_ptr<frc::DutyCycle> dutyCycle_;
