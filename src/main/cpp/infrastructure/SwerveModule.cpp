@@ -445,7 +445,8 @@ void SwerveModule::SetDesiredState(const frc::SwerveModuleState &referenceState)
 
     SetTurningPosition(state.angle.Degrees());
 
-    SetDriveVelocity(state.speed);
+    //SetDriveVelocity(state.speed); -------------------------------------------------------debugging
+    SetDriveVelocity(0_mps);
 }
 
 void SwerveModule::ResetEncoders() noexcept
