@@ -140,7 +140,7 @@ public:
       const int driveMotorCanID,
       const int turningMotorCanID,
       const int turningEncoderPort,
-      const double alignmentOffset) noexcept;
+      const int alignmentOffset) noexcept;
 
   // No copy/assign.
   SwerveModule(const SwerveModule &) = delete;

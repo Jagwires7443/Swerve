@@ -16,7 +16,7 @@
 class AngleSensor
 {
 public:
-    AngleSensor(int deviceID, double alignment) noexcept;
+    AngleSensor(int deviceID, int alignment) noexcept;
 
     AngleSensor(const AngleSensor &) = delete;
     AngleSensor &operator=(const AngleSensor &) = delete;
