@@ -2,10 +2,11 @@
 
 #include "infrastructure/ShuffleboardWidgets.h"
 
-AngleSensor::AngleSensor(const int channel, const int alignment) noexcept : alignment_{alignment}
-{
-    digitalInput_ = std::make_unique<frc::DigitalInput>(channel);
-    dutyCycle_ = std::make_unique<frc::DutyCycle>(*digitalInput_);
+AngleSensor::AngleSensor(int deviceID, int alignment) noexcept
+    : canCoder_(deviceID), alignment_(alignment) {
+    // Configure the sensor range and other settings
+    canCoder_.ConfigAbsoluteSensorRange(ctre::phoenix::sensors::AbsoluteSensorRange::Unsigned_0_to_360);
+    // Other configuration as needed...
 }
 
 void AngleSensor::Periodic() noexcept
@@ -122,16 +123,17 @@ void AngleSensor::ShuffleboardCreate(frc::ShuffleboardContainer &container,
     shuffleboard_ = true;
 }
 
-std::optional<units::angle::degree_t> AngleSensor::GetAbsolutePosition() noexcept
-{
-    const auto position = GetAbsolutePosition(dutyCycle_->GetFrequency(), dutyCycle_->GetOutput(), true);
-
-    if (!position.has_value())
-    {
-        return std::nullopt;
+std::optional<units::angle::degree_t> AngleSensor::GetAbsolutePosition() noexcept {
+    double position = canCoder_.GetPosition();
+    // Continuously adjust position to fall within [-180 to 180) degree range
+    while (position > 180.0) {
+        position -= 360.0;
     }
-
-    return units::angle::turn_t{static_cast<double>(position.value()) / 4096.0};
+    while (position <= -180.0) {
+        position += 360.0;
+    }
+    // Apply alignment offset and return
+    return units::angle::degree_t{position + alignment_};
 }
 
 std::optional<int> AngleSensor::GetAbsolutePositionWithoutAlignment() noexcept
