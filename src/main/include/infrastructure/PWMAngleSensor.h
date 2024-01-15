@@ -6,7 +6,7 @@
 #include <frc/DutyCycle.h>
 #include <frc/shuffleboard/ShuffleboardContainer.h>
 #include <units/angle.h>
-//#include <ctre/phoenix/sensors/CANCoder.h>
+#include <ctre/phoenix/sensors/CANCoder.h>
 
 #include <functional>
 #include <memory>
