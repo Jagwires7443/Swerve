@@ -39,7 +39,7 @@ private:
     std::optional<int> GetAbsolutePosition(const int frequency, const double output, const bool applyOffset) noexcept;
 
     ctre::phoenix::sensors::CANCoder canCoder_;
-    int alignment_;
+    int alignment_{0};
 
     std::unique_ptr<frc::DigitalInput> digitalInput_;
     std::unique_ptr<frc::DutyCycle> dutyCycle_;
