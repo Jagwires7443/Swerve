@@ -1083,6 +1083,13 @@ void DriveSubsystem::SetModuleStates(std::array<frc::SwerveModuleState, 4> &desi
   m_frontRightSwerveModule->SetDesiredState(frontRight);
   m_rearLeftSwerveModule->SetDesiredState(rearLeft);
   m_rearRightSwerveModule->SetDesiredState(rearRight);
+
+// -----------------------------------------------------------------------------debugging
+  m_frontLeftSwerveModule->SetDriveVelocity(0.0_mps);
+  m_frontRightSwerveModule->SetDriveVelocity(0.0_mps);
+  m_rearLeftSwerveModule->SetDriveVelocity(0.0_mps);
+  m_rearRightSwerveModule->SetDriveVelocity(0.0_mps);
+// -----------------------------------------------------------------------------debugging
 }
 
 units::degree_t DriveSubsystem::GetHeading() noexcept
