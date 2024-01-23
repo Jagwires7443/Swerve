@@ -1,3 +1,6 @@
+
+
+
 // Copyright (c) FIRST and other WPILib contributors.
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
@@ -16,12 +19,18 @@
 #include <frc/shuffleboard/ShuffleboardLayout.h>
 #include <frc/shuffleboard/ShuffleboardTab.h>
 #include <frc/shuffleboard/SimpleWidget.h>
-#include <frc2/command/CommandBase.h>
+#include <frc2/command/Command.h>
 #include <frc2/command/CommandScheduler.h>
 #include <networktables/NetworkTableEntry.h>
 #include <networktables/NetworkTableInstance.h>
 #include <networktables/NetworkTableValue.h>
 #include <wpi/array.h>
+#include <pathplanner/lib/auto/AutoBuilder.h>
+#include <pathplanner/lib/util/HolonomicPathFollowerConfig.h>
+#include <pathplanner/lib/util/PIDConstants.h>
+#include <pathplanner/lib/util/ReplanningConfig.h>
+#include <frc/geometry/Pose2d.h>
+#include <frc/kinematics/ChassisSpeeds.h>
 
 #include <algorithm>
 #include <chrono>
@@ -32,6 +41,8 @@
 #include <string_view>
 #include <thread>
 #include <vector>
+
+using namespace pathplanner;
 
 DriveSubsystem::DriveSubsystem() noexcept
 {
@@ -118,6 +129,31 @@ DriveSubsystem::DriveSubsystem() noexcept
   // Initial position (third parameter) defaulted to "frc::Pose2d()"; initial
   // angle (second parameter) is automatically zeroed by navX initialization.
   m_odometry = std::make_unique<frc::SwerveDriveOdometry<4>>(kDriveKinematics, GetHeading(), GetModulePositions());
+
+  AutoBuilder::configureHolonomic(
+      [this]()
+      {
+        return GetPose();
+      }, // Robot pose supplier
+      [this](frc::Pose2d pose)
+      { ResetOdometry(pose); }, // Method to reset odometry (will be called if your auto has a starting pose)
+      [this]()
+      { return GetSpeed(); }, // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
+      [this](frc::ChassisSpeeds speeds)
+      { Drive(speeds); },                // Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds
+      HolonomicPathFollowerConfig(       // HolonomicPathFollowerConfig, this should likely live in your Constants class
+          PIDConstants(0.004, 0.0, 0.0), // Translation PID constants
+          PIDConstants(0.006, 0.0, 0.0), // Rotation PID constants
+          3.68808_mps,                   // Max module speed, in m/s
+          0.4_m,                         // Drive base radius in meters. Distance from robot center to furthest module.
+          ReplanningConfig()             // Default path replanning config. See the API for the options here
+          ),
+      [this]()
+      {
+        return false;
+      },
+      this // Reference to this subsystem to set requirements
+  );
 }
 
 std::array<frc::SwerveModulePosition, 4> DriveSubsystem::GetModulePositions() noexcept
@@ -199,7 +235,10 @@ void DriveSubsystem::Periodic() noexcept
   m_odometry->Update(botRot, GetModulePositions());
 }
 
-frc::Pose2d DriveSubsystem::GetPose() noexcept { return m_odometry->GetPose(); }
+frc::Pose2d DriveSubsystem::GetPose() noexcept
+{
+  return m_odometry->GetPose();
+}
 
 std::pair<double, double> DriveSubsystem::GetTilt() noexcept
 {
@@ -1019,6 +1058,23 @@ void DriveSubsystem::Drive(units::meters_per_second_t xSpeed,
   SetModuleStates(states);
 }
 
+void DriveSubsystem::Drive(frc::ChassisSpeeds speeds)
+{
+  Drive(speeds.vx,speeds.vy,speeds.omega,false);
+}
+
+frc::ChassisSpeeds DriveSubsystem::GetSpeed()
+{
+  return kDriveKinematics.ToChassisSpeeds(
+    {
+    m_frontLeftSwerveModule->GetState(),
+    m_frontRightSwerveModule->GetState(),
+    m_rearLeftSwerveModule->GetState(),
+    m_rearRightSwerveModule->GetState()
+    
+    }
+  );
+}
 void DriveSubsystem::ResetEncoders() noexcept
 {
   m_frontLeftSwerveModule->ResetEncoders();

@@ -11,10 +11,7 @@
 #include "commands/AutonomousCommands.h"
 #include "commands/TestModeCommands.h"
 #include "subsystems/DriveSubsystem.h"
-#include "subsystems/FeederSubsystem.h"
 #include "subsystems/Infrastructure.h"
-#include "subsystems/ShooterSubsystem.h"
-
 #include <memory>
 #include <tuple>
 
@@ -55,15 +52,10 @@ private:
   bool m_fieldOriented{false};
   bool m_lock{false};
   bool m_slow{false};
-  double m_shooterVelocity{0.0};
-  uint m_LEDPattern{29};
-  uint m_LEDPatternCount{0};
 
   // The robot's subsystems and commands are defined here...
   DriveSubsystem m_driveSubsystem;
-  FeederSubsystem m_feederSubsystem;
   InfrastructureSubsystem m_infrastructureSubsystem;
-  ShooterSubsystem m_shooterSubsystem;
 
   frc2::CommandXboxController m_xbox{0};
   frc2::CommandGenericHID m_buttonBoard{1};

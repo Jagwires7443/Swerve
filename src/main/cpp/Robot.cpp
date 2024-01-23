@@ -61,7 +61,7 @@ void Robot::AutonomousInit() noexcept
 {
   m_container.TestExit();
 
-  m_autonomousCommand = m_container.GetAutonomousCommand();
+  //m_autonomousCommand = m_container.GetAutonomousCommand();
 
   if (m_autonomousCommand)
   {

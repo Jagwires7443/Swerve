@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <frc2/command/CommandBase.h>
+#include <frc2/command/Command.h>
 #include <frc2/command/CommandHelper.h>
 #include <frc2/command/CommandPtr.h>
 
@@ -14,7 +14,7 @@
 
 // Home all swerve modules to zero heading.
 class ZeroCommand
-    : public frc2::CommandHelper<frc2::CommandBase, ZeroCommand>
+    : public frc2::CommandHelper<frc2::Command, ZeroCommand>
 {
 public:
     explicit ZeroCommand(DriveSubsystem *subsystem) noexcept
@@ -37,7 +37,7 @@ private:
 
 // Expose turning maximum velocity and acceleration.
 class MaxVAndATurningCommand
-    : public frc2::CommandHelper<frc2::CommandBase, ZeroCommand>
+    : public frc2::CommandHelper<frc2::Command, ZeroCommand>
 {
 public:
     explicit MaxVAndATurningCommand(DriveSubsystem *subsystem) noexcept
@@ -62,7 +62,7 @@ private:
 
 // Expose drive maximum velocity and acceleration.
 class MaxVAndADriveCommand
-    : public frc2::CommandHelper<frc2::CommandBase, ZeroCommand>
+    : public frc2::CommandHelper<frc2::Command, ZeroCommand>
 {
 public:
     explicit MaxVAndADriveCommand(DriveSubsystem *subsystem) noexcept
@@ -87,7 +87,7 @@ private:
 
 // Alternately command swerve modules to form X and O patterns.
 class XsAndOsCommand
-    : public frc2::CommandHelper<frc2::CommandBase, XsAndOsCommand>
+    : public frc2::CommandHelper<frc2::Command, XsAndOsCommand>
 {
 public:
     explicit XsAndOsCommand(DriveSubsystem *subsystem) noexcept
@@ -112,7 +112,7 @@ private:
 
 // Command swerve modules to slowly rotate together (spin).
 class RotateModulesCommand
-    : public frc2::CommandHelper<frc2::CommandBase, RotateModulesCommand>
+    : public frc2::CommandHelper<frc2::Command, RotateModulesCommand>
 {
 public:
     explicit RotateModulesCommand(DriveSubsystem *subsystem) noexcept
@@ -137,7 +137,7 @@ private:
 
 // Drive in a square.
 class SquareCommand
-    : public frc2::CommandHelper<frc2::CommandBase, SquareCommand>
+    : public frc2::CommandHelper<frc2::Command, SquareCommand>
 {
 public:
     explicit SquareCommand(DriveSubsystem *subsystem) noexcept
@@ -162,7 +162,7 @@ private:
 
 // Drive in a spirograph pattern.
 class SpirographCommand
-    : public frc2::CommandHelper<frc2::CommandBase, SpirographCommand>
+    : public frc2::CommandHelper<frc2::Command, SpirographCommand>
 {
 public:
     explicit SpirographCommand(DriveSubsystem *subsystem) noexcept
@@ -187,7 +187,7 @@ private:
 
 // Drive in an orbit.
 class OrbitCommand
-    : public frc2::CommandHelper<frc2::CommandBase, OrbitCommand>
+    : public frc2::CommandHelper<frc2::Command, OrbitCommand>
 {
 public:
     explicit OrbitCommand(DriveSubsystem *subsystem) noexcept
@@ -210,7 +210,7 @@ private:
 
 // Drive in a fancy pirouette.
 class PirouetteCommand
-    : public frc2::CommandHelper<frc2::CommandBase, PirouetteCommand>
+    : public frc2::CommandHelper<frc2::Command, PirouetteCommand>
 {
 public:
     explicit PirouetteCommand(DriveSubsystem *subsystem) noexcept
@@ -233,7 +233,7 @@ private:
 
 // Excersize theta (spin) controller.
 class SpinCommand
-    : public frc2::CommandHelper<frc2::CommandBase, SpinCommand>
+    : public frc2::CommandHelper<frc2::Command, SpinCommand>
 {
 public:
     explicit SpinCommand(DriveSubsystem *subsystem) noexcept
