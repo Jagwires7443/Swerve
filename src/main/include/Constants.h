@@ -126,3 +126,11 @@ namespace pidf
     constexpr double kDriveThetaI = 0.0;
     constexpr double kDriveThetaD = 0.0;
 }
+
+namespace nonDrive
+{
+    constexpr int kFeederOneCanID = 11;
+    constexpr int kFeederTwoCanID = 12;
+    constexpr int kShooterOneCanID = 9;
+    constexpr int kShooterTwoCanID = 10;
+}

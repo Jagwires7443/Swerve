@@ -98,16 +98,11 @@ public:
              units::meters_per_second_t ySpeed, units::radians_per_second_t rot,
              bool fieldRelative, units::meter_t x_center, units::meter_t y_center) noexcept;
 
-  void Drive(frc::ChassisSpeeds speeds);
-
-  frc::ChassisSpeeds GetSpeed();
-
   /**
    * Resets the drive encoder to zero, and the turning encoder based on the
    * absolute position sensor.
    */
-  void
-  ResetEncoders() noexcept;
+  void ResetEncoders() noexcept;
 
   /**
    * Sets the drive MotorControllers to a power from -1 to 1.
@@ -294,5 +289,3 @@ private:
   std::string m_rearLeftGraphScroll;
   std::string m_rearRightGraphScroll;
 };
-
-// class Autobuilder

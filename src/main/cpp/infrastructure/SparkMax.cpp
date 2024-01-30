@@ -9,8 +9,8 @@
 #include <rev/CANSparkMaxLowLevel.h>
 #include <rev/RelativeEncoder.h>
 #include <rev/REVLibError.h>
-#include <rev/SparkLimitSwitch.h>
-#include <rev/SparkPIDController.h>
+#include <rev/SparkMaxLimitSwitch.h>
+#include <rev/SparkMaxPIDController.h>
 
 #include <bitset>
 #include <cmath>
@@ -132,12 +132,12 @@ namespace
         // Underlying REV object holders.
         std::unique_ptr<rev::CANSparkMax> motor_;
         std::unique_ptr<rev::RelativeEncoder> encoder_;
-        std::unique_ptr<rev::SparkPIDController> controller_;
+        std::unique_ptr<rev::SparkMaxPIDController> controller_;
 
         // REV object holders, only used when not using an external
         // ("alternate") encoder.
-        std::unique_ptr<rev::SparkLimitSwitch> forward_;
-        std::unique_ptr<rev::SparkLimitSwitch> reverse_;
+        std::unique_ptr<rev::SparkMaxLimitSwitch> forward_;
+        std::unique_ptr<rev::SparkMaxLimitSwitch> reverse_;
 
         // Shuffleboard UI elements, used by ShuffleboardCreate() and
         // ShuffleboardPeriodic() only.
@@ -691,7 +691,7 @@ void SparkMax::ConfigPeriodic() noexcept
     {
         DoSafely("motor_", [&]() -> void
                  {
-            motor_ = std::make_unique<rev::CANSparkMax>(canId_, rev::CANSparkLowLevel::MotorType::kBrushless);
+            motor_ = std::make_unique<rev::CANSparkMax>(canId_, rev::CANSparkMaxLowLevel::MotorType::kBrushless);
             if (!motor_)
             {
                 ++throws_;
@@ -736,7 +736,7 @@ void SparkMax::ConfigPeriodic() noexcept
                  {
             if (encoderCounts_ == 0)
             {
-                encoder_ = std::make_unique<rev::SparkRelativeEncoder>(motor_->GetEncoder(rev::SparkRelativeEncoder::Type::kHallSensor));
+                encoder_ = std::make_unique<rev::SparkMaxRelativeEncoder>(motor_->GetEncoder());
             }
             else
             {
@@ -756,7 +756,7 @@ void SparkMax::ConfigPeriodic() noexcept
     {
         DoSafely("controller_", [&]() -> void
                  {
-            controller_ = std::make_unique<rev::SparkPIDController>(motor_->GetPIDController());
+            controller_ = std::make_unique<rev::SparkMaxPIDController>(motor_->GetPIDController());
             if (!controller_)
             {
                 ++throws_;
@@ -845,10 +845,10 @@ void SparkMax::ConfigPeriodic() noexcept
                     tmp = std::get<uint>(config_.at("kLimitSwitchFwdPolarity"));
                 }
 
-                const rev::SparkLimitSwitch::Type polarity = tmp == 0 ? rev::SparkLimitSwitch::Type::kNormallyOpen : rev::SparkLimitSwitch::Type::kNormallyClosed;
+                const rev::SparkMaxLimitSwitch::Type polarity = tmp == 0 ? rev::SparkMaxLimitSwitch::Type::kNormallyOpen : rev::SparkMaxLimitSwitch::Type::kNormallyClosed;
                 DoSafely("forward_", [&]() -> void
                          {
-                forward_ = std::make_unique<rev::SparkLimitSwitch>(motor_->GetForwardLimitSwitch(polarity));
+                forward_ = std::make_unique<rev::SparkMaxLimitSwitch>(motor_->GetForwardLimitSwitch(polarity));
                 if (!forward_)
                 {
                     ++throws_;
@@ -880,10 +880,10 @@ void SparkMax::ConfigPeriodic() noexcept
                     tmp = std::get<uint>(config_.at("kLimitSwitchRevPolarity"));
                 }
 
-                const rev::SparkLimitSwitch::Type polarity = tmp == 0 ? rev::SparkLimitSwitch::Type::kNormallyOpen : rev::SparkLimitSwitch::Type::kNormallyClosed;
+                const rev::SparkMaxLimitSwitch::Type polarity = tmp == 0 ? rev::SparkMaxLimitSwitch::Type::kNormallyOpen : rev::SparkMaxLimitSwitch::Type::kNormallyClosed;
                 DoSafely("reverse_", [&]() -> void
                          {
-                reverse_ = std::make_unique<rev::SparkLimitSwitch>(motor_->GetReverseLimitSwitch(polarity));
+                reverse_ = std::make_unique<rev::SparkMaxLimitSwitch>(motor_->GetReverseLimitSwitch(polarity));
                 if (!reverse_)
                 {
                     ++throws_;
