@@ -92,5 +92,6 @@
     "valarray": "cpp",
     "variant": "cpp",
     "*.inc": "cpp"
-  }
+  },
+  "C_Cpp_Runner.msvcBatchPath": ""
 }
