@@ -1,6 +1,9 @@
 #include "infrastructure/PWMAngleSensor.h"
 
 #include "infrastructure/ShuffleboardWidgets.h"
+#include <iostream>
+#include <frc/shuffleboard/Shuffleboard.h>
+#include <frc/smartdashboard/SmartDashboard.h>
 
 AngleSensor::AngleSensor(int deviceID, units::turn_t alignment) noexcept
     : canCoder_(deviceID) {
@@ -11,6 +14,7 @@ AngleSensor::AngleSensor(int deviceID, units::turn_t alignment) noexcept
             .WithMagnetOffset(alignment.value())
             // .WithSensorDirection(ctre::phoenix6::signals::SensorDirectionValue::Clockwise_Positive)
     );
+     frc::SmartDashboard::PutNumber("Alignment", alignment.value());
     // Other configuration as needed...
 }
 

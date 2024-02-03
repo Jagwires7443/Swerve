@@ -1,7 +1,6 @@
 // Copyright (c) FIRST and other WPILib contributors.
 // Open Source Software; you can modify and/or share it under the terms of
-// the WPILib BSD license file in the root directory of this project.
-
+// the WPILib BSD license file in the root directory of this pr
 #include "Constants.h"
 #include "RobotContainer.h"
 
@@ -24,6 +23,8 @@
 #include <string>
 #include <units/acceleration.h>
 #include <units/velocity.h>
+#include <frc/shuffleboard/Shuffleboard.h>
+#include <frc/smartdashboard/SmartDashboard.h>
 
 RobotContainer::RobotContainer() noexcept
 {
@@ -37,6 +38,7 @@ RobotContainer::RobotContainer() noexcept
 
 frc2::CommandPtr RobotContainer::DriveCommandFactory(RobotContainer *container) noexcept
 {
+  frc::SmartDashboard::PutNumber("DCF", 0);
   // Set up default drive command; non-owning pointer is passed by value.
   auto driveRequirements = {dynamic_cast<frc2::Subsystem *>(&container->m_driveSubsystem)};
 
@@ -102,6 +104,8 @@ void RobotContainer::AutonomousInit() noexcept
 
 void RobotContainer::TeleopInit() noexcept
 {
+  //std:string
+  frc::SmartDashboard::PutNumber("TeleopInitTest", 1);
   m_driveSubsystem.ClearFaults();
   m_feederSubsystem.ClearFaults();
   m_shooterSubsystem.ClearFaults();
@@ -261,7 +265,7 @@ std::tuple<double, double, double, bool> RobotContainer::GetDriveTeleopControls(
   // port) side of the robot.  Poitive rotation is counter-clockwise.  On the
   // other hand, as the controller is held, the Y axis is aligned with forward.
   // And, specifically, it is the negative Y axis which extends forward.  So,
-  // the robot's X is the controllers inverted Y.  On the controller, the X
+  // thne robot's X is the controllers inverted Y.  On the controller, the X
   // axis lines up with the robot's Y axis.  And, the controller's positive X
   // extends to the right.  So, the robot's Y is the controller's inverted X.
   // Finally, the other controller joystick is used for commanding rotation and
@@ -326,6 +330,9 @@ std::tuple<double, double, double, bool> RobotContainer::GetDriveTeleopControls(
     y *= 2.0;
     z *= 1.6;
   }
+  frc::SmartDashboard::PutNumber("X", x);
+  frc::SmartDashboard::PutNumber("Y", y);
+  frc::SmartDashboard::PutNumber("Z", z);
 
   return std::make_tuple(x, y, z, m_fieldOriented);
 }

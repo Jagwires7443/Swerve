@@ -10,7 +10,7 @@ namespace physical
 {
     // Alignment constants, for each swerve module.  Specified on [-2048, 2048)
     // "count" scale, in (dimensionless) angular units.
-    constexpr units::degree_t kFrontLeftAlignmentOffset = -280_deg;
+    constexpr units::degree_t kFrontLeftAlignmentOffset = -50_deg;
     constexpr units::degree_t kFrontRightAlignmentOffset = -309_deg;
     constexpr units::degree_t kRearLeftAlignmentOffset = -332_deg;
     constexpr units::degree_t kRearRightAlignmentOffset = -276_deg;

@@ -10,6 +10,7 @@
 #include "infrastructure/SwerveModule.h"
 
 #include <frc/DataLogManager.h>
+#include <frc/smartdashboard/SmartDashboard.h>
 #include <frc/shuffleboard/BuiltInWidgets.h>
 #include <frc/shuffleboard/Shuffleboard.h>
 #include <frc/shuffleboard/ShuffleboardContainer.h>
@@ -991,7 +992,9 @@ void DriveSubsystem::Drive(units::meters_per_second_t xSpeed,
   m_rotation = rot / physical::kMaxTurnRate;
   m_x = xSpeed / physical::kMaxDriveSpeed;
   m_y = ySpeed / physical::kMaxDriveSpeed;
-
+  frc::SmartDashboard::PutNumber("DriveSubXSpeed", m_x);
+  frc::SmartDashboard::PutNumber("DriveSubYSpeed", m_y);
+  frc::SmartDashboard::PutNumber("rotation", m_rotation);
   frc::Rotation2d botRot;
 
   DoSafeIMU("GetRotation2d()", [&]() -> void
@@ -999,6 +1002,7 @@ void DriveSubsystem::Drive(units::meters_per_second_t xSpeed,
     if (m_ahrs)
     {
       botRot = -m_ahrs->GetRotation2d();
+      frc::SmartDashboard::PutNumber("BotRot", botRot.Degrees().value());
     } });
 
   if (!m_ahrs)
@@ -1029,6 +1033,7 @@ void DriveSubsystem::ResetEncoders() noexcept
 
 void DriveSubsystem::SetModuleStates(std::array<frc::SwerveModuleState, 4> &desiredStates) noexcept
 {
+
   auto [frontLeft, frontRight, rearLeft, rearRight] = desiredStates;
 
   m_commandedStateFrontLeft = frontLeft;
@@ -1083,6 +1088,16 @@ void DriveSubsystem::SetModuleStates(std::array<frc::SwerveModuleState, 4> &desi
   m_frontRightSwerveModule->SetDesiredState(frontRight);
   m_rearLeftSwerveModule->SetDesiredState(rearLeft);
   m_rearRightSwerveModule->SetDesiredState(rearRight);
+
+  frc::SmartDashboard::PutNumber("LeftFront Desired Speed", frontLeft.speed.value());
+  frc::SmartDashboard::PutNumber("RightFront Desired Speed", frontRight.speed.value());
+  frc::SmartDashboard::PutNumber("LeftRear Desired Speed", rearLeft.speed.value());
+  frc::SmartDashboard::PutNumber("RightRear Desired Speed", rearRight.speed.value());
+
+  frc::SmartDashboard::PutNumber("LeftFront Desired Angle", frontLeft.angle.Degrees().value());
+  frc::SmartDashboard::PutNumber("RightFront Desired Angle", frontRight.angle.Degrees().value());
+  frc::SmartDashboard::PutNumber("LeftRear Desired Angle", rearLeft.angle.Degrees().value());
+  frc::SmartDashboard::PutNumber("RightRear Desired Angle", rearRight.angle.Degrees().value());
 
 }
 

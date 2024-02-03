@@ -14,6 +14,7 @@
 #include "subsystems/FeederSubsystem.h"
 #include "subsystems/Infrastructure.h"
 #include "subsystems/ShooterSubsystem.h"
+#include <frc/shuffleboard/Shuffleboard.h>
 
 #include <memory>
 #include <tuple>
