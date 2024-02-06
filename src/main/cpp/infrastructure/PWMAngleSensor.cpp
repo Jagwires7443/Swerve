@@ -131,7 +131,8 @@ void AngleSensor::SetAlignment(const units::turn_t alignment) noexcept {
 std::optional<units::angle::degree_t> AngleSensor::GetAbsolutePosition() noexcept {
     units::degree_t position = canCoder_.GetPosition().GetValue();
     // Position will already within [-180 to 180) degree range, offset to match magnet position
-    return position;
+    frc::SmartDashboard::PutNumber("AngleSensor::GetAbsolutePosition Value", position.value());
+    return (position / 360_deg) * 1_deg;
 }
 
 std::optional<units::angle::turn_t> AngleSensor::GetAbsolutePositionWithoutAlignment() noexcept
