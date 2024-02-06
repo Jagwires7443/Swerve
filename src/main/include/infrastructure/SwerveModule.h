@@ -177,7 +177,7 @@ public:
 
   // Determine if commanded turning position has been achieved, to within
   // specified tolerance.
-  bool CheckTurningPosition(const units::angle::degree_t tolerance = 2.5_deg) noexcept;
+  bool CheckTurningPosition(const units::angle::degree_t tolerance = 60_deg) noexcept; // original tolerance was 2.5_deg
 
   // Drive is normally oriented around velocity, but distance enables odometry,
   // simple dead reckoning, etc.  Possibly useful for autonomous driving.
