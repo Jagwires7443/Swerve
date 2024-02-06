@@ -23,6 +23,7 @@
 #include <networktables/NetworkTableValue.h>
 #include <units/voltage.h>
 #include <wpi/StringMap.h>
+#include <frc/smartdashboard/SmartDashboard.h>
 
 #include <bitset>
 #include <cmath>
@@ -64,6 +65,11 @@ SwerveModule::SwerveModule(
     // Note this has no explicit SetInverted() method; flip the turning motor
     // and it's incremental encoder in order to make things work out/line up.
     m_turningPositionPWM = std::make_unique<AngleSensor>(turningEncoderPort, alignmentOffset);
+
+    // test printout for alignment calibration
+    if (m_turningPositionPWM->GetAbsolutePosition().has_value()) {
+        frc::SmartDashboard::PutNumber("Initial Alignment " + std::string(name), m_turningPositionPWM->GetAbsolutePosition().value().value());
+    }
 
     // Motor controller configurations are only checked (or saved) in test mode
     // but a minimal amount is set up in these methods.
@@ -436,6 +442,11 @@ void SwerveModule::SetDesiredState(const frc::SwerveModuleState &referenceState)
     frc::SwerveModuleState state = referenceState;
 
     const std::optional<units::angle::degree_t> position = m_turningPositionPWM->GetAbsolutePosition();
+
+    // test printout for alignment calibration
+    if (position.has_value()) {
+        frc::SmartDashboard::PutNumber("Wheel Position " + std::string(m_name), position.value().value());
+    }
 
     if (position.has_value())
     {
