@@ -145,7 +145,7 @@ std::optional<units::angle::degree_t> AngleSensor::GetAbsolutePosition() noexcep
     }
 
     frc::SmartDashboard::PutNumber("AngleSensor::GetAbsolutePosition Value", normalizedPosition);
-    return (units::angle::degree_t(normalizedPosition) / 360_deg) * 1_deg;  // Construct a new degree_t with the normalized value
+    return units::angle::degree_t(normalizedPosition);  // Construct a new degree_t with the normalized value
 }
 
 
