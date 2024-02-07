@@ -137,14 +137,15 @@ std::optional<units::angle::degree_t> AngleSensor::GetAbsolutePosition() noexcep
 */
 std::optional<units::angle::degree_t> AngleSensor::GetAbsolutePosition() noexcept {
     units::degree_t position = canCoder_.GetPosition().GetValue();  // Assuming this returns units::angle::degree_t
-    double normalizedPosition = std::fmod(position.value() + 360.0, 360.0);  // Normalize to [0, 360) range
+    frc::SmartDashboard::PutNumber("AngleSensor::GetAbsolutePosition Value", position.value());
+
+    double normalizedPosition = std::fmod((position.value() / 360) + 360.0, 360.0);  // Normalize to [0, 360) range
 
     // If normalizedPosition is greater than 180, adjust to [-180, 180) range
     if (normalizedPosition > 180.0) {
         normalizedPosition -= 360.0;
     }
 
-    frc::SmartDashboard::PutNumber("AngleSensor::GetAbsolutePosition Value", normalizedPosition);
     return units::angle::degree_t(normalizedPosition);  // Construct a new degree_t with the normalized value
 }
 
