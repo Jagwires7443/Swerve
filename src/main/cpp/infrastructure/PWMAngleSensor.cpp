@@ -143,7 +143,7 @@ std::optional<units::angle::degree_t> AngleSensor::GetAbsolutePosition() noexcep
     // Use the device ID in the SmartDashboard key
     frc::SmartDashboard::PutNumber("AngleSensor::GetAbsolutePosition Absolute ID: " + deviceIdStr, position.value());
 
-    double normalizedPosition = std::fmod((position.value() / 360) + 360.0, 360.0);  // Normalize to [0, 360) range
+    double normalizedPosition = std::fmod(position.value() + 360.0, 360.0);  // Normalize to [0, 360) range
 
     // If normalizedPosition is greater than 180, adjust to [-180, 180) range
     if (normalizedPosition > 180.0) {
@@ -158,8 +158,19 @@ std::optional<units::angle::degree_t> AngleSensor::GetAbsolutePosition() noexcep
 std::optional<units::angle::turn_t> AngleSensor::GetAbsolutePositionWithoutAlignment() noexcept
 {
     units::degree_t position = canCoder_.GetPosition().GetValue();
+    int deviceId = canCoder_.GetDeviceID(); // Obtain the CANCoder device ID
+    std::string deviceIdStr = std::to_string(deviceId); // Convert the device ID to string
+
+    frc::SmartDashboard::PutNumber("AngleSensor::GetAbsolutePositionWithoutAlignment Absolute ID: " + deviceIdStr, position.value());
 
     position -= GetAlignment();
 
-    return position;
+    double normalizedPosition = std::fmod(position.value() + 360.0, 360.0);  // Normalize to [0, 360) range
+
+    // If normalizedPosition is greater than 180, adjust to [-180, 180) range
+    if (normalizedPosition > 180.0) {
+        normalizedPosition -= 360.0;
+    }
+    frc::SmartDashboard::PutNumber("AngleSensor::GetAbsolutePositionWithoutAlignment Adjusted ID: " + deviceIdStr, normalizedPosition);
+    return units::angle::degree_t(normalizedPosition);  // Construct a new degree_t with the normalized value
 }
