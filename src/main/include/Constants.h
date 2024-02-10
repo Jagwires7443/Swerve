@@ -59,8 +59,8 @@ namespace physical
 
     // Drivebase geometry: distance between centers of right and left wheels on
     // robot; distance between centers of front and back wheels on robot.
-    constexpr units::meter_t kTrackWidth = 22.5_in;
-    constexpr units::meter_t kWheelBase = 22.5_in;
+    constexpr units::meter_t kTrackWidth = 24.5_in;
+    constexpr units::meter_t kWheelBase = 24.5_in;
 
     // CAN ID and Digital I/O Port assignments.
     constexpr int kFrontLeftTurningMotorCanID = 8;

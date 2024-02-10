@@ -62,9 +62,9 @@ private:
 
   // The robot's subsystems and commands are defined here...
   DriveSubsystem m_driveSubsystem;
-  FeederSubsystem m_feederSubsystem;
+  // FeederSubsystem m_feederSubsystem;
   InfrastructureSubsystem m_infrastructureSubsystem;
-  ShooterSubsystem m_shooterSubsystem;
+  // ShooterSubsystem m_shooterSubsystem;
 
   frc2::CommandXboxController m_xbox{0};
   frc2::CommandGenericHID m_buttonBoard{1};

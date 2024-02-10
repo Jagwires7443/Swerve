@@ -1056,6 +1056,16 @@ void DriveSubsystem::SetModuleStates(std::array<frc::SwerveModuleState, 4> &desi
   m_commandedStateRearLeft = rearLeft;
   m_commandedStateRearRight = rearRight;
 
+  frc::SmartDashboard::PutNumber("LeftFront Desired Speed", frontLeft.speed.value());
+  frc::SmartDashboard::PutNumber("RightFront Desired Speed", frontRight.speed.value());
+  frc::SmartDashboard::PutNumber("LeftRear Desired Speed", rearLeft.speed.value());
+  frc::SmartDashboard::PutNumber("RightRear Desired Speed", rearRight.speed.value());
+
+  frc::SmartDashboard::PutNumber("LeftFront Desired Angle", frontLeft.angle.Degrees().value());
+  frc::SmartDashboard::PutNumber("RightFront Desired Angle", frontRight.angle.Degrees().value());
+  frc::SmartDashboard::PutNumber("LeftRear Desired Angle", rearLeft.angle.Degrees().value());
+  frc::SmartDashboard::PutNumber("RightRear Desired Angle", rearRight.angle.Degrees().value());
+
   // Don't command turning if there is no drive; this is used from Drive(), and
   // it winds up causing the modules to all home to zero any time there is no
   // joystick input.  This check causes them to stay where they are, which is
@@ -1070,6 +1080,11 @@ void DriveSubsystem::SetModuleStates(std::array<frc::SwerveModuleState, 4> &desi
     m_frontRightSwerveModule->SetDriveVelocity(0.0_mps);
     m_rearLeftSwerveModule->SetDriveVelocity(0.0_mps);
     m_rearRightSwerveModule->SetDriveVelocity(0.0_mps);
+
+    m_frontLeftSwerveModule->StopTurning();
+    m_frontRightSwerveModule->StopTurning();
+    m_rearLeftSwerveModule->StopTurning();
+    m_rearRightSwerveModule->StopTurning();
 
     return;
   }
@@ -1103,17 +1118,6 @@ void DriveSubsystem::SetModuleStates(std::array<frc::SwerveModuleState, 4> &desi
   m_frontRightSwerveModule->SetDesiredState(frontRight);
   m_rearLeftSwerveModule->SetDesiredState(rearLeft);
   m_rearRightSwerveModule->SetDesiredState(rearRight);
-
-  frc::SmartDashboard::PutNumber("LeftFront Desired Speed", frontLeft.speed.value());
-  frc::SmartDashboard::PutNumber("RightFront Desired Speed", frontRight.speed.value());
-  frc::SmartDashboard::PutNumber("LeftRear Desired Speed", rearLeft.speed.value());
-  frc::SmartDashboard::PutNumber("RightRear Desired Speed", rearRight.speed.value());
-
-  frc::SmartDashboard::PutNumber("LeftFront Desired Angle", frontLeft.angle.Degrees().value());
-  frc::SmartDashboard::PutNumber("RightFront Desired Angle", frontRight.angle.Degrees().value());
-  frc::SmartDashboard::PutNumber("LeftRear Desired Angle", rearLeft.angle.Degrees().value());
-  frc::SmartDashboard::PutNumber("RightRear Desired Angle", rearRight.angle.Degrees().value());
-
 }
 
 units::degree_t DriveSubsystem::GetHeading() noexcept

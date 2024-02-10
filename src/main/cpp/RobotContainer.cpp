@@ -87,17 +87,17 @@ frc2::CommandPtr RobotContainer::PointCommandFactory(RobotContainer *container) 
 void RobotContainer::AutonomousInit() noexcept
 {
   m_driveSubsystem.ClearFaults();
-  m_feederSubsystem.ClearFaults();
-  m_shooterSubsystem.ClearFaults();
+  // m_feederSubsystem.ClearFaults();
+  // m_shooterSubsystem.ClearFaults();
 
   m_driveSubsystem.ResetEncoders();
 
   m_driveSubsystem.SetDefaultCommand(frc2::RunCommand([&]() -> void {},
                                                       {&m_driveSubsystem}));
-  m_feederSubsystem.SetDefaultCommand(frc2::RunCommand([&]() -> void {},
-                                                       {&m_feederSubsystem}));
-  m_shooterSubsystem.SetDefaultCommand(frc2::RunCommand([&]() -> void {},
-                                                        {&m_shooterSubsystem}));
+  // m_feederSubsystem.SetDefaultCommand(frc2::RunCommand([&]() -> void {},
+  //                                                      {&m_feederSubsystem}));
+  // m_shooterSubsystem.SetDefaultCommand(frc2::RunCommand([&]() -> void {},
+  //                                                       {&m_shooterSubsystem}));
   m_infrastructureSubsystem.SetDefaultCommand(frc2::RunCommand([&]() -> void {},
                                                                {&m_infrastructureSubsystem}));
 }
@@ -107,19 +107,19 @@ void RobotContainer::TeleopInit() noexcept
   //std:string
   frc::SmartDashboard::PutNumber("TeleopInitTest", 1);
   m_driveSubsystem.ClearFaults();
-  m_feederSubsystem.ClearFaults();
-  m_shooterSubsystem.ClearFaults();
+  // m_feederSubsystem.ClearFaults();
+  // m_shooterSubsystem.ClearFaults();
 
   m_driveSubsystem.ResetEncoders();
   m_driveSubsystem.ZeroHeading();
   
   m_driveSubsystem.SetDefaultCommand(DriveCommandFactory(this));
-  m_feederSubsystem.SetDefaultCommand(frc2::RunCommand([&]() -> void
-                                                       { m_feederSubsystem.Default(m_xbox.GetRightTriggerAxis()); },
-                                                       {&m_feederSubsystem}));
-  m_shooterSubsystem.SetDefaultCommand(frc2::RunCommand([&]() -> void
-                                                        { m_shooterSubsystem.Default(m_xbox.GetLeftTriggerAxis(), m_shooterVelocity); },
-                                                        {&m_shooterSubsystem}));
+  // m_feederSubsystem.SetDefaultCommand(frc2::RunCommand([&]() -> void
+  //                                                      { m_feederSubsystem.Default(m_xbox.GetRightTriggerAxis()); },
+  //                                                      {&m_feederSubsystem}));
+  // m_shooterSubsystem.SetDefaultCommand(frc2::RunCommand([&]() -> void
+  //                                                       { m_shooterSubsystem.Default(m_xbox.GetLeftTriggerAxis(), m_shooterVelocity); },
+  //                                                       {&m_shooterSubsystem}));
   m_infrastructureSubsystem.SetDefaultCommand(frc2::RunCommand([&]() -> void
                                                                { m_infrastructureSubsystem.SetLEDPattern(m_LEDPattern); },
                                                                {&m_infrastructureSubsystem}));
@@ -146,83 +146,83 @@ void RobotContainer::ConfigureBindings() noexcept
                                          {&m_driveSubsystem})
                         .ToPtr());
 
-  m_xbox.LeftBumper().WhileTrue(frc2::InstantCommand([&]() -> void
-                                                     { m_feederSubsystem.Fire(); },
-                                                     {&m_feederSubsystem})
-                                    .ToPtr());
-  m_xbox.LeftBumper().OnFalse(frc2::InstantCommand([&]() -> void
-                                                   { m_feederSubsystem.NoFeed(); },
-                                                   {&m_feederSubsystem})
-                                  .ToPtr());
+  // m_xbox.LeftBumper().WhileTrue(frc2::InstantCommand([&]() -> void
+  //                                                    { m_feederSubsystem.Fire(); },
+  //                                                    {&m_feederSubsystem})
+  //                                   .ToPtr());
+  // m_xbox.LeftBumper().OnFalse(frc2::InstantCommand([&]() -> void
+  //                                                  { m_feederSubsystem.NoFeed(); },
+  //                                                  {&m_feederSubsystem})
+  //                                 .ToPtr());
 
-  m_xbox.RightBumper().WhileTrue(frc2::InstantCommand([&]() -> void
-                                                      { m_feederSubsystem.Eject(); },
-                                                      {&m_feederSubsystem})
-                                     .ToPtr());
-  m_xbox.RightBumper().OnFalse(frc2::InstantCommand([&]() -> void
-                                                    { m_feederSubsystem.NoFeed(); },
-                                                    {&m_feederSubsystem})
-                                   .ToPtr());
+  // m_xbox.RightBumper().WhileTrue(frc2::InstantCommand([&]() -> void
+  //                                                     { m_feederSubsystem.Eject(); },
+  //                                                     {&m_feederSubsystem})
+  //                                    .ToPtr());
+  // m_xbox.RightBumper().OnFalse(frc2::InstantCommand([&]() -> void
+  //                                                   { m_feederSubsystem.NoFeed(); },
+  //                                                   {&m_feederSubsystem})
+  //                                  .ToPtr());
 
-  m_xbox.Start().WhileTrue(frc2::InstantCommand([&]() -> void
-                                                { m_feederSubsystem.Raise(); },
-                                                {&m_feederSubsystem})
-                               .ToPtr());
+  // m_xbox.Start().WhileTrue(frc2::InstantCommand([&]() -> void
+  //                                               { m_feederSubsystem.Raise(); },
+  //                                               {&m_feederSubsystem})
+  //                              .ToPtr());
 
-  m_xbox.Back().WhileTrue(frc2::InstantCommand([&]() -> void
-                                               { m_feederSubsystem.Lower(); },
-                                               {&m_feederSubsystem})
-                              .ToPtr());
+  // m_xbox.Back().WhileTrue(frc2::InstantCommand([&]() -> void
+  //                                              { m_feederSubsystem.Lower(); },
+  //                                              {&m_feederSubsystem})
+  //                             .ToPtr());
 
-  frc2::POVButton(&m_xbox, 90).WhileTrue(frc2::InstantCommand([&]() -> void
-                                                              { m_feederSubsystem.LockIntake(); },
-                                                              {&m_feederSubsystem})
-                                             .ToPtr());
+  // frc2::POVButton(&m_xbox, 90).WhileTrue(frc2::InstantCommand([&]() -> void
+  //                                                             { m_feederSubsystem.LockIntake(); },
+  //                                                             {&m_feederSubsystem})
+  //                                            .ToPtr());
 
-  frc2::POVButton(&m_xbox, 270).WhileTrue(frc2::InstantCommand([&]() -> void
-                                                               { m_feederSubsystem.DropIntake(); },
-                                                               {&m_feederSubsystem})
-                                              .ToPtr());
+  // frc2::POVButton(&m_xbox, 270).WhileTrue(frc2::InstantCommand([&]() -> void
+  //                                                              { m_feederSubsystem.DropIntake(); },
+  //                                                              {&m_feederSubsystem})
+  //                                             .ToPtr());
 
-  frc2::POVButton(&m_xbox, 0).WhileTrue(frc2::InstantCommand([&]() -> void
-                                                             { m_feederSubsystem.RaiseIntake(); },
-                                                             {&m_feederSubsystem})
-                                            .ToPtr());
+  // frc2::POVButton(&m_xbox, 0).WhileTrue(frc2::InstantCommand([&]() -> void
+  //                                                            { m_feederSubsystem.RaiseIntake(); },
+  //                                                            {&m_feederSubsystem})
+  //                                           .ToPtr());
 
-  frc2::POVButton(&m_xbox, 180).WhileTrue(frc2::InstantCommand([&]() -> void
-                                                               { m_feederSubsystem.LowerIntake(); },
-                                                               {&m_feederSubsystem})
-                                              .ToPtr());
+  // frc2::POVButton(&m_xbox, 180).WhileTrue(frc2::InstantCommand([&]() -> void
+  //                                                              { m_feederSubsystem.LowerIntake(); },
+  //                                                              {&m_feederSubsystem})
+  //                                             .ToPtr());
 
-  frc2::JoystickButton(&m_buttonBoard, 5).OnTrue(frc2::InstantCommand([&]() -> void
-                                                                      { m_shooterVelocity = -500.0; },
-                                                                      {})
-                                                     .ToPtr());
+  // frc2::JoystickButton(&m_buttonBoard, 5).OnTrue(frc2::InstantCommand([&]() -> void
+  //                                                                     { m_shooterVelocity = -500.0; },
+  //                                                                     {})
+  //                                                    .ToPtr());
 
-  frc2::JoystickButton(&m_buttonBoard, 6).OnTrue(frc2::InstantCommand([&]() -> void
-                                                                      { m_lock = true; },
-                                                                      {})
-                                                     .ToPtr());
+  // frc2::JoystickButton(&m_buttonBoard, 6).OnTrue(frc2::InstantCommand([&]() -> void
+  //                                                                     { m_lock = true; },
+  //                                                                     {})
+  //                                                    .ToPtr());
 
-  frc2::JoystickButton(&m_buttonBoard, 6).OnFalse(frc2::InstantCommand([&]() -> void
-                                                                       { m_lock = false; },
-                                                                       {})
-                                                      .ToPtr());
+  // frc2::JoystickButton(&m_buttonBoard, 6).OnFalse(frc2::InstantCommand([&]() -> void
+  //                                                                      { m_lock = false; },
+  //                                                                      {})
+  //                                                     .ToPtr());
 
-  frc2::JoystickButton(&m_buttonBoard, 10).OnTrue(frc2::InstantCommand([&]() -> void
-                                                                       { m_shooterVelocity = 1320.0; },
-                                                                       {})
-                                                      .ToPtr());
+  // frc2::JoystickButton(&m_buttonBoard, 10).OnTrue(frc2::InstantCommand([&]() -> void
+  //                                                                      { m_shooterVelocity = 1320.0; },
+  //                                                                      {})
+  //                                                     .ToPtr());
 
-  frc2::JoystickButton(&m_buttonBoard, 11).OnTrue(frc2::InstantCommand([&]() -> void
-                                                                       { m_shooterVelocity = 930.0; },
-                                                                       {})
-                                                      .ToPtr());
+  // frc2::JoystickButton(&m_buttonBoard, 11).OnTrue(frc2::InstantCommand([&]() -> void
+  //                                                                      { m_shooterVelocity = 930.0; },
+  //                                                                      {})
+  //                                                     .ToPtr());
 
-  frc2::JoystickButton(&m_buttonBoard, 12).OnTrue(frc2::InstantCommand([&]() -> void
-                                                                       { m_shooterVelocity = 400.0; },
-                                                                       {})
-                                                      .ToPtr());
+  // frc2::JoystickButton(&m_buttonBoard, 12).OnTrue(frc2::InstantCommand([&]() -> void
+  //                                                                      { m_shooterVelocity = 400.0; },
+  //                                                                      {})
+  //                                                     .ToPtr());
 
   frc2::JoystickButton(&m_buttonBoard, 7).OnTrue(frc2::InstantCommand([&]() -> void
                                                                       { ++m_LEDPattern;
@@ -343,14 +343,14 @@ void RobotContainer::TestInit() noexcept
   frc2::CommandScheduler::GetInstance().CancelAll();
 
   m_driveSubsystem.ClearFaults();
-  m_feederSubsystem.ClearFaults();
-  m_shooterSubsystem.ClearFaults();
+  // m_feederSubsystem.ClearFaults();
+  // m_shooterSubsystem.ClearFaults();
 
   m_driveSubsystem.ResetEncoders();
 
   m_driveSubsystem.TestInit();
-  m_feederSubsystem.TestInit();
-  m_shooterSubsystem.TestInit();
+  // m_feederSubsystem.TestInit();
+  // m_shooterSubsystem.TestInit();
 
   frc::SendableChooser<std::function<frc2::CommandPtr()>> *chooser{m_driveSubsystem.TestModeChooser()};
 
@@ -375,25 +375,25 @@ void RobotContainer::TestExit() noexcept
   frc2::CommandScheduler::GetInstance().CancelAll();
 
   m_driveSubsystem.ClearFaults();
-  m_feederSubsystem.ClearFaults();
-  m_shooterSubsystem.ClearFaults();
+  // m_feederSubsystem.ClearFaults();
+  // m_shooterSubsystem.ClearFaults();
 
   m_driveSubsystem.ResetEncoders();
 
   m_driveSubsystem.TestExit();
-  m_feederSubsystem.TestExit();
-  m_shooterSubsystem.TestExit();
+  // m_feederSubsystem.TestExit();
+  // m_shooterSubsystem.TestExit();
 
   m_driveSubsystem.BurnConfig();
-  m_feederSubsystem.BurnConfig();
-  m_shooterSubsystem.BurnConfig();
+  // m_feederSubsystem.BurnConfig();
+  // m_shooterSubsystem.BurnConfig();
 }
 
 void RobotContainer::TestPeriodic() noexcept
 {
   m_driveSubsystem.TestPeriodic();
-  m_feederSubsystem.TestPeriodic();
-  m_shooterSubsystem.TestPeriodic();
+  // m_feederSubsystem.TestPeriodic();
+  // m_shooterSubsystem.TestPeriodic();
 }
 
 void RobotContainer::DisabledInit() noexcept
@@ -401,8 +401,8 @@ void RobotContainer::DisabledInit() noexcept
   frc2::CommandScheduler::GetInstance().CancelAll();
 
   m_driveSubsystem.ClearFaults();
-  m_feederSubsystem.ClearFaults();
-  m_shooterSubsystem.ClearFaults();
+  // m_feederSubsystem.ClearFaults();
+  // m_shooterSubsystem.ClearFaults();
 
   m_driveSubsystem.ResetEncoders();
 
@@ -415,8 +415,8 @@ void RobotContainer::DisabledInit() noexcept
 void RobotContainer::DisabledExit() noexcept
 {
   m_driveSubsystem.ClearFaults();
-  m_feederSubsystem.ClearFaults();
-  m_shooterSubsystem.ClearFaults();
+  // m_feederSubsystem.ClearFaults();
+  // m_shooterSubsystem.ClearFaults();
 
   m_driveSubsystem.ResetEncoders();
 

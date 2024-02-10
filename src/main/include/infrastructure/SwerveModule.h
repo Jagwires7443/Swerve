@@ -179,6 +179,9 @@ public:
   // specified tolerance.
   bool CheckTurningPosition(const units::angle::degree_t tolerance = 2.5_deg) noexcept;
 
+  // Stop all output to turning motors to save power when stationary.
+  void StopTurning() noexcept;
+
   // Drive is normally oriented around velocity, but distance enables odometry,
   // simple dead reckoning, etc.  Possibly useful for autonomous driving.
 
@@ -285,8 +288,8 @@ private:
   double m_turningPosition_D{pidf::kTurningPositionD};
   double m_turningPosition_DF{pidf::kTurningPositionDF};
   double m_turningPosition_F{pidf::kTurningPositionF};
-  double m_turningPosition_V{pidf::kTurningPositionMaxVelocity};
-  double m_turningPosition_A{pidf::kTurningPositionMaxAcceleration};
+  units::degrees_per_second_t m_turningPosition_V{pidf::kTurningPositionMaxVelocity};
+  units::degrees_per_second_squared_t m_turningPosition_A{pidf::kTurningPositionMaxAcceleration};
 
   // Drive position PID
   double m_drivePosition_P{pidf::kDrivePositionP};

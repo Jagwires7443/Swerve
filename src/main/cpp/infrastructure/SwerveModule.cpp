@@ -337,6 +337,11 @@ bool SwerveModule::CheckTurningPosition(const units::angle::degree_t tolerance) 
     return error >= -tolerance && error < tolerance;
 }
 
+void SwerveModule::StopTurning() noexcept
+{
+    m_turningMotor->Set(0);
+}
+
 // Drive position and velocity are in rotations and rotations/second,
 // respectively.  Brake/coast also applies here; brake only in distance mode,
 // once distance has been reached or in velocity mode, if commanded velocity is
@@ -782,8 +787,8 @@ void SwerveModule::TurningPositionPID(double P, double I, double IZ, double IM, 
     m_turningPosition_D = D;
     m_turningPosition_DF = DF;
     m_turningPosition_F = F;
-    m_turningPosition_V = V;
-    m_turningPosition_A = A;
+    m_turningPosition_V = units::degrees_per_second_t{V};
+    m_turningPosition_A = units::degrees_per_second_squared_t{A};
 
     SetTurningPositionPID();
 }
