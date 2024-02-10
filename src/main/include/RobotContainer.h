@@ -53,7 +53,7 @@ private:
 
   void ConfigureBindings() noexcept;
 
-  bool m_fieldOriented{false};
+  bool m_fieldOriented{true};
   bool m_lock{false};
   bool m_slow{false};
   double m_shooterVelocity{0.0};

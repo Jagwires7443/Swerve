@@ -111,7 +111,8 @@ void RobotContainer::TeleopInit() noexcept
   m_shooterSubsystem.ClearFaults();
 
   m_driveSubsystem.ResetEncoders();
-
+  m_driveSubsystem.ZeroHeading();
+  
   m_driveSubsystem.SetDefaultCommand(DriveCommandFactory(this));
   m_feederSubsystem.SetDefaultCommand(frc2::RunCommand([&]() -> void
                                                        { m_feederSubsystem.Default(m_xbox.GetRightTriggerAxis()); },
