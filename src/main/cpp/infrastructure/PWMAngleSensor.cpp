@@ -147,6 +147,8 @@ std::optional<units::angle::degree_t> AngleSensor::GetAbsolutePosition() noexcep
 
     // Convert to radians and back to use MathUtil AngleModulus
     units::degree_t normalizedPosition = frc::AngleModulus(position);
+
+    // Use the device ID in the adjusted position SmartDashboard key as well
     frc::SmartDashboard::PutNumber("AngleSensor::GetAbsolutePosition Adjusted ID: " + deviceIdStr, normalizedPosition.value());
     return normalizedPosition;
 }

@@ -214,6 +214,14 @@ void SwerveModule::Periodic() noexcept
         return;
     }
 
+    // If no drive speed is applied, don't bother turning
+    if (m_turningStopped)
+    {
+        m_turningMotor->Set(0);
+        m_turningStopped = false;
+        return;
+    }
+
     // Update (and apply below) turning position PID.
     double calculated = m_rioPIDController->Calculate(m_turningPosition);
 
@@ -230,6 +238,8 @@ void SwerveModule::Periodic() noexcept
     {
         calculated -= m_rioPID_F;
     }
+
+    frc::SmartDashboard::PutNumber(std::string(m_name) + "_TurningOutput", calculated);
 
     // Use voltage compensation, to offset low battery voltage.
     m_turningMotor->SetVoltage(calculated * 12.0_V);
@@ -339,7 +349,7 @@ bool SwerveModule::CheckTurningPosition(const units::angle::degree_t tolerance) 
 
 void SwerveModule::StopTurning() noexcept
 {
-    m_turningMotor->Set(0);
+    m_turningStopped = true;
 }
 
 // Drive position and velocity are in rotations and rotations/second,
@@ -413,6 +423,8 @@ void SwerveModule::SetDriveVelocity(units::velocity::meters_per_second_t velocit
 
     const units::angle::degree_t angleError = m_turningPosition - m_commandedHeading;
     const double vectorAlignment = std::cos(units::angle::radian_t{angleError}.to<double>());
+
+    frc::SmartDashboard::PutNumber(std::string(m_name) + "_VectorAlignment", vectorAlignment);
 
 #if 0
     m_driveMotor->SeekVelocity(velocity * vectorAlignment);

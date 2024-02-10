@@ -224,12 +224,12 @@ void RobotContainer::ConfigureBindings() noexcept
   //                                                                      {})
   //                                                     .ToPtr());
 
-  frc2::JoystickButton(&m_buttonBoard, 7).OnTrue(frc2::InstantCommand([&]() -> void
-                                                                      { ++m_LEDPattern;
-                                                                     if (m_LEDPattern >= m_LEDPatternCount) { m_LEDPattern = 0; }
-                                                                     std::printf("LED Pattern[%u]: %s\n", m_LEDPattern, std::string(m_infrastructureSubsystem.GetLEDPatternDescription(m_LEDPattern)).c_str()); },
-                                                                      {})
-                                                     .ToPtr());
+  // frc2::JoystickButton(&m_buttonBoard, 7).OnTrue(frc2::InstantCommand([&]() -> void
+  //                                                                     { ++m_LEDPattern;
+  //                                                                    if (m_LEDPattern >= m_LEDPatternCount) { m_LEDPattern = 0; }
+  //                                                                    std::printf("LED Pattern[%u]: %s\n", m_LEDPattern, std::string(m_infrastructureSubsystem.GetLEDPatternDescription(m_LEDPattern)).c_str()); },
+  //                                                                     {})
+  //                                                    .ToPtr());
 }
 
 std::optional<frc2::CommandPtr> RobotContainer::GetAutonomousCommand() noexcept
@@ -293,7 +293,7 @@ std::tuple<double, double, double, bool> RobotContainer::GetDriveTeleopControls(
   auto shape = [](double raw, double mixer = 0.75) -> double
   {
     // Input deadband around 0.0 (+/- range).
-    constexpr double range = 0.05;
+    constexpr double range = 0.07;
 
     constexpr double slope = 1.0 / (1.0 - range);
 
@@ -319,7 +319,7 @@ std::tuple<double, double, double, bool> RobotContainer::GetDriveTeleopControls(
   y = shape(y);
   z = shape(z, 0.0);
 
-  if (m_slow || m_buttonBoard.GetRawButton(9))
+  if (m_slow) // || m_buttonBoard.GetRawButton(9)
   {
     x *= 0.50;
     y *= 0.50;

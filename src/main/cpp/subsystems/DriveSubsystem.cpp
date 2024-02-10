@@ -1076,6 +1076,7 @@ void DriveSubsystem::SetModuleStates(std::array<frc::SwerveModuleState, 4> &desi
       rearLeft.speed == 0.0_mps &&
       rearRight.speed == 0.0_mps)
   {
+    frc::SmartDashboard::PutBoolean("Stopped", true);
     m_frontLeftSwerveModule->SetDriveVelocity(0.0_mps);
     m_frontRightSwerveModule->SetDriveVelocity(0.0_mps);
     m_rearLeftSwerveModule->SetDriveVelocity(0.0_mps);
@@ -1085,9 +1086,10 @@ void DriveSubsystem::SetModuleStates(std::array<frc::SwerveModuleState, 4> &desi
     m_frontRightSwerveModule->StopTurning();
     m_rearLeftSwerveModule->StopTurning();
     m_rearRightSwerveModule->StopTurning();
-
     return;
   }
+
+  frc::SmartDashboard::PutBoolean("Stopped", false);
 
   // m_limit is always unity, except in Test Mode.  So, by default, it does not
   // modify anything here.  In Test Mode, it can be used to slow things down.

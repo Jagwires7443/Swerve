@@ -277,6 +277,7 @@ private:
   // roboRIO.  Setting m_rio false allows testing turning PID on the SPARK MAX.
   const bool m_rio{true};
   bool m_brakeApplied{true};
+  bool m_turningStopped{false};
   double m_rioPID_F{pidf::kTurningPositionF};
   std::unique_ptr<frc::ProfiledPIDController<units::angle::degrees>> m_rioPIDController;
 

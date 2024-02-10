@@ -67,5 +67,5 @@ private:
   // ShooterSubsystem m_shooterSubsystem;
 
   frc2::CommandXboxController m_xbox{0};
-  frc2::CommandGenericHID m_buttonBoard{1};
+  // frc2::CommandGenericHID m_buttonBoard{1};
 };
