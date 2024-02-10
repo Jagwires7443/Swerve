@@ -4,6 +4,7 @@
 #include <iostream>
 #include <frc/shuffleboard/Shuffleboard.h>
 #include <frc/smartdashboard/SmartDashboard.h>
+#include <frc/MathUtil.h>
 
 AngleSensor::AngleSensor(int deviceID, units::turn_t alignment) noexcept
     : canCoder_(deviceID) {
@@ -144,16 +145,10 @@ std::optional<units::angle::degree_t> AngleSensor::GetAbsolutePosition() noexcep
     // Use the device ID in the SmartDashboard key
     frc::SmartDashboard::PutNumber("AngleSensor::GetAbsolutePosition Absolute ID: " + deviceIdStr, position.value());
 
-    double normalizedPosition = std::fmod(position.value() + 360.0, 360.0);  // Normalize to [0, 360) range
-
-    // If normalizedPosition is greater than 180, adjust to [-180, 180) range
-    if (normalizedPosition > 180.0) {
-        normalizedPosition -= 360.0;
-    }
-
-    // Use the device ID in the adjusted position SmartDashboard key as well
-    frc::SmartDashboard::PutNumber("AngleSensor::GetAbsolutePosition Adjusted ID: " + deviceIdStr, normalizedPosition);
-    return units::angle::degree_t(normalizedPosition);  // Construct a new degree_t with the normalized value
+    // Convert to radians and back to use MathUtil AngleModulus
+    units::degree_t normalizedPosition = frc::AngleModulus(position);
+    frc::SmartDashboard::PutNumber("AngleSensor::GetAbsolutePosition Adjusted ID: " + deviceIdStr, normalizedPosition.value());
+    return normalizedPosition;
 }
 
 std::optional<units::angle::turn_t> AngleSensor::GetAbsolutePositionWithoutAlignment() noexcept
@@ -166,12 +161,8 @@ std::optional<units::angle::turn_t> AngleSensor::GetAbsolutePositionWithoutAlign
 
     position -= GetAlignment();
 
-    double normalizedPosition = std::fmod(position.value() + 360.0, 360.0);  // Normalize to [0, 360) range
-
-    // If normalizedPosition is greater than 180, adjust to [-180, 180) range
-    if (normalizedPosition > 180.0) {
-        normalizedPosition -= 360.0;
-    }
-    frc::SmartDashboard::PutNumber("AngleSensor::GetAbsolutePositionWithoutAlignment Adjusted ID: " + deviceIdStr, normalizedPosition);
-    return units::angle::degree_t(normalizedPosition);  // Construct a new degree_t with the normalized value
+    // Convert to radians and back to use MathUtil AngleModulus
+    units::degree_t normalizedPosition = frc::AngleModulus(position);
+    frc::SmartDashboard::PutNumber("AngleSensor::GetAbsolutePositionWithoutAlignment Adjusted ID: " + deviceIdStr, normalizedPosition.value());
+    return normalizedPosition;
 }
