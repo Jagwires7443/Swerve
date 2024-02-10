@@ -14,8 +14,9 @@ AngleSensor::AngleSensor(int deviceID, units::turn_t alignment) noexcept
             .WithMagnetOffset(alignment.value())
             // .WithSensorDirection(ctre::phoenix6::signals::SensorDirectionValue::Clockwise_Positive)
     );
-     frc::SmartDashboard::PutNumber("Alignment", alignment.value());
-    // Other configuration as needed...
+    int deviceId = canCoder_.GetDeviceID(); // Obtain the CANCoder device ID
+    std::string deviceIdStr = std::to_string(deviceId); // Convert the device ID to string
+    frc::SmartDashboard::PutNumber("Alignment Device ID: " + deviceIdStr, alignment.value());
 }
 
 void AngleSensor::Periodic() noexcept
