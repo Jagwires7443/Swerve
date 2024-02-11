@@ -1007,6 +1007,8 @@ void DriveSubsystem::Drive(units::meters_per_second_t xSpeed,
     fieldRelative = false;
   }
 
+  frc::SmartDashboard::PutBoolean("Field Relative", fieldRelative);
+
   // Center of rotation argument is defaulted to the center of the robot above,
   // but it is also possible to rotate about a different point.
   wpi::array<frc::SwerveModuleState, 4> states = kDriveKinematics.ToSwerveModuleStates(
