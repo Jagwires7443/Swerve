@@ -38,7 +38,6 @@ RobotContainer::RobotContainer() noexcept
 
 frc2::CommandPtr RobotContainer::DriveCommandFactory(RobotContainer *container) noexcept
 {
-  frc::SmartDashboard::PutNumber("DCF", 0);
   // Set up default drive command; non-owning pointer is passed by value.
   auto driveRequirements = {dynamic_cast<frc2::Subsystem *>(&container->m_driveSubsystem)};
 
