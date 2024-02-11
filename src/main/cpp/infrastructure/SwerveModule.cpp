@@ -462,7 +462,7 @@ void SwerveModule::SetDesiredState(const frc::SwerveModuleState &referenceState)
 
     // test printout for alignment calibration
     if (position.has_value()) {
-        frc::SmartDashboard::PutNumber("Wheel Position " + std::string(m_name), position.value().value());
+        frc::SmartDashboard::PutNumber(std::string(m_name) + " Actual Angle", position.value().value());
     }
 
     if (position.has_value())
