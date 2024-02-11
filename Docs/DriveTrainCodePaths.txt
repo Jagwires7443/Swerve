@@ -5,7 +5,7 @@ Init Path (Runs Once)
     SwerveModule::SwerveModule
         PID inits
 
-Periodic Paths (Runs at 20Hz)
+Periodic Paths (Runs at 50Hz)
     SwerveModule::Periodic
         calculates the next PID step
         applies calculated step to turning motor
