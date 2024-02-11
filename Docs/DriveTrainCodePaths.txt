@@ -1,0 +1,35 @@
+Init Path (Runs Once)
+    RobotContainer::TeleopInit
+        sets default run command to RobotContainer::DriveCommandFactory
+
+    SwerveModule::SwerveModule
+        PID inits
+
+Periodic Paths (Runs at 20Hz)
+    SwerveModule::Periodic
+        calculates the next PID step
+        applies calculated step to turning motor
+
+    RobotContainer::GetDriveTeleopControls
+        gets controller input and applies deadzone
+        returns the modified controller input
+    RobotContainer::DriveCommandFactory
+        multiplies controller output by max drive/turn speed in constants file
+        sends the multiplied controller input to drive
+    DriveSubsystem::Drive
+        divides controller output by max drive/turn speed in constants file
+        disables field relative if no gyro
+        convert controller output to swerve module states (hold speed and angle)
+    DriveSubsystem::SetModuleStates
+        stops drive and turn motors if all desired speeds are zero
+        sends desired speed and angle to individual modules
+    SwerveModule::SetDesiredState
+        calls AngleSensor::GetAbsolutePosition
+            returns current angle bounded [-180, 180)
+        performs turning optimization
+        calls SwerveModule::SetTurningPosition
+            bounds angle between [-180, 180)
+            sets m_rioPIDController set point to bounded angle
+        calls SwerveModule::SetDriveVelocity
+            does some questionable math to set a voltage
+            I did not see a PID in this code path
