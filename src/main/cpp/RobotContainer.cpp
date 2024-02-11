@@ -103,8 +103,6 @@ void RobotContainer::AutonomousInit() noexcept
 
 void RobotContainer::TeleopInit() noexcept
 {
-  //std:string
-  frc::SmartDashboard::PutNumber("TeleopInitTest", 1);
   m_driveSubsystem.ClearFaults();
   // m_feederSubsystem.ClearFaults();
   // m_shooterSubsystem.ClearFaults();
