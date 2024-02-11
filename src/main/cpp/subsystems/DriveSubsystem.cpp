@@ -992,9 +992,6 @@ void DriveSubsystem::Drive(units::meters_per_second_t xSpeed,
   m_rotation = rot / physical::kMaxTurnRate;
   m_x = xSpeed / physical::kMaxDriveSpeed;
   m_y = ySpeed / physical::kMaxDriveSpeed;
-  frc::SmartDashboard::PutNumber("DriveSubXSpeed Pre ToSwerveModuleStates", m_x);
-  frc::SmartDashboard::PutNumber("DriveSubYSpeed Pre ToSwerveModuleStates", m_y);
-  frc::SmartDashboard::PutNumber("rotation Pre ToSwerveModuleStates", m_rotation);
   frc::Rotation2d botRot;
 
   DoSafeIMU("GetRotation2d()", [&]() -> void
@@ -1019,21 +1016,6 @@ void DriveSubsystem::Drive(units::meters_per_second_t xSpeed,
       frc::Translation2d(x_center, y_center));
 
   kDriveKinematics.DesaturateWheelSpeeds(&states, physical::kMaxDriveSpeed);
-
-  
-    // Iterate over the states array and put each module's speed and angle to SmartDashboard
-    std::array<std::string, 4> moduleNames = {"FrontLeft", "FrontRight", "RearLeft", "RearRight"};
-    for (size_t i = 0; i < states.size(); ++i) {
-        std::string speedKey = moduleNames[i] + " Speed Post ToSwerveModuleStates";
-        std::string angleKey = moduleNames[i] + " Angle Post ToSwerveModuleStates";
-
-        // Convert speed to meters per second and angle to degrees for display
-        double speedMps = states[i].speed.to<double>();
-        double angleDeg = states[i].angle.Degrees().value();
-
-        frc::SmartDashboard::PutNumber(speedKey, speedMps);
-        frc::SmartDashboard::PutNumber(angleKey, angleDeg);
-    }
 
   SetModuleStates(states);
 }
