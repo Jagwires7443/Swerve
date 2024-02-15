@@ -177,7 +177,7 @@ public:
 
   // Determine if commanded turning position has been achieved, to within
   // specified tolerance.
-  bool CheckTurningPosition(const units::angle::degree_t tolerance = 2.5_deg) noexcept;
+  bool CheckTurningPosition(const units::angle::degree_t tolerance = 5_deg) noexcept;
 
   // Stop all output to turning motors to save power when stationary.
   void StopTurning() noexcept;

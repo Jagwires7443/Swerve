@@ -316,7 +316,7 @@ std::tuple<double, double, double, bool> RobotContainer::GetDriveTeleopControls(
   y = shape(y);
   z = shape(z, 0.0);
 
-  if (m_slow) // || m_buttonBoard.GetRawButton(9)
+  if (true) // || m_buttonBoard.GetRawButton(9)
   {
     x *= 0.50;
     y *= 0.50;

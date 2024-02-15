@@ -8,12 +8,12 @@
 
 namespace physical
 {
-    // Alignment constants, for each swerve module.  Specified on [-2048, 2048)
-    // "count" scale, in (dimensionless) angular units.
-    constexpr units::degree_t kFrontLeftAlignmentOffset = -50_deg;
-    constexpr units::degree_t kFrontRightAlignmentOffset = -309_deg;
-    constexpr units::degree_t kRearLeftAlignmentOffset = -332_deg;
-    constexpr units::degree_t kRearRightAlignmentOffset = -276_deg;
+    // Alignment constants, for each swerve module.  Specified on [-180, 180)
+    // "count" scale, in deg.  From driver station view: +clockwise -counterclockwise.
+    constexpr units::degree_t kFrontLeftAlignmentOffset = -92_deg;
+    constexpr units::degree_t kFrontRightAlignmentOffset = 93_deg;
+    constexpr units::degree_t kRearLeftAlignmentOffset = 26_deg;
+    constexpr units::degree_t kRearRightAlignmentOffset = 131_deg;
 
     // SDS Mk3 Standard (or Fast) Gear Ratio: 8.16:1 (or 6.86:1);
     // Nominal Wheel Diameter (4"): =0.1016m;
@@ -90,17 +90,17 @@ namespace pidf
 {
     constexpr units::degrees_per_second_t kTurningPositionMaxVelocity = 2750.0_deg_per_s;
     constexpr units::degrees_per_second_squared_t kTurningPositionMaxAcceleration = 20000.0_deg_per_s_sq;
-    constexpr double kTurningPositionP = 0.002; // originally 0.006
-    constexpr double kTurningPositionF = 0.000; // originally 0.003
+    constexpr double kTurningPositionP = 0.00395; // originally 0.006 concrete 0.00395
+    constexpr double kTurningPositionF = 0.0; // originally 0.003 concrete 0.003
     constexpr double kTurningPositionI = 0.0;
     constexpr double kTurningPositionIZ = 0.0;
     constexpr double kTurningPositionIM = 0.0;
-    constexpr double kTurningPositionD = 0.0;
+    constexpr double kTurningPositionD = 0.000;
     constexpr double kTurningPositionDF = 0.0;
 
     constexpr double kDrivePositionMaxVelocity = 5700.0;     // Rotations per minute.
     constexpr double kDrivePositionMaxAcceleration = 1000.0; // Rotations per minute per second.
-    constexpr double kDrivePositionP = 0.004;
+    constexpr double kDrivePositionP = 0.000;
     constexpr double kDrivePositionF = 0.0;
     constexpr double kDrivePositionI = 0.0;
     constexpr double kDrivePositionIZ = 0.0;
