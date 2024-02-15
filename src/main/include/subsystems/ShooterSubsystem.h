@@ -1,11 +1,26 @@
 #pragma once
 
+#include "Constants.h"
 #include "infrastructure/SparkMax.h"
 
+
 #include <frc2/command/SubsystemBase.h>
+#include <frc/shuffleboard/ComplexWidget.h>
+#include <frc/shuffleboard/SimpleWidget.h>
+#include <frc/smartdashboard/SendableChooser.h>
+#include <frc2/command/CommandPtr.h>
+#include <frc2/command/SubsystemBase.h>
+#include <units/angle.h>
+#include <units/angular_velocity.h>
+#include <units/length.h>
+#include <units/velocity.h>
 
 #include <chrono>
 #include <memory>
+#include <array>
+#include <functional>
+#include <optional>
+#include <utility>
 
 class ShooterSubsystem : public frc2::SubsystemBase
 {
