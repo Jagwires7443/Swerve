@@ -63,18 +63,24 @@ namespace physical
     constexpr units::meter_t kWheelBase = 24.5_in;
 
     // CAN ID and Digital I/O Port assignments.
-    constexpr int kFrontLeftTurningMotorCanID = 8;
-    constexpr int kFrontLeftDriveMotorCanID = 7;
-    constexpr int kFrontRightTurningMotorCanID = 2;
     constexpr int kFrontRightDriveMotorCanID = 1;
-    constexpr int kRearLeftTurningMotorCanID = 6;
-    constexpr int kRearLeftDriveMotorCanID = 5;
-    constexpr int kRearRightTurningMotorCanID = 4;
+    constexpr int kFrontRightTurningMotorCanID = 2;
     constexpr int kRearRightDriveMotorCanID = 3;
-    constexpr int kFrontLeftTurningEncoderPort = 13;
+    constexpr int kRearRightTurningMotorCanID = 4;
+    constexpr int kRearLeftDriveMotorCanID = 5;
+    constexpr int kRearLeftTurningMotorCanID = 6;
+    constexpr int kFrontLeftDriveMotorCanID = 7;
+    constexpr int kFrontLeftTurningMotorCanID = 8;
     constexpr int kFrontRightTurningEncoderPort = 10;
-    constexpr int kRearLeftTurningEncoderPort = 12;
     constexpr int kRearRightTurningEncoderPort = 11;
+    constexpr int kRearLeftTurningEncoderPort = 12;
+    constexpr int kFrontLeftTurningEncoderPort = 13;
+    constexpr int kLeftShooterMotorCanID = 14;
+    constexpr int kRightShooterMotorCanID = 15;
+    constexpr int kIntakeArmMotorCanID = 16;
+    constexpr int kIntakeSpinMotorCanID = 17;
+
+    
 
     // These can flip because of gearing.
     constexpr bool kDriveMotorInverted = false;
