@@ -56,7 +56,7 @@ SwerveModule::SwerveModule(
         pidf::kTurningPositionD,
         std::move(frc::TrapezoidProfile<units::angle::degrees>::Constraints{
             pidf::kTurningPositionMaxVelocity,
-            pidf::kTurningPositionMaxAcceleration}));
+            pidf::kTurningPositionMaxAcceleration}), 100_ms);
 
     m_rioPIDController->EnableContinuousInput(-180.0_deg, +180.0_deg);
 
