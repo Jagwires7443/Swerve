@@ -112,10 +112,10 @@ void RobotContainer::TeleopInit() noexcept
   
   m_driveSubsystem.SetDefaultCommand(DriveCommandFactory(this));
   // m_feederSubsystem.SetDefaultCommand(frc2::RunCommand([&]() -> void
-  //                                                      { m_feederSubsystem.Default(m_xbox.GetRightTriggerAxis()); },
+  //                                                      { m_feederSubsystem.SetSpinMotorVoltagePercent(m_xbox.GetRightTriggerAxis()); },
   //                                                      {&m_feederSubsystem}));
   // m_shooterSubsystem.SetDefaultCommand(frc2::RunCommand([&]() -> void
-  //                                                       { m_shooterSubsystem.Default(m_xbox.GetLeftTriggerAxis(), m_shooterVelocity); },
+  //                                                       { m_shooterSubsystem.SetSpinMotorVoltagePercent(m_xbox.GetLeftTriggerAxis(), m_shooterVelocity); },
   //                                                       {&m_shooterSubsystem}));
   m_infrastructureSubsystem.SetDefaultCommand(frc2::RunCommand([&]() -> void
                                                                { m_infrastructureSubsystem.SetLEDPattern(m_LEDPattern); },
@@ -148,7 +148,7 @@ void RobotContainer::ConfigureBindings() noexcept
   //                                                    {&m_feederSubsystem})
   //                                   .ToPtr());
   // m_xbox.LeftBumper().OnFalse(frc2::InstantCommand([&]() -> void
-  //                                                  { m_feederSubsystem.NoFeed(); },
+  //                                                  { m_feederSubsystem.DisableIntake(); },
   //                                                  {&m_feederSubsystem})
   //                                 .ToPtr());
 
@@ -157,12 +157,12 @@ void RobotContainer::ConfigureBindings() noexcept
   //                                                     {&m_feederSubsystem})
   //                                    .ToPtr());
   // m_xbox.RightBumper().OnFalse(frc2::InstantCommand([&]() -> void
-  //                                                   { m_feederSubsystem.NoFeed(); },
+  //                                                   { m_feederSubsystem.DisableIntake(); },
   //                                                   {&m_feederSubsystem})
   //                                  .ToPtr());
 
   // m_xbox.Start().WhileTrue(frc2::InstantCommand([&]() -> void
-  //                                               { m_feederSubsystem.Raise(); },
+  //                                               { m_feederSubsystem.SetArmMotorVoltagePercent(); },
   //                                               {&m_feederSubsystem})
   //                              .ToPtr());
 

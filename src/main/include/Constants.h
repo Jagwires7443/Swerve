@@ -132,12 +132,12 @@ namespace pidf
 
 namespace shooter
 {
-    // Left Motor Config
+    // Left Motor Constructor Parameters
     constexpr std::string_view kLeftShooterMotorName = "LeftShooterMotor";
     constexpr int kLeftShooterMotorCanID = 14;
     constexpr bool kLeftShooterMotorIsInverted = true;
 
-    // Right Motor Config
+    // Right Motor Constructor Parameters
     constexpr std::string_view kRightShooterMotorName = "RightShooterMotor";
     constexpr int kRightShooterMotorCanID = 15;
     constexpr bool kRightShooterMotorIsInverted = false;
@@ -147,8 +147,15 @@ namespace shooter
 
 namespace intake
 {
+    // Arm Motor Constructor Parameters
+    constexpr std::string_view kIntakeArmMotorName = "ArmMotor";
     constexpr int kIntakeArmMotorCanID = 16;
+    constexpr bool kIntakeArmMotorIsInverted = false;
+
+    // Intake Spin Motor Constructor Parameters
+    constexpr std::string_view kIntakeSpinMotorName = "IntakeSpinMotor";
     constexpr int kIntakeSpinMotorCanID = 17;
+    constexpr bool kIntakeSpinMotorIsInverted = false;
 
     /* NOTE!!!: The intake arm values are NOT final, are subject to change
     after testing*/

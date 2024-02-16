@@ -11,7 +11,7 @@
 #include "commands/AutonomousCommands.h"
 #include "commands/TestModeCommands.h"
 #include "subsystems/DriveSubsystem.h"
-#include "subsystems/FeederSubsystem.h"
+#include "subsystems/IntakeSubsystem.h"
 #include "subsystems/Infrastructure.h"
 #include "subsystems/ShooterSubsystem.h"
 #include <frc/shuffleboard/Shuffleboard.h>
@@ -62,7 +62,7 @@ private:
 
   // The robot's subsystems and commands are defined here...
   DriveSubsystem m_driveSubsystem;
-  // FeederSubsystem m_feederSubsystem;
+  // IntakeSubsystem m_IntakeSubsystem;
   InfrastructureSubsystem m_infrastructureSubsystem;
   // ShooterSubsystem m_shooterSubsystem;
 

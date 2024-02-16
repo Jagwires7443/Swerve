@@ -14,10 +14,7 @@ void TimedAutoBase::Initialize() noexcept
     m_drive->ResetDrive();
     m_drive->ZeroHeading();
 
-    // TODO: update to match our intake
-    m_feeder->Default(0.0);
-    m_feeder->LockIntake();
-    m_feeder->RaiseIntake();
+    m_Intake->DisableIntake();
 
     m_shooter->Stop();
 
@@ -30,7 +27,7 @@ void TimedAutoBase::End(bool interrupted) noexcept
 {
     m_drive->Drive(0_mps, 0_mps, 0_deg_per_s, false);
 
-    m_feeder->Default(0.0);
+    m_Intake->DisableIntake();
 
     m_shooter->Stop();
 }
