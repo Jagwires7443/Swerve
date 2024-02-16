@@ -1,0 +1,9 @@
+P ~= 1/360
+
+update frequency likely too high for anything other than P
+
+things to try
+    output could be capped
+        increased low error sensitivity
+    nonlinear output scaling
+        increased low/high error sensitivity, decreased opposite
