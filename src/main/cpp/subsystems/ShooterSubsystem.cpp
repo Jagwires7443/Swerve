@@ -30,9 +30,6 @@ ShooterSubsystem::ShooterSubsystem() noexcept
     m_LeftShooterMotor->SetConfig(config);
     m_RightShooterMotor->SetConfig(config);
 
-    m_LeftShooterMotor->ApplyConfig(false);
-    m_RightShooterMotor->ApplyConfig(false);
-
     Stop();
 }
 
