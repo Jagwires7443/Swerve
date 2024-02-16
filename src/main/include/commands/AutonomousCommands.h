@@ -21,8 +21,8 @@
 class TimedAutoBase : public frc2::CommandHelper<frc2::Command, TimedAutoBase>
 {
 protected:
-  TimedAutoBase(DriveSubsystem *const drive, FeederSubsystem *const feeder, InfrastructureSubsystem *const infrastructure, ShooterSubsystem *const shooter, std::string_view name) noexcept
-      : m_drive{drive}, m_feeder{feeder}, m_infrastructure{infrastructure}, m_shooter{shooter} { SetName(name); }
+  TimedAutoBase(DriveSubsystem *const drive, FeederSubsystem *const feeder, ShooterSubsystem *const shooter, std::string_view name) noexcept
+      : m_drive{drive}, m_feeder{feeder}, m_shooter{shooter} { SetName(name); }
 
 public:
   virtual ~TimedAutoBase() noexcept = default;
@@ -40,42 +40,12 @@ public:
 protected:
   DriveSubsystem *const m_drive;
   FeederSubsystem *const m_feeder;
-  InfrastructureSubsystem *const m_infrastructure;
   ShooterSubsystem *const m_shooter;
 
 private:
-  bool pressure_{false};
   bool finished_{false};
   uint64_t FPGATime_{0};
   uint counter_{0};
-};
-
-class OneBallAuto : public TimedAutoBase
-{
-public:
-  OneBallAuto(DriveSubsystem *const drive, FeederSubsystem *const feeder, InfrastructureSubsystem *const infrastructure, ShooterSubsystem *const shooter) noexcept
-      : TimedAutoBase(drive, feeder, infrastructure, shooter, "OneBallAuto") {}
-
-  bool Iteration(const uint counter) noexcept override;
-
-  static frc2::CommandPtr OneBallAutoCommandFactory(DriveSubsystem *const drive, FeederSubsystem *const feeder, InfrastructureSubsystem *const infrastructure, ShooterSubsystem *const shooter) noexcept
-  {
-    return frc2::CommandPtr{std::make_unique<OneBallAuto>(drive, feeder, infrastructure, shooter)};
-  }
-};
-
-class TwoBallAuto : public TimedAutoBase
-{
-public:
-  TwoBallAuto(DriveSubsystem *const drive, FeederSubsystem *const feeder, InfrastructureSubsystem *const infrastructure, ShooterSubsystem *const shooter) noexcept
-      : TimedAutoBase(drive, feeder, infrastructure, shooter, "TwoBallAuto") {}
-
-  bool Iteration(const uint counter) noexcept override;
-
-  static frc2::CommandPtr TwoBallAutoCommandFactory(DriveSubsystem *const drive, FeederSubsystem *const feeder, InfrastructureSubsystem *const infrastructure, ShooterSubsystem *const shooter) noexcept
-  {
-    return frc2::CommandPtr{std::make_unique<TwoBallAuto>(drive, feeder, infrastructure, shooter)};
-  }
 };
 
 namespace TrajectoryAuto

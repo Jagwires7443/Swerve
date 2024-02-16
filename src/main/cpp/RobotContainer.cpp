@@ -231,22 +231,12 @@ void RobotContainer::ConfigureBindings() noexcept
 
 std::optional<frc2::CommandPtr> RobotContainer::GetAutonomousCommand() noexcept
 {
-#if 0
-  if (m_buttonBoard.GetRawButton(9))
-  {
-    return TwoBallAuto::TwoBallAutoCommandFactory(&m_driveSubsystem, &m_feederSubsystem, &m_infrastructureSubsystem, &m_shooterSubsystem);
-  }
-  else
-  {
-    return OneBallAuto::OneBallAutoCommandFactory(&m_driveSubsystem, &m_feederSubsystem, &m_infrastructureSubsystem, &m_shooterSubsystem);
-  }
-#endif
-
   frc::TrajectoryConfig trajectoryConfig{4.0_mps, 2.0_mps_sq};
   frc::SwerveDriveKinematics<4> kinematics{m_driveSubsystem.kDriveKinematics};
 
   trajectoryConfig.SetKinematics(kinematics);
 
+  // TODO: Update trajectory path to our autonomous path
   frc::Trajectory trajectory = frc::TrajectoryGenerator::GenerateTrajectory(
       {frc::Pose2d{},
        frc::Pose2d{1.0_m, 0.0_m, frc::Rotation2d{}}},
