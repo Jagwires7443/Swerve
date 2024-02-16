@@ -75,10 +75,7 @@ namespace physical
     constexpr int kRearRightTurningEncoderPort = 11;
     constexpr int kRearLeftTurningEncoderPort = 12;
     constexpr int kFrontLeftTurningEncoderPort = 13;
-    constexpr int kLeftShooterMotorCanID = 14;
-    constexpr int kRightShooterMotorCanID = 15;
-    constexpr int kIntakeArmMotorCanID = 16;
-    constexpr int kIntakeSpinMotorCanID = 17;
+    
 
     
 
@@ -135,8 +132,27 @@ namespace pidf
 
 namespace nonDrive
 {
-    constexpr int kFeederOneCanID = 23;
-    constexpr int kFeederTwoCanID = 22;
-    constexpr int kShooterOneCanID = 21;
-    constexpr int kShooterTwoCanID = 20;
+
 }
+
+namespace shooter
+{
+    constexpr int kLeftShooterMotorCanID = 14;
+    constexpr int kRightShooterMotorCanID = 15;
+
+    constexpr int kShooterMotorSpeed = 0;
+
+}
+
+namespace intake
+{
+    constexpr int kIntakeArmMotorCanID = 16;
+    constexpr int kIntakeSpinMotorCanID = 17;
+
+    /* NOTE!!!: The intake arm values are NOT final, are subject to change
+    after testing*/
+    constexpr units::degree_t kIntakeArmHome = 90.0_deg;
+    constexpr units::degree_t kIntakeArmPickup = 180.0_deg;
+    constexpr units::degree_t kIntakeArmLoad = 0.0_deg;
+}
+
