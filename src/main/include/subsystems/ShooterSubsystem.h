@@ -25,27 +25,23 @@
 class ShooterSubsystem : public frc2::SubsystemBase
 {
 public:
-    // The only ctor of the FeederSubsystem class.
     ShooterSubsystem() noexcept;
 
     ShooterSubsystem(const ShooterSubsystem &) = delete;
     ShooterSubsystem &operator=(const ShooterSubsystem &) = delete;
 
     void Periodic() noexcept override;
-
+    void Default(const double percent) noexcept;
+    void Stop() noexcept;
+    void BurnConfig() noexcept;
+    void ClearFaults() noexcept;
     bool GetStatus() const noexcept;
 
+#pragma region Test
     void TestInit() noexcept;
     void TestExit() noexcept;
     void TestPeriodic() noexcept;
-
-    void Default(const double percent, const double velocity) noexcept;
-
-    void Stop() noexcept;
-
-    void BurnConfig() noexcept;
-
-    void ClearFaults() noexcept;
+#pragma endregion
 
 private:
     std::unique_ptr<SmartMotorBase> m_shooterMotorBase;

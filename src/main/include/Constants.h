@@ -130,18 +130,19 @@ namespace pidf
     constexpr double kDriveThetaD = 0.0;
 }
 
-namespace nonDrive
-{
-
-}
-
 namespace shooter
 {
+    // Left Motor Config
+    constexpr std::string_view kLeftShooterMotorName = "LeftShooterMotor";
     constexpr int kLeftShooterMotorCanID = 14;
+    constexpr bool kLeftShooterMotorIsInverted = true;
+
+    // Right Motor Config
+    constexpr std::string_view kRightShooterMotorName = "RightShooterMotor";
     constexpr int kRightShooterMotorCanID = 15;
+    constexpr bool kRightShooterMotorIsInverted = false;
 
     constexpr int kShooterMotorSpeed = 0;
-
 }
 
 namespace intake

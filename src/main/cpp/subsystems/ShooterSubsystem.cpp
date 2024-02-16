@@ -14,8 +14,14 @@ ShooterSubsystem::ShooterSubsystem() noexcept
         {"kIdleMode", uint{0}},
     };
 
-    m_shooterMotorBase = SparkFactory::CreateSparkMax("Shooter", 13, false);
-    m_backspinMotorBase = SparkFactory::CreateSparkMax("Backspin", 14, true);
+    m_shooterMotorBase = SparkFactory::CreateSparkMax(
+        shooter::kLeftShooterMotorName,
+        shooter::kLeftShooterMotorCanID,
+        shooter::kLeftShooterMotorIsInverted);
+    m_backspinMotorBase = SparkFactory::CreateSparkMax(
+        shooter::kRightShooterMotorName,
+        shooter::kRightShooterMotorCanID,
+        shooter::kRightShooterMotorIsInverted);
     m_shooterMotor = std::make_unique<SmartMotor<units::angle::turns>>(*m_shooterMotorBase);
     m_backspinMotor = std::make_unique<SmartMotor<units::angle::turns>>(*m_backspinMotorBase);
 
@@ -32,70 +38,10 @@ void ShooterSubsystem::Periodic() noexcept
     m_backspinMotor->Periodic();
 }
 
-bool ShooterSubsystem::GetStatus() const noexcept
+void ShooterSubsystem::Default(const double percent) noexcept
 {
-    return m_shooterMotor->GetStatus() ||
-           m_backspinMotor->GetStatus();
-}
-
-void ShooterSubsystem::TestInit() noexcept {}
-void ShooterSubsystem::TestExit() noexcept {}
-void ShooterSubsystem::TestPeriodic() noexcept
-{
-    const std::chrono::time_point now = std::chrono::steady_clock::now();
-    if (now >= m_verifyMotorControllersWhen)
-    {
-        using namespace std::chrono_literals;
-
-        m_verifyMotorControllersWhen = now + 15s;
-
-        m_shooterMotor->CheckConfig();
-        m_backspinMotor->CheckConfig();
-    }
-}
-
-void ShooterSubsystem::Default(const double percent, const double velocity) noexcept
-{
-    // Manual control (backup).
-    if (velocity == 0.0)
-    {
-        m_shooterMotor->SetVoltage(percent * 12.00_V);
-        m_backspinMotor->SetVoltage(percent * 11.25_V);
-
-        return;
-    }
-
-    // On/off trigger control (off here).
-    if (percent < 0.25)
-    {
-        m_shooterMotor->Stop();
-        m_backspinMotor->Stop();
-
-        return;
-    }
-
-// Unfortunately, SPARK MAX has too much velocity measurement latency for this.
-#if 0
-    // RPM.
-    const double shooterVelocity = m_shooterMotor->GetVelocityRaw();
-    // const double backspinVelocity = m_backspinMotor->GetVelocityRaw();
-
-    // Bang-bang velocity control (simple).
-    if (shooterVelocity < velocity)
-    {
-        m_shooterMotor->Set(1.0);
-    }
-    else
-    {
-        m_shooterMotor->Stop();
-    }
-
-#else
-
-    m_shooterMotor->SetVoltage(velocity / 1500.0 * 12.00_V);
-    m_backspinMotor->SetVoltage(velocity / 1500.0 * 11.25_V);
-
-#endif
+    m_shooterMotor->SetVoltage(percent * 12.00_V);
+    m_backspinMotor->SetVoltage(percent * 12.00_V);
 }
 
 void ShooterSubsystem::Stop() noexcept
@@ -115,3 +61,27 @@ void ShooterSubsystem::ClearFaults() noexcept
     m_shooterMotor->ClearFaults();
     m_backspinMotor->ClearFaults();
 }
+
+bool ShooterSubsystem::GetStatus() const noexcept
+{
+    return m_shooterMotor->GetStatus() ||
+           m_backspinMotor->GetStatus();
+}
+
+#pragma region Test
+void ShooterSubsystem::TestInit() noexcept {}
+void ShooterSubsystem::TestExit() noexcept {}
+void ShooterSubsystem::TestPeriodic() noexcept
+{
+    const std::chrono::time_point now = std::chrono::steady_clock::now();
+    if (now >= m_verifyMotorControllersWhen)
+    {
+        using namespace std::chrono_literals;
+
+        m_verifyMotorControllersWhen = now + 15s;
+
+        m_shooterMotor->CheckConfig();
+        m_backspinMotor->CheckConfig();
+    }
+}
+#pragma endregion
