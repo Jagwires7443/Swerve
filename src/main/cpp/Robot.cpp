@@ -46,7 +46,10 @@ void Robot::DisabledInit() noexcept
   m_container.DisabledInit();
 }
 
-void Robot::DisabledPeriodic() noexcept {}
+void Robot::DisabledPeriodic() noexcept
+{
+  m_container.DisabledPeriodic();
+}
 
 void Robot::DisabledExit() noexcept
 {
@@ -71,9 +74,15 @@ void Robot::AutonomousInit() noexcept
   m_container.AutonomousInit();
 }
 
-void Robot::AutonomousPeriodic() noexcept {}
+void Robot::AutonomousPeriodic() noexcept
+{
+  m_container.AutonomousPeriodic();
+}
 
-void Robot::AutonomousExit() noexcept {}
+void Robot::AutonomousExit() noexcept
+{
+    m_container.AutonomousExit();
+}
 
 void Robot::TeleopInit() noexcept
 {
@@ -95,9 +104,15 @@ void Robot::TeleopInit() noexcept
 /**
  * This function is called periodically during operator control.
  */
-void Robot::TeleopPeriodic() noexcept {}
+void Robot::TeleopPeriodic() noexcept
+{
+  m_container.TeleopPeriodic();
+}
 
-void Robot::TeleopExit() noexcept {}
+void Robot::TeleopExit() noexcept
+{
+  m_container.TeleopExit();
+}
 
 void Robot::TestInit() noexcept
 {
