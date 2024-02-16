@@ -6,71 +6,79 @@
 
 ShooterSubsystem::ShooterSubsystem() noexcept
 {
-    // These motors use bang-bang control, thus an increased velocity reporting
-    // rate (kStatus1).
+    // TODO: add comment here saying what motor this is for
     const SmartMotorBase::ConfigMap config = {
         {"kStatus1", uint{250}},
         {"kStatus2", uint{250}},
         {"kIdleMode", uint{0}},
+        {"kRampRate", double{0.1}},
+        {"kSmartCurrentStallLimit", uint{25}}, // Amps
+        {"kSmartCurrentFreeLimit", uint{10}}, 
     };
 
-    m_shooterMotorBase = SparkFactory::CreateSparkMax(
+    m_LeftShooterMotorBase = SparkFactory::CreateSparkMax(
         shooter::kLeftShooterMotorName,
         shooter::kLeftShooterMotorCanID,
         shooter::kLeftShooterMotorIsInverted);
-    m_backspinMotorBase = SparkFactory::CreateSparkMax(
+    m_RightShooterMotorBase = SparkFactory::CreateSparkMax(
         shooter::kRightShooterMotorName,
         shooter::kRightShooterMotorCanID,
         shooter::kRightShooterMotorIsInverted);
-    m_shooterMotor = std::make_unique<SmartMotor<units::angle::turns>>(*m_shooterMotorBase);
-    m_backspinMotor = std::make_unique<SmartMotor<units::angle::turns>>(*m_backspinMotorBase);
+    m_LeftShooterMotor = std::make_unique<SmartMotor<units::angle::turns>>(*m_LeftShooterMotorBase);
+    m_RightShooterMotor = std::make_unique<SmartMotor<units::angle::turns>>(*m_RightShooterMotorBase);
 
-    m_shooterMotor->SetConfig(config);
-    m_backspinMotor->SetConfig(config);
+    m_LeftShooterMotor->SetConfig(config);
+    m_RightShooterMotor->SetConfig(config);
 
-    m_shooterMotor->ApplyConfig(false);
-    m_backspinMotor->ApplyConfig(false);
+    m_LeftShooterMotor->ApplyConfig(false);
+    m_RightShooterMotor->ApplyConfig(false);
+
+    Stop();
 }
 
 void ShooterSubsystem::Periodic() noexcept
 {
-    m_shooterMotor->Periodic();
-    m_backspinMotor->Periodic();
+    m_LeftShooterMotor->Periodic();
+    m_RightShooterMotor->Periodic();
 }
 
-void ShooterSubsystem::Default(const double percent) noexcept
+void ShooterSubsystem::SetShooterMotorVoltagePercent(const double percent) noexcept
 {
-    m_shooterMotor->SetVoltage(percent * 12.00_V);
-    m_backspinMotor->SetVoltage(percent * 12.00_V);
+    m_LeftShooterMotor->SetVoltage(percent * 12.00_V);
+    m_RightShooterMotor->SetVoltage(percent * 12.00_V);
 }
 
 void ShooterSubsystem::Stop() noexcept
 {
-    m_shooterMotor->Stop();
-    m_backspinMotor->Stop();
+    m_LeftShooterMotor->Stop();
+    m_RightShooterMotor->Stop();
+}
+
+#pragma region Utility
+bool ShooterSubsystem::GetStatus() const noexcept
+{
+    return m_LeftShooterMotor->GetStatus() ||
+           m_RightShooterMotor->GetStatus();
 }
 
 void ShooterSubsystem::BurnConfig() noexcept
 {
-    m_shooterMotor->ApplyConfig(true);
-    m_backspinMotor->ApplyConfig(true);
+    m_LeftShooterMotor->ApplyConfig(true);
+    m_RightShooterMotor->ApplyConfig(true);
 }
 
 void ShooterSubsystem::ClearFaults() noexcept
 {
-    m_shooterMotor->ClearFaults();
-    m_backspinMotor->ClearFaults();
+    m_LeftShooterMotor->ClearFaults();
+    m_RightShooterMotor->ClearFaults();
 }
-
-bool ShooterSubsystem::GetStatus() const noexcept
-{
-    return m_shooterMotor->GetStatus() ||
-           m_backspinMotor->GetStatus();
-}
+#pragma endregion
 
 #pragma region Test
 void ShooterSubsystem::TestInit() noexcept {}
+
 void ShooterSubsystem::TestExit() noexcept {}
+
 void ShooterSubsystem::TestPeriodic() noexcept
 {
     const std::chrono::time_point now = std::chrono::steady_clock::now();
@@ -80,8 +88,8 @@ void ShooterSubsystem::TestPeriodic() noexcept
 
         m_verifyMotorControllersWhen = now + 15s;
 
-        m_shooterMotor->CheckConfig();
-        m_backspinMotor->CheckConfig();
+        m_LeftShooterMotor->CheckConfig();
+        m_RightShooterMotor->CheckConfig();
     }
 }
 #pragma endregion

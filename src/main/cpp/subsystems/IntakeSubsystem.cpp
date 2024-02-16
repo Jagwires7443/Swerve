@@ -20,8 +20,14 @@ IntakeSubsystem::IntakeSubsystem() noexcept
         {"kSmartCurrentStallLimit", uint{30}}, // Amps
     };
 
-    m_ArmMotorBase = SparkFactory::CreateSparkMax(intake::kIntakeArmMotorName, intake::kIntakeArmMotorCanID, intake::kIntakeArmMotorIsInverted);
-    m_SpinMotorBase = SparkFactory::CreateSparkMax(intake::kIntakeSpinMotorName, intake::kIntakeSpinMotorCanID, intake::kIntakeSpinMotorIsInverted);
+    m_ArmMotorBase = SparkFactory::CreateSparkMax(
+        intake::kIntakeArmMotorName,
+        intake::kIntakeArmMotorCanID,
+        intake::kIntakeArmMotorIsInverted);
+    m_SpinMotorBase = SparkFactory::CreateSparkMax(
+        intake::kIntakeSpinMotorName,
+        intake::kIntakeSpinMotorCanID,
+        intake::kIntakeSpinMotorIsInverted);
     m_ArmMotor = std::make_unique<SmartMotor<units::angle::turns>>(*m_ArmMotorBase);
     m_SpinMotor = std::make_unique<SmartMotor<units::angle::turns>>(*m_SpinMotorBase);
 
@@ -88,7 +94,8 @@ void IntakeSubsystem::TestPeriodic() noexcept
 
         m_verifyMotorControllersWhen = now + 15s;
 
-        // m_motor->CheckConfig();
+        m_ArmMotor->CheckConfig();
+        m_SpinMotor->CheckConfig();
     }
 }
 #pragma endregion

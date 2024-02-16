@@ -31,23 +31,28 @@ public:
     ShooterSubsystem &operator=(const ShooterSubsystem &) = delete;
 
     void Periodic() noexcept override;
-    void Default(const double percent) noexcept;
+    void SetShooterMotorVoltagePercent(const double percent) noexcept;
     void Stop() noexcept;
+
+private:
+    std::unique_ptr<SmartMotorBase> m_LeftShooterMotorBase;
+    std::unique_ptr<SmartMotorBase> m_RightShooterMotorBase;
+    std::unique_ptr<SmartMotor<units::angle::turns>> m_LeftShooterMotor;
+    std::unique_ptr<SmartMotor<units::angle::turns>> m_RightShooterMotor;
+
+#pragma region Utility
+public:
+    bool GetStatus() const noexcept;
     void BurnConfig() noexcept;
     void ClearFaults() noexcept;
-    bool GetStatus() const noexcept;
+#pragma endregion
 
 #pragma region Test
+public:
     void TestInit() noexcept;
     void TestExit() noexcept;
     void TestPeriodic() noexcept;
-#pragma endregion
-
 private:
-    std::unique_ptr<SmartMotorBase> m_shooterMotorBase;
-    std::unique_ptr<SmartMotorBase> m_backspinMotorBase;
-    std::unique_ptr<SmartMotor<units::angle::turns>> m_shooterMotor;
-    std::unique_ptr<SmartMotor<units::angle::turns>> m_backspinMotor;
-
     std::chrono::steady_clock::time_point m_verifyMotorControllersWhen;
+#pragma endregion
 };
