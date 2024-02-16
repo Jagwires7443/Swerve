@@ -224,7 +224,6 @@ void SwerveModule::Periodic() noexcept
 
     // Update (and apply below) turning position PID.
     double calculated = m_rioPIDController->Calculate(m_turningPosition);
-    frc::SmartDashboard::PutNumber(std::string(m_name) + " Turning PID Measured Angle", m_turningPosition.value());
 
     // Feedforward is a form of open-loop control.  For turning, there is not
     // much to do, but add in a constant value based only on the direction of
