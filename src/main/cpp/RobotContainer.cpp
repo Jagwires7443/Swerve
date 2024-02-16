@@ -128,95 +128,139 @@ frc2::CommandPtr RobotContainer::DriveCommandFactory(RobotContainer *container) 
 
 std::tuple<double, double, double, bool> RobotContainer::GetDriveTeleopControls() noexcept
 {
-  // The robot's frame of reference is the standard unit circle, from
-  // trigonometry.  However, the front of the robot is facing along the positve
-  // X axis.  This means the poitive Y axis extends outward from the left (or
-  // port) side of the robot.  Poitive rotation is counter-clockwise.  On the
-  // other hand, as the controller is held, the Y axis is aligned with forward.
-  // And, specifically, it is the negative Y axis which extends forward.  So,
-  // thne robot's X is the controllers inverted Y.  On the controller, the X
-  // axis lines up with the robot's Y axis.  And, the controller's positive X
-  // extends to the right.  So, the robot's Y is the controller's inverted X.
-  // Finally, the other controller joystick is used for commanding rotation and
-  // things work out so that this is also an inverted X axis.
-  double x = -m_xbox.GetLeftY();
-  double y = -m_xbox.GetLeftX();
-  double z = -m_xbox.GetRightX();
+  /*
+  The robot's frame of reference is the standard unit circle, from
+  trigonometry.  However, the front of the robot is facing along the positve
+  X axis.  This means the poitive Y axis extends outward from the left (or
+  port) side of the robot.  Poitive rotation is counter-clockwise.  On the
+  other hand, as the controller is held, the Y axis is aligned with forward.
+  And, specifically, it is the negative Y axis which extends forward.  So,
+  the robot's X is the controllers inverted Y.  On the controller, the X
+  axis lines up with the robot's Y axis.  And, the controller's positive X
+  extends to the right.  So, the robot's Y is the controller's inverted X.
+  Finally, the other controller joystick is used for commanding rotation and
+  things work out so that this is also an inverted X axis.
+  */
+  double LeftStickX = -m_xbox.GetLeftY();
+  double LeftStickY = -m_xbox.GetLeftX();
+  double rightStickRot = -m_xbox.GetRightX();
 
-  // PlayStation controllers seem to do this strange thing with the rotation:
-  // double z = -m_xbox.GetLeftTriggerAxis();
-  // Note: there is now a PS4Controller class.
-
-  // Add some deadzone, so the robot doesn't drive when the joysticks are
-  // released and return to "zero".  These implement a continuous deadband, one
-  // in which the full range of outputs may be generated, once joysticks move
-  // outside the deadband.
-
-  // Also, cube the result, to provide more opertor control.  Just cubing the
-  // raw value does a pretty good job with the deadband, but doing both is easy
-  // and guarantees no movement in the deadband.  Cubing makes it easier to
-  // command smaller/slower movements, while still being able to command full
-  // power.  The 'mixer` parameter is used to shape the `raw` input, some mix
-  // between out = in^3.0 and out = in.
-  auto shape = [](double raw, double mixer = 0.75) -> double
+  if (triggerSpeedEnabled) // scale speed by analog trigger
   {
-    // Input deadband around 0.0 (+/- range).
-    constexpr double range = 0.07;
+    double RightTrigAnalogVal = m_xbox.GetRightTriggerAxis();
+    RightTrigAnalogVal = ConditionRawTriggerInput(RightTrigAnalogVal);
 
-    constexpr double slope = 1.0 / (1.0 - range);
-
-    if (raw >= -range && raw <= +range)
+    if (LeftStickX != 0 || LeftStickY != 0)
     {
-      raw = 0.0;
+      if (LeftStickX != 0)
+      {
+        double LeftStickTheta = atan(LeftStickY / LeftStickX);
+        LeftStickX = RightTrigAnalogVal * cos(LeftStickTheta);
+        LeftStickY = RightTrigAnalogVal * sin(LeftStickTheta);
+      }
+      else
+      {
+        LeftStickY = std::copysign(RightTrigAnalogVal, LeftStickY);
+      }
     }
-    else if (raw < -range)
-    {
-      raw += range;
-      raw *= slope;
-    }
-    else if (raw > +range)
-    {
-      raw -= range;
-      raw *= slope;
-    }
-
-    return mixer * std::pow(raw, 3.0) + (1.0 - mixer) * raw;
-  };
-
-  x = shape(x);
-  y = shape(y);
-  z = shape(z, 0.0);
-
-  if (true) // || m_buttonBoard.GetRawButton(9)
+  }
+  else // scale speed by analog stick
   {
-    x *= 0.50;
-    y *= 0.50;
-    z *= 0.40;
+    LeftStickX = ConditionRawJoystickInput(LeftStickX);
+    LeftStickY = ConditionRawJoystickInput(LeftStickY);
+  }
+
+  rightStickRot = ConditionRawJoystickInput(rightStickRot, 0.0);
+
+  // TODO: decide if this is still needed
+  LeftStickX *= 2.0;
+  LeftStickY *= 2.0;
+  rightStickRot *= 1.6;
+
+  frc::SmartDashboard::PutNumber("X", LeftStickX);
+  frc::SmartDashboard::PutNumber("Y", LeftStickY);
+  frc::SmartDashboard::PutNumber("Z", rightStickRot);
+
+  return std::make_tuple(LeftStickX, LeftStickY, rightStickRot, m_fieldOriented);
+}
+
+double RobotContainer::ConditionRawTriggerInput(double RawTrigVal) noexcept
+{
+  // Set a raw trigger value using the right trigger
+  RawTrigVal = m_xbox.GetRightTriggerAxis();
+  double deadZoneVal = 0.05;
+  double deadZoneCorrection = 1.0 / (1.0 - deadZoneVal);
+
+  if (RawTrigVal < deadZoneVal)
+  {
+    /*if the trigger value is less than deadzonevalue, it will
+    set the right trigger value to zero to correct drifting*/
+    return 0;
   }
   else
-  { // XXX Still needed?
-    x *= 2.0;
-    y *= 2.0;
-    z *= 1.6;
+  {
+    /* if the trigger value is greater than the deadzonevalue, it will
+    make a small correction to stop the increase in speed from being
+    too big */
+    RawTrigVal -= deadZoneVal;
+    RawTrigVal *= deadZoneCorrection;
+    return std::pow(RawTrigVal, 3.0); // std::pow(RawTrigVal, 3.0) == RawTrigVal^3
   }
-  frc::SmartDashboard::PutNumber("X", x);
-  frc::SmartDashboard::PutNumber("Y", y);
-  frc::SmartDashboard::PutNumber("Z", z);
+}
 
-  return std::make_tuple(x, y, z, m_fieldOriented);
+double RobotContainer::ConditionRawJoystickInput(double RawJoystickVal, double mixer) noexcept
+{
+  /*
+  PlayStation controllers seem to do this strange thing with the rotation:
+  double z = -m_xbox.GetLeftTriggerAxis();
+  Note: there is now a PS4Controller class.
+
+  Add some deadzone, so the robot doesn't drive when the joysticks are
+  released and return to "zero".  These implement a continuous deadband, one
+  in which the full range of outputs may be generated, once joysticks move
+  outside the deadband.
+
+  Also, cube the result, to provide more opertor control.  Just cubing the
+  raw value does a pretty good job with the deadband, but doing both is easy
+  and guarantees no movement in the deadband.  Cubing makes it easier to
+  command smaller/slower movements, while still being able to command full
+  power.  The 'mixer` parameter is used to shape the `raw` input, some mix
+  between out = in^3.0 and out = in.
+  */
+  
+  // Input deadband around 0.0 (+/- range).
+  constexpr double deadZoneVal = 0.05;
+
+  constexpr double slope = 1.0 / (1.0 - deadZoneVal);
+
+  if (RawJoystickVal >= -deadZoneVal && RawJoystickVal <= +deadZoneVal)
+  {
+    RawJoystickVal = 0.0;
+  }
+  else if (RawJoystickVal < -deadZoneVal)
+  {
+    RawJoystickVal += deadZoneVal;
+    RawJoystickVal *= slope;
+  }
+  else if (RawJoystickVal > +deadZoneVal)
+  {
+    RawJoystickVal -= deadZoneVal;
+    RawJoystickVal *= slope;
+  }
+
+  return mixer * std::pow(RawJoystickVal, 3.0) + (1.0 - mixer) * RawJoystickVal;
 }
 
 void RobotContainer::ConfigureBindings() noexcept
 {
-  m_xbox.A().OnTrue(frc2::InstantCommand([&]() -> void
-                                         { m_slow = true; },
-                                         {})
-                        .ToPtr());
-  m_xbox.B().OnTrue(frc2::InstantCommand([&]() -> void
-                                         { m_slow = false; },
-                                         {})
-                        .ToPtr());
+  // TODO: define Keybindings here
+  m_xbox.Start().OnTrue(
+    frc2::InstantCommand([&]() -> void
+      { triggerSpeedEnabled = !triggerSpeedEnabled; },
+      {}
+    ).ToPtr());
 
+  // TODO: decide if we want this
   m_xbox.X().OnTrue(frc2::InstantCommand([&]() -> void
                                          { m_fieldOriented = false; },
                                          {})
@@ -226,6 +270,8 @@ void RobotContainer::ConfigureBindings() noexcept
                                            m_fieldOriented = true; },
                                          {&m_driveSubsystem})
                         .ToPtr());
+
+  // TODO: decide if we want to bind wheel lock
 }
 #pragma endregion
 

@@ -51,12 +51,13 @@ public:
 private:
   static frc2::CommandPtr DriveCommandFactory(RobotContainer *container) noexcept;
   std::tuple<double, double, double, bool> GetDriveTeleopControls() noexcept;
+  double ConditionRawTriggerInput(double RawTrigVal) noexcept;
+  double ConditionRawJoystickInput(double RawJoystickVal, double mixer = 0.75) noexcept;
   void ConfigureBindings() noexcept;
 
   bool m_fieldOriented{true};
   bool m_lock{false};
-  bool m_slow{false};
-  double m_shooterVelocity{0.0};
+  bool triggerSpeedEnabled{false};
 
   frc2::CommandXboxController m_xbox{0};
   // frc2::CommandXboxController m_xbox{1}; TODO: update for second controller
