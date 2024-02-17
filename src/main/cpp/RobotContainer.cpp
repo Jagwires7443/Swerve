@@ -272,6 +272,11 @@ void RobotContainer::ConfigureBindings() noexcept
                         .ToPtr());
 
   // TODO: decide if we want to bind wheel lock
+
+  m_xbox.A().OnTrue(frc2::InstantCommand([&]() -> void
+                                         { m_intakeSubsystem.SetSpinMotorVoltagePercent(intake::kIntakeSpinMotorVoltagePercent); },
+                                         {&m_intakeSubsystem})
+                        .ToPtr());
 }
 #pragma endregion
 
