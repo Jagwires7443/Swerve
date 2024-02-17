@@ -18,6 +18,7 @@ IntakeSubsystem::IntakeSubsystem() noexcept
 
     const SmartMotorBase::ConfigMap moreTorque = {
         {"kSmartCurrentStallLimit", uint{30}}, // Amps
+        {"kMotorType", uint{0}} // Brushed
     };
 
     m_ArmMotorBase = SparkFactory::CreateSparkMax(

@@ -277,6 +277,10 @@ void RobotContainer::ConfigureBindings() noexcept
                                          { m_intakeSubsystem.SetSpinMotorVoltagePercent(intake::kIntakeSpinMotorVoltagePercent); },
                                          {&m_intakeSubsystem})
                         .ToPtr());
+  m_xbox.A().OnFalse(frc2::InstantCommand([&]() -> void
+                  { m_intakeSubsystem.SetSpinMotorVoltagePercent(0.0); },
+                  {&m_intakeSubsystem})
+                        .ToPtr());
 }
 #pragma endregion
 

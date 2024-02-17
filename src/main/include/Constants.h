@@ -147,7 +147,7 @@ namespace intake
     // Intake Spin Motor Constructor Parameters
     constexpr std::string_view kIntakeSpinMotorName = "IntakeSpinMotor";
     constexpr int kIntakeSpinMotorCanID = 16;
-    constexpr bool kIntakeSpinMotorIsInverted = false;
+    constexpr bool kIntakeSpinMotorIsInverted = true;
 
     /* NOTE!!!: The intake arm values are NOT final, are subject to change
     after testing*/
@@ -155,7 +155,7 @@ namespace intake
     constexpr units::degree_t kIntakeArmPickup = 180.0_deg;
     constexpr units::degree_t kIntakeArmLoad = 0.0_deg;
 
-    constexpr double kIntakeSpinMotorVoltagePercent = 1;
+    constexpr double kIntakeSpinMotorVoltagePercent = .15;
 
     // Arm Motor Constructor Parameters
     constexpr std::string_view kIntakeArmMotorName = "ArmMotor";
