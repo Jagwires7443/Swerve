@@ -14,6 +14,7 @@ ShooterSubsystem::ShooterSubsystem() noexcept
         {"kRampRate", double{0.1}},
         {"kSmartCurrentStallLimit", uint{25}}, // Amps
         {"kSmartCurrentFreeLimit", uint{10}}, 
+        {"kMotorType", bool(0)}, //Set brushed motor for shooters
     };
 
     m_LeftShooterMotorBase = SparkFactory::CreateSparkMax(
