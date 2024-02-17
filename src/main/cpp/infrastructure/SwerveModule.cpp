@@ -88,6 +88,7 @@ SwerveModule::SwerveModule(
         {"kStatus2", uint{250}}, // ms
         {"kPositionConversionFactor", double{360.0}},
         {"kVelocityConversionFactor", double{360.0 / 60.0}},
+        {"kSmartCurrentStallLimit", uint{40}}, // Amps
     });
     m_turningMotor->ApplyConfig(false);
 
@@ -97,6 +98,7 @@ SwerveModule::SwerveModule(
         {"kStatus2", uint{250}}, // ms
         {"kPositionConversionFactor", double{physical::kDriveMetersPerRotation}},
         {"kVelocityConversionFactor", double{physical::kDriveMetersPerRotation / 60.0}},
+        {"kSmartCurrentStallLimit", uint{40}}, // Amps
     });
     m_driveMotor->ApplyConfig(false);
 
