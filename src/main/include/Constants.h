@@ -75,13 +75,10 @@ namespace physical
     constexpr int kRearRightTurningEncoderPort = 11;
     constexpr int kRearLeftTurningEncoderPort = 12;
     constexpr int kFrontLeftTurningEncoderPort = 13;
-    
-
-    
 
     // These can flip because of gearing.
     constexpr bool kDriveMotorInverted = false;
-    constexpr bool kTurningMotorInverted = false;
+    constexpr bool kTurningMotorInverted = true;
 }
 
 namespace firmware
@@ -98,7 +95,7 @@ namespace pidf
     constexpr double kTurningPositionI = 0.0;
     constexpr double kTurningPositionIZ = 0.0;
     constexpr double kTurningPositionIM = 0.0;
-    constexpr double kTurningPositionD = 0.000;
+    constexpr double kTurningPositionD = 0.000395;
     constexpr double kTurningPositionDF = 0.0;
 
     constexpr double kDrivePositionMaxVelocity = 5700.0;     // Rotations per minute.
