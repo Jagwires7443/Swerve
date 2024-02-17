@@ -8,21 +8,21 @@
 #include <chrono>
 #include <memory>
 
-class IntakeSubsystem : public frc2::SubsystemBase
+class TransferArmSubsystem : public frc2::SubsystemBase
 {
 public:
-    IntakeSubsystem() noexcept;
+    TransferArmSubsystem() noexcept;
 
-    IntakeSubsystem(const IntakeSubsystem &) = delete;
-    IntakeSubsystem &operator=(const IntakeSubsystem &) = delete;
+    TransferArmSubsystem(const TransferArmSubsystem &) = delete;
+    TransferArmSubsystem &operator=(const TransferArmSubsystem &) = delete;
 
     void Periodic() noexcept override;
     void DisableIntake() noexcept;
-    void SetSpinMotorVoltagePercent(const double percent) noexcept;
-    
+    void SetArmMotorVoltagePercent(const double percent) noexcept; // must be used in a PID loop to set arm position
+
 private:
-    std::unique_ptr<SmartMotorBase> m_SpinMotorBase;
-    std::unique_ptr<SmartMotor<units::angle::turns>> m_SpinMotor;
+    std::unique_ptr<SmartMotorBase> m_ArmMotorBase;
+    std::unique_ptr<SmartMotor<units::angle::turns>> m_ArmMotor;
 
 #pragma region Utility
 public:
