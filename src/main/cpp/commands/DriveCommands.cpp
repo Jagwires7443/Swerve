@@ -10,7 +10,7 @@ void ZeroTurningModules::Execute() noexcept { (void)driveSubsystem->ZeroModules(
 
 void DriveCommand::Initialize() noexcept
 {
-    driveSubsystem->Drive(0.0_fps, 0.0_fps, 0.0_fps, true);
+    driveSubsystem->Drive(0.0_mps, 0.0_mps, 0.0_rad_per_s, true);
 }
 
 void DriveCommand::Execute() noexcept
@@ -25,5 +25,5 @@ void DriveCommand::Execute() noexcept
 
 void DriveCommand::End(bool interrupted) noexcept
 {
-    driveSubsystem->Drive(0.0_fps, 0.0_fps, 0.0_fps, true);
+    driveSubsystem->Drive(0.0_mps, 0.0_mps, 0.0_rad_per_s, true);
 }
