@@ -144,14 +144,9 @@ namespace shooter
 
 namespace intake
 {
-    // Arm Motor Constructor Parameters
-    constexpr std::string_view kIntakeArmMotorName = "ArmMotor";
-    constexpr int kIntakeArmMotorCanID = 16;
-    constexpr bool kIntakeArmMotorIsInverted = false;
-
     // Intake Spin Motor Constructor Parameters
     constexpr std::string_view kIntakeSpinMotorName = "IntakeSpinMotor";
-    constexpr int kIntakeSpinMotorCanID = 17;
+    constexpr int kIntakeSpinMotorCanID = 16;
     constexpr bool kIntakeSpinMotorIsInverted = false;
 
     /* NOTE!!!: The intake arm values are NOT final, are subject to change
@@ -160,6 +155,11 @@ namespace intake
     constexpr units::degree_t kIntakeArmPickup = 180.0_deg;
     constexpr units::degree_t kIntakeArmLoad = 0.0_deg;
 
-    constexpr double kIntakeSpinMotorVoltagePercent = .30;
+    constexpr double kIntakeSpinMotorVoltagePercent = 1;
+
+    // Arm Motor Constructor Parameters
+    constexpr std::string_view kIntakeArmMotorName = "ArmMotor";
+    constexpr int kIntakeArmMotorCanID = 17;
+    constexpr bool kIntakeArmMotorIsInverted = false;
 }
 
