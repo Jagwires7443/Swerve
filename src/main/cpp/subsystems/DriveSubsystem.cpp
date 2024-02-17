@@ -163,7 +163,7 @@ void DriveSubsystem::Periodic() noexcept
             {
     if (m_ahrs)
     {
-      botRot = -m_ahrs->GetRotation2d();
+      botRot = m_ahrs->GetRotation2d();
     }
     else
     {
@@ -223,7 +223,7 @@ void DriveSubsystem::ResetOdometry(frc::Pose2d pose) noexcept
             {
     if (m_ahrs)
     {
-      botRot = -m_ahrs->GetRotation2d();
+      botRot = m_ahrs->GetRotation2d();
     } });
 
   m_odometry->ResetPosition(botRot, GetModulePositions(), pose);
@@ -998,7 +998,7 @@ void DriveSubsystem::Drive(units::meters_per_second_t xSpeed,
             {
     if (m_ahrs)
     {
-      botRot = -m_ahrs->GetRotation2d();
+      botRot = m_ahrs->GetRotation2d();
       frc::SmartDashboard::PutNumber("BotRot", botRot.Degrees().value());
     } });
 
@@ -1114,7 +1114,7 @@ units::degree_t DriveSubsystem::GetHeading() noexcept
             {
     if (m_ahrs)
     {
-      heading = units::degree_t{-m_ahrs->GetAngle()}; // In degrees already.
+      heading = units::degree_t{m_ahrs->GetAngle()}; // In degrees already.
     } });
 
   return heading;
@@ -1138,7 +1138,7 @@ double DriveSubsystem::GetTurnRate() noexcept
             {
     if (m_ahrs)
     {
-      rate = -m_ahrs->GetRate(); // In degrees/second (units not used in WPILib).
+      rate = m_ahrs->GetRate(); // In degrees/second (units not used in WPILib).
     } });
 
   return rate;
