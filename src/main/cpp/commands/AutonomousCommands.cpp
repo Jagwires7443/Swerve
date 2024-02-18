@@ -14,7 +14,7 @@ void TimedAutoBase::Initialize() noexcept
     m_drive->ResetDrive();
     m_drive->ZeroHeading();
 
-    m_Intake->DisableIntake();
+    m_Intake->StopIntake();
 
     m_shooter->Stop();
 
@@ -27,7 +27,7 @@ void TimedAutoBase::End(bool interrupted) noexcept
 {
     m_drive->Drive(0_mps, 0_mps, 0_deg_per_s, false);
 
-    m_Intake->DisableIntake();
+    m_Intake->StopIntake();
 
     m_shooter->Stop();
 }

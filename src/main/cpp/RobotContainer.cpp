@@ -40,7 +40,6 @@ RobotContainer::RobotContainer() noexcept
 void RobotContainer::AutonomousInit() noexcept
 {
   m_driveSubsystem.ClearFaults();
-  m_intakeSubsystem.ClearFaults();
   m_shooterSubsystem.ClearFaults();
 
   m_driveSubsystem.ResetEncoders();
@@ -80,7 +79,6 @@ std::optional<frc2::CommandPtr> RobotContainer::GetAutonomousCommand() noexcept
 void RobotContainer::TeleopInit() noexcept
 {
   m_driveSubsystem.ClearFaults();
-  m_intakeSubsystem.ClearFaults();
   m_shooterSubsystem.ClearFaults();
 
   m_driveSubsystem.ResetEncoders();
@@ -278,7 +276,7 @@ void RobotContainer::ConfigureBindings() noexcept
                                          {&m_intakeSubsystem})
                         .ToPtr());
   m_xbox.A().OnFalse(frc2::InstantCommand([&]() -> void
-                                          { m_intakeSubsystem.SetSpinMotorVoltagePercent(0.0); },
+                                          { m_intakeSubsystem.StopIntake(); },
                                           {&m_intakeSubsystem})
                          .ToPtr());
 }
@@ -290,13 +288,11 @@ void RobotContainer::TestInit() noexcept
   frc2::CommandScheduler::GetInstance().CancelAll();
 
   m_driveSubsystem.ClearFaults();
-  m_intakeSubsystem.ClearFaults();
   m_shooterSubsystem.ClearFaults();
 
   m_driveSubsystem.ResetEncoders();
 
   m_driveSubsystem.TestInit();
-  m_intakeSubsystem.TestInit();
   m_shooterSubsystem.TestInit();
 
   frc::SendableChooser<std::function<frc2::CommandPtr()>> *chooser{m_driveSubsystem.TestModeChooser()};
@@ -320,7 +316,6 @@ void RobotContainer::TestInit() noexcept
 void RobotContainer::TestPeriodic() noexcept
 {
   m_driveSubsystem.TestPeriodic();
-  m_intakeSubsystem.TestPeriodic();
   m_shooterSubsystem.TestPeriodic();
 }
 
@@ -329,17 +324,14 @@ void RobotContainer::TestExit() noexcept
   frc2::CommandScheduler::GetInstance().CancelAll();
 
   m_driveSubsystem.ClearFaults();
-  m_intakeSubsystem.ClearFaults();
   m_shooterSubsystem.ClearFaults();
 
   m_driveSubsystem.ResetEncoders();
 
   m_driveSubsystem.TestExit();
-  m_intakeSubsystem.TestExit();
   m_shooterSubsystem.TestExit();
 
   m_driveSubsystem.BurnConfig();
-  m_intakeSubsystem.BurnConfig();
   m_shooterSubsystem.BurnConfig();
 }
 
@@ -370,7 +362,6 @@ void RobotContainer::DisabledInit() noexcept
   frc2::CommandScheduler::GetInstance().CancelAll();
 
   m_driveSubsystem.ClearFaults();
-  m_intakeSubsystem.ClearFaults();
   m_shooterSubsystem.ClearFaults();
 
   m_driveSubsystem.ResetEncoders();
@@ -386,7 +377,6 @@ void RobotContainer::DisabledPeriodic() noexcept {}
 void RobotContainer::DisabledExit() noexcept
 {
   m_driveSubsystem.ClearFaults();
-  m_intakeSubsystem.ClearFaults();
   m_shooterSubsystem.ClearFaults();
 
   m_driveSubsystem.ResetEncoders();
