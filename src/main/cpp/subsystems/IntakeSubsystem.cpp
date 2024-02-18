@@ -13,7 +13,8 @@ IntakeSubsystem::IntakeSubsystem() noexcept
         {"kIdleMode", uint{0}},
         {"kRampRate", double{0.1}},
         {"kSmartCurrentStallLimit", uint{30}}, // Amps
-        {"kSmartCurrentFreeLimit", uint{10}},  // Amps
+        {"kSmartCurrentFreeLimit", uint{10}}, // Amps
+        {"kMotorType", uint{0}}, // Brushed
     };
 
     m_SpinMotorBase = SparkFactory::CreateSparkMax(
