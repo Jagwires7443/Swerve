@@ -16,6 +16,7 @@
 #include <frc2/command/CommandScheduler.h>
 #include <frc2/command/InstantCommand.h>
 #include <frc2/command/RunCommand.h>
+#include "commands/PositionTransferArmCommand.h"
 
 #include <cmath>
 #include <cstdio>
@@ -48,6 +49,8 @@ void RobotContainer::AutonomousInit() noexcept
                                                       {&m_driveSubsystem}));
   m_intakeSubsystem.SetDefaultCommand(frc2::RunCommand([&]() -> void {},
                                                        {&m_intakeSubsystem}));
+  m_transferArmSubsystem.SetDefaultCommand(frc2::RunCommand([&]() -> void {},
+                                                       {&m_transferArmSubsystem}));
   m_shooterSubsystem.SetDefaultCommand(frc2::RunCommand([&]() -> void {},
                                                         {&m_shooterSubsystem}));
   m_infrastructureSubsystem.SetDefaultCommand(frc2::RunCommand([&]() -> void {},
@@ -259,15 +262,15 @@ void RobotContainer::ConfigureBindings() noexcept
           .ToPtr());
 
   // TODO: decide if we want this
-  m_xbox.X().OnTrue(frc2::InstantCommand([&]() -> void
-                                         { m_fieldOriented = false; },
-                                         {})
-                        .ToPtr());
-  m_xbox.Y().OnTrue(frc2::InstantCommand([&]() -> void
-                                         { m_driveSubsystem.ZeroHeading();
-                                           m_fieldOriented = true; },
-                                         {&m_driveSubsystem})
-                        .ToPtr());
+  // m_xbox.X().OnTrue(frc2::InstantCommand([&]() -> void
+  //                                        { m_fieldOriented = false; },
+  //                                        {})
+  //                       .ToPtr());
+  // m_xbox.Y().OnTrue(frc2::InstantCommand([&]() -> void
+  //                                        { m_driveSubsystem.ZeroHeading();
+  //                                          m_fieldOriented = true; },
+  //                                        {&m_driveSubsystem})
+  //                       .ToPtr());
 
   // TODO: decide if we want to bind wheel lock
 
@@ -279,6 +282,9 @@ void RobotContainer::ConfigureBindings() noexcept
                                           { m_intakeSubsystem.StopIntake(); },
                                           {&m_intakeSubsystem})
                          .ToPtr());
+
+  m_xbox.B().OnTrue(PositionTransferArm::PositionTransferArmCommandFactory(&m_transferArmSubsystem, 90_deg));
+
 }
 #pragma endregion
 

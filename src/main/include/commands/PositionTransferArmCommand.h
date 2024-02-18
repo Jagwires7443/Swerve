@@ -31,7 +31,7 @@ public:
     void End(bool interrupted) noexcept override;
     bool IsFinished() noexcept override { return finished; }
 
-    static frc2::CommandPtr DriveCommandFactory(TransferArmSubsystem *transferArmSubsystem, units::degree_t position) noexcept
+    static frc2::CommandPtr PositionTransferArmCommandFactory(TransferArmSubsystem *transferArmSubsystem, units::degree_t position) noexcept
     {
         return frc2::CommandPtr{std::make_unique<PositionTransferArm>(transferArmSubsystem, position)};
     }

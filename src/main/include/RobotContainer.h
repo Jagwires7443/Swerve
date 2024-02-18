@@ -12,6 +12,7 @@
 #include "commands/TestModeCommands.h"
 #include "subsystems/DriveSubsystem.h"
 #include "subsystems/IntakeSubsystem.h"
+#include "subsystems/TransferArmSubsystem.h"
 #include "subsystems/Infrastructure.h"
 #include "subsystems/ShooterSubsystem.h"
 #include <frc/shuffleboard/Shuffleboard.h>
@@ -85,6 +86,7 @@ private:
   DriveSubsystem m_driveSubsystem;
   InfrastructureSubsystem m_infrastructureSubsystem;
   IntakeSubsystem m_intakeSubsystem;
+  TransferArmSubsystem m_transferArmSubsystem;
   ShooterSubsystem m_shooterSubsystem;
 
   // declared for the infrastructure subsystem
