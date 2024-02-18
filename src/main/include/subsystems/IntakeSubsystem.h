@@ -1,6 +1,5 @@
 #pragma once
 
-#include "infrastructure/SparkMax.h"
 #include "rev/CANSparkMax.h"
 
 #include <frc/DoubleSolenoid.h>
