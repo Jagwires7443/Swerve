@@ -85,7 +85,7 @@ void RobotContainer::TeleopInit() noexcept
 
   m_driveSubsystem.ResetEncoders();
   m_driveSubsystem.ZeroHeading();
-  
+
   m_driveSubsystem.SetDefaultCommand(DriveCommandFactory(this));
   m_intakeSubsystem.SetDefaultCommand(frc2::RunCommand([&]() -> void {},
                                                        {&m_intakeSubsystem}));
@@ -227,7 +227,7 @@ double RobotContainer::ConditionRawJoystickInput(double RawJoystickVal, double m
   power.  The 'mixer` parameter is used to shape the `raw` input, some mix
   between out = in^3.0 and out = in.
   */
-  
+
   // Input deadband around 0.0 (+/- range).
   constexpr double deadZoneVal = 0.05;
 
@@ -255,10 +255,10 @@ void RobotContainer::ConfigureBindings() noexcept
 {
   // TODO: define Keybindings here
   m_xbox.Start().OnTrue(
-    frc2::InstantCommand([&]() -> void
-      { triggerSpeedEnabled = !triggerSpeedEnabled; },
-      {}
-    ).ToPtr());
+      frc2::InstantCommand([&]() -> void
+                           { triggerSpeedEnabled = !triggerSpeedEnabled; },
+                           {})
+          .ToPtr());
 
   // TODO: decide if we want this
   m_xbox.X().OnTrue(frc2::InstantCommand([&]() -> void
@@ -278,9 +278,9 @@ void RobotContainer::ConfigureBindings() noexcept
                                          {&m_intakeSubsystem})
                         .ToPtr());
   m_xbox.A().OnFalse(frc2::InstantCommand([&]() -> void
-                  { m_intakeSubsystem.SetSpinMotorVoltagePercent(0.0); },
-                  {&m_intakeSubsystem})
-                        .ToPtr());
+                                          { m_intakeSubsystem.SetSpinMotorVoltagePercent(0.0); },
+                                          {&m_intakeSubsystem})
+                         .ToPtr());
 }
 #pragma endregion
 
