@@ -40,13 +40,13 @@ void TransferArmSubsystem::SetTransferArmPosition(const units::turn_t position) 
 {
     m_pidController.SetReference(position.value(), rev::CANSparkMax::ControlType::kPosition);
     frc::SmartDashboard::PutNumber("SetPoint", position.value());
-    frc::SmartDashboard::PutNumber("ProcessVariable", m_encoder.GetPosition());
+    // frc::SmartDashboard::PutNumber("ProcessVariable", m_encoder.GetPosition());
 }
 
-units::turn_t TransferArmSubsystem::GetTransferArmPosition() noexcept
-{
-    return units::turn_t(m_encoder.GetPosition());
-}
+// units::turn_t TransferArmSubsystem::GetTransferArmPosition() noexcept
+// {
+//     return units::turn_t(m_encoder.GetPosition());
+// }
 
 void TransferArmSubsystem::UpdatePIDValues() noexcept
 {
