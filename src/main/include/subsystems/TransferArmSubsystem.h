@@ -17,9 +17,14 @@ public:
     TransferArmSubsystem(const TransferArmSubsystem &) = delete;
     TransferArmSubsystem &operator=(const TransferArmSubsystem &) = delete;
 
-    void StopIntake() noexcept;
-    void SetArmMotorVoltagePercent(const double percent) noexcept; // must be used in a PID loop to set arm position
+    void StopTransferArm() noexcept;
+    void SetTransferArmPosition(const units::turn_t position) noexcept;
+    units::turn_t GetTransferArmPosition() noexcept;
+    void UpdatePIDValues() noexcept;
 
 private:
     rev::CANSparkMax m_motor{intake::kIntakeArmMotorCanID, rev::CANSparkMax::MotorType::kBrushless};
+    rev::SparkPIDController m_pidController = m_motor.GetPIDController();
+    rev::SparkRelativeEncoder m_encoder = m_motor.GetEncoder(rev::SparkRelativeEncoder::Type::kQuadrature);
+    double kP = 0.001, kI = 0, kD = 0, kIz = 0, kFF = 0, kMaxOutput = 1, kMinOutput = -1;
 };
