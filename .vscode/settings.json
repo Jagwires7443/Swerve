@@ -58,5 +58,6 @@
   "C_Cpp_Runner.msvcSecureNoWarnings": false,
   "files.associations": {
     "*.inc": "cpp"
-  }
+  },
+  "C_Cpp.errorSquiggles": "disabled"
 }
