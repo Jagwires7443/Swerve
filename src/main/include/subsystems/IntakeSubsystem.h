@@ -3,8 +3,6 @@
 #include "Constants.h"
 #include "rev/CANSparkMax.h"
 #include <frc2/command/SubsystemBase.h>
-#include <chrono>
-#include <memory>
 
 class IntakeSubsystem : public frc2::SubsystemBase
 {
