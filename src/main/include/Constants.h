@@ -129,23 +129,20 @@ namespace pidf
 
 namespace shooter
 {
-    // Left Motor Constructor Parameters
-    constexpr std::string_view kLeftShooterMotorName = "LeftShooterMotor";
+    // Left Motor Parameters
     constexpr int kLeftShooterMotorCanID = 14;
     constexpr bool kLeftShooterMotorIsInverted = true;
 
-    // Right Motor Constructor Parameters
-    constexpr std::string_view kRightShooterMotorName = "RightShooterMotor";
+    // Right Motor Parameters
     constexpr int kRightShooterMotorCanID = 15;
     constexpr bool kRightShooterMotorIsInverted = false;
 
-    constexpr int kShooterMotorSpeed = 0;
+    constexpr int kShooterMotorVoltagePercent = .45;
 }
 
 namespace intake
 {
-    // Intake Spin Motor Constructor Parameters
-    constexpr std::string_view kIntakeSpinMotorName = "IntakeSpinMotor";
+    // Intake Motor Parameters
     constexpr int kIntakeSpinMotorCanID = 16;
     constexpr bool kIntakeSpinMotorIsInverted = true;
 
@@ -156,10 +153,16 @@ namespace intake
     constexpr units::degree_t kIntakeArmLoad = 0.0_deg;
 
     constexpr double kIntakeSpinMotorVoltagePercent = .15;
-
-    // Arm Motor Constructor Parameters
-    constexpr std::string_view kIntakeArmMotorName = "ArmMotor";
-    constexpr int kIntakeArmMotorCanID = 17;
-    constexpr bool kIntakeArmMotorIsInverted = false;
 }
 
+namespace arm
+{
+    // Arm Motor Parameters
+    constexpr int kTransferArmMotorCanID = 17;
+    constexpr bool kTransferArmMotorIsInverted = false;
+
+    // Arm Controller
+    constexpr double kArmPositionP = 0.005;
+    constexpr double kArmPositionD = 0.0005;
+    constexpr double kArmPositionF = 0.0;
+}

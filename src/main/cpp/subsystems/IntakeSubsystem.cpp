@@ -1,20 +1,18 @@
 #include "subsystems/IntakeSubsystem.h"
-
-#include "Constants.h"
-
 #include <units/voltage.h>
 
 IntakeSubsystem::IntakeSubsystem() noexcept
 {
+    m_IntakeMotor.SetInverted(intake::kIntakeSpinMotorIsInverted);
     StopIntake();
 }
 
 void IntakeSubsystem::StopIntake() noexcept
 {
-    m_motor.StopMotor();
+    m_IntakeMotor.StopMotor();
 }
 
 void IntakeSubsystem::SetSpinMotorVoltagePercent(const double percent) noexcept
 {
-    m_motor.SetVoltage(percent * 12_V);
+    m_IntakeMotor.SetVoltage(percent * 12_V);
 }

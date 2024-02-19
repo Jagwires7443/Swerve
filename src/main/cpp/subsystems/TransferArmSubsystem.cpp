@@ -1,15 +1,11 @@
 #include "subsystems/TransferArmSubsystem.h"
-
-#include "Constants.h"
-
 #include <units/voltage.h>
-#include <units/angle.h>
 #include <frc/smartdashboard/SmartDashboard.h>
 
 TransferArmSubsystem::TransferArmSubsystem() noexcept
 {
-    m_motor.RestoreFactoryDefaults();
-    
+    m_TransferArmMotor.SetInverted(arm::kTransferArmMotorIsInverted);
+
     // set PID coefficients
     m_pidController.SetP(kP);
     m_pidController.SetI(kI);
@@ -19,21 +15,16 @@ TransferArmSubsystem::TransferArmSubsystem() noexcept
     m_pidController.SetOutputRange(kMinOutput, kMaxOutput);
 
     // display PID coefficients on SmartDashboard
-    frc::SmartDashboard::PutNumber("P Gain", kP);
-    frc::SmartDashboard::PutNumber("I Gain", kI);
-    frc::SmartDashboard::PutNumber("D Gain", kD);
-    frc::SmartDashboard::PutNumber("I Zone", kIz);
-    frc::SmartDashboard::PutNumber("Feed Forward", kFF);
-    frc::SmartDashboard::PutNumber("Max Output", kMaxOutput);
-    frc::SmartDashboard::PutNumber("Min Output", kMinOutput);
-    frc::SmartDashboard::PutNumber("Set Rotations", 0);
+    frc::SmartDashboard::PutNumber("Arm P Gain ", kP);
+    frc::SmartDashboard::PutNumber("Arm D Gain ", kD);
+    frc::SmartDashboard::PutNumber("Arm F ", kFF);
 
     StopTransferArm();
 }
 
 void TransferArmSubsystem::StopTransferArm() noexcept
 {
-    m_motor.StopMotor();
+    m_TransferArmMotor.StopMotor();
 }
 
 void TransferArmSubsystem::SetTransferArmPosition(const units::turn_t position) noexcept
@@ -50,23 +41,12 @@ void TransferArmSubsystem::SetTransferArmPosition(const units::turn_t position) 
 
 void TransferArmSubsystem::UpdatePIDValues() noexcept
 {
-    double p = frc::SmartDashboard::GetNumber("P Gain", 0);
-    double i = frc::SmartDashboard::GetNumber("I Gain", 0);
-    double d = frc::SmartDashboard::GetNumber("D Gain", 0);
-    double iz = frc::SmartDashboard::GetNumber("I Zone", 0);
-    double ff = frc::SmartDashboard::GetNumber("Feed Forward", 0);
-    double max = frc::SmartDashboard::GetNumber("Max Output", 0);
-    double min = frc::SmartDashboard::GetNumber("Min Output", 0);
-    double rotations = frc::SmartDashboard::GetNumber("Set Rotations", 0);
+    double p = frc::SmartDashboard::GetNumber("Arm P Gain ", 0);
+    double d = frc::SmartDashboard::GetNumber("Arm D Gain ", 0);
+    double ff = frc::SmartDashboard::GetNumber("Arm F ", 0);
 
     // if PID coefficients on SmartDashboard have changed, write new values to controller
     if((p != kP)) { m_pidController.SetP(p); kP = p; }
-    if((i != kI)) { m_pidController.SetI(i); kI = i; }
     if((d != kD)) { m_pidController.SetD(d); kD = d; }
-    if((iz != kIz)) { m_pidController.SetIZone(iz); kIz = iz; }
     if((ff != kFF)) { m_pidController.SetFF(ff); kFF = ff; }
-    if((max != kMaxOutput) || (min != kMinOutput)) { 
-      m_pidController.SetOutputRange(min, max); 
-      kMinOutput = min; kMaxOutput = max; 
-    }
 }

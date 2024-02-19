@@ -16,7 +16,7 @@ void TimedAutoBase::Initialize() noexcept
 
     m_Intake->StopIntake();
 
-    m_shooter->Stop();
+    m_shooter->StopShooter();
 
     finished_ = false;
     FPGATime_ = frc::RobotController::GetFPGATime();
@@ -29,7 +29,7 @@ void TimedAutoBase::End(bool interrupted) noexcept
 
     m_Intake->StopIntake();
 
-    m_shooter->Stop();
+    m_shooter->StopShooter();
 }
 
 void TimedAutoBase::Execute() noexcept

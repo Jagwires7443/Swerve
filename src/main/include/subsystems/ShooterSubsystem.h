@@ -1,26 +1,8 @@
 #pragma once
 
 #include "Constants.h"
-#include "infrastructure/SparkMax.h"
-
-
+#include "rev/CANSparkMax.h"
 #include <frc2/command/SubsystemBase.h>
-#include <frc/shuffleboard/ComplexWidget.h>
-#include <frc/shuffleboard/SimpleWidget.h>
-#include <frc/smartdashboard/SendableChooser.h>
-#include <frc2/command/CommandPtr.h>
-#include <frc2/command/SubsystemBase.h>
-#include <units/angle.h>
-#include <units/angular_velocity.h>
-#include <units/length.h>
-#include <units/velocity.h>
-
-#include <chrono>
-#include <memory>
-#include <array>
-#include <functional>
-#include <optional>
-#include <utility>
 
 class ShooterSubsystem : public frc2::SubsystemBase
 {
@@ -30,29 +12,10 @@ public:
     ShooterSubsystem(const ShooterSubsystem &) = delete;
     ShooterSubsystem &operator=(const ShooterSubsystem &) = delete;
 
-    void Periodic() noexcept override;
+    void StopShooter() noexcept;
     void SetShooterMotorVoltagePercent(const double percent) noexcept;
-    void Stop() noexcept;
 
 private:
-    std::unique_ptr<SmartMotorBase> m_LeftShooterMotorBase;
-    std::unique_ptr<SmartMotorBase> m_RightShooterMotorBase;
-    std::unique_ptr<SmartMotor<units::angle::turns>> m_LeftShooterMotor;
-    std::unique_ptr<SmartMotor<units::angle::turns>> m_RightShooterMotor;
-
-#pragma region Utility
-public:
-    bool GetStatus() const noexcept;
-    void BurnConfig() noexcept;
-    void ClearFaults() noexcept;
-#pragma endregion
-
-#pragma region Test
-public:
-    void TestInit() noexcept;
-    void TestExit() noexcept;
-    void TestPeriodic() noexcept;
-private:
-    std::chrono::steady_clock::time_point m_verifyMotorControllersWhen;
-#pragma endregion
+    rev::CANSparkMax m_LeftShooterMotor{shooter::kLeftShooterMotorCanID, rev::CANSparkMax::MotorType::kBrushed};
+    rev::CANSparkMax m_RightShooterMotor{shooter::kRightShooterMotorCanID, rev::CANSparkMax::MotorType::kBrushed};
 };

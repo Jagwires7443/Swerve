@@ -1,13 +1,9 @@
 #pragma once
 
-#include "rev/CANSparkMax.h"
-
-#include <frc/DoubleSolenoid.h>
-#include <frc2/command/SubsystemBase.h>
 #include "Constants.h"
-
-#include <chrono>
-#include <memory>
+#include "rev/CANSparkMax.h"
+#include <frc2/command/SubsystemBase.h>
+#include <units/angle.h>
 
 class TransferArmSubsystem : public frc2::SubsystemBase
 {
@@ -23,8 +19,8 @@ public:
     void UpdatePIDValues() noexcept;
 
 private:
-    rev::CANSparkMax m_motor{intake::kIntakeArmMotorCanID, rev::CANSparkMax::MotorType::kBrushless};
-    rev::SparkPIDController m_pidController = m_motor.GetPIDController();
-    //rev::CANEncoder m_encoder = m_motor.GetAlternateEncoder(rev::CANEncoder::AlternateEncoderType::kQuadrature, 8192);
-    double kP = 0.001, kI = 0, kD = 0, kIz = 0, kFF = 0, kMaxOutput = 1, kMinOutput = -1;
+    rev::CANSparkMax m_TransferArmMotor{arm::kTransferArmMotorCanID, rev::CANSparkMax::MotorType::kBrushless};
+    // rev::CANEncoder m_encoder = m_TransferArmMotor.GetAlternateEncoder(rev::CANEncoder::AlternateEncoderType::kQuadrature, 8192);
+    rev::SparkPIDController m_pidController = m_TransferArmMotor.GetPIDController();
+    double kP = arm::kArmPositionP, kI = 0, kD = arm::kArmPositionD, kIz = 0, kFF = arm::kArmPositionF, kMaxOutput = 1, kMinOutput = -1;
 };
