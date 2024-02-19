@@ -16,6 +16,7 @@
 #include <frc2/command/CommandScheduler.h>
 #include <frc2/command/InstantCommand.h>
 #include <frc2/command/RunCommand.h>
+#include "commands/ShootCommands.h"
 #include "commands/PositionTransferArmCommand.h"
 
 #include <cmath>
@@ -289,6 +290,8 @@ void RobotContainer::ConfigureBindings() noexcept
                                           { m_shooterSubsystem.StopShooter(); },
                                           {&m_shooterSubsystem})
                          .ToPtr());
+
+  m_xbox.Y().OnTrue(ShootCommands(&m_shooterSubsystem).ToPtr());
 }
 #pragma endregion
 

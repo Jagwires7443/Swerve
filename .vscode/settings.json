@@ -57,6 +57,8 @@
   "C_Cpp_Runner.useLinkTimeOptimization": false,
   "C_Cpp_Runner.msvcSecureNoWarnings": false,
   "files.associations": {
-    "*.inc": "cpp"
-  }
+    "*.inc": "cpp",
+    "memory": "cpp"
+  },
+  "C_Cpp.errorSquiggles": "disabled"
 }

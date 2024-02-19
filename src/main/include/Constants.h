@@ -135,9 +135,9 @@ namespace shooter
 
     // Right Motor Parameters
     constexpr int kRightShooterMotorCanID = 15;
-    constexpr bool kRightShooterMotorIsInverted = false;
+    constexpr bool kRightShooterMotorIsInverted = true;
 
-    constexpr int kShooterMotorVoltagePercent = .45;
+    constexpr int kShooterMotorVoltagePercent = 1;
 }
 
 namespace intake
