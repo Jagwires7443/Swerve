@@ -10,6 +10,7 @@
 #include "infrastructure/SwerveModule.h"
 
 #include <frc/DataLogManager.h>
+#include <frc/smartdashboard/SmartDashboard.h>
 #include <frc/shuffleboard/BuiltInWidgets.h>
 #include <frc/shuffleboard/Shuffleboard.h>
 #include <frc/shuffleboard/ShuffleboardContainer.h>
@@ -162,7 +163,7 @@ void DriveSubsystem::Periodic() noexcept
             {
     if (m_ahrs)
     {
-      botRot = -m_ahrs->GetRotation2d();
+      botRot = m_ahrs->GetRotation2d();
     }
     else
     {
@@ -222,7 +223,7 @@ void DriveSubsystem::ResetOdometry(frc::Pose2d pose) noexcept
             {
     if (m_ahrs)
     {
-      botRot = -m_ahrs->GetRotation2d();
+      botRot = m_ahrs->GetRotation2d();
     } });
 
   m_odometry->ResetPosition(botRot, GetModulePositions(), pose);
@@ -991,20 +992,22 @@ void DriveSubsystem::Drive(units::meters_per_second_t xSpeed,
   m_rotation = rot / physical::kMaxTurnRate;
   m_x = xSpeed / physical::kMaxDriveSpeed;
   m_y = ySpeed / physical::kMaxDriveSpeed;
-
   frc::Rotation2d botRot;
 
   DoSafeIMU("GetRotation2d()", [&]() -> void
             {
     if (m_ahrs)
     {
-      botRot = -m_ahrs->GetRotation2d();
+      botRot = m_ahrs->GetRotation2d();
+      frc::SmartDashboard::PutNumber("BotRot", botRot.Degrees().value());
     } });
 
   if (!m_ahrs)
   {
     fieldRelative = false;
   }
+
+  frc::SmartDashboard::PutBoolean("Field Relative", fieldRelative);
 
   // Center of rotation argument is defaulted to the center of the robot above,
   // but it is also possible to rotate about a different point.
@@ -1029,12 +1032,23 @@ void DriveSubsystem::ResetEncoders() noexcept
 
 void DriveSubsystem::SetModuleStates(std::array<frc::SwerveModuleState, 4> &desiredStates) noexcept
 {
+
   auto [frontLeft, frontRight, rearLeft, rearRight] = desiredStates;
 
   m_commandedStateFrontLeft = frontLeft;
   m_commandedStateFrontRight = frontRight;
   m_commandedStateRearLeft = rearLeft;
   m_commandedStateRearRight = rearRight;
+
+  frc::SmartDashboard::PutNumber("LeftFront Desired Speed", frontLeft.speed.value());
+  frc::SmartDashboard::PutNumber("RightFront Desired Speed", frontRight.speed.value());
+  frc::SmartDashboard::PutNumber("LeftRear Desired Speed", rearLeft.speed.value());
+  frc::SmartDashboard::PutNumber("RightRear Desired Speed", rearRight.speed.value());
+
+  frc::SmartDashboard::PutNumber("LeftFront Desired Angle", frontLeft.angle.Degrees().value());
+  frc::SmartDashboard::PutNumber("RightFront Desired Angle", frontRight.angle.Degrees().value());
+  frc::SmartDashboard::PutNumber("LeftRear Desired Angle", rearLeft.angle.Degrees().value());
+  frc::SmartDashboard::PutNumber("RightRear Desired Angle", rearRight.angle.Degrees().value());
 
   // Don't command turning if there is no drive; this is used from Drive(), and
   // it winds up causing the modules to all home to zero any time there is no
@@ -1046,13 +1060,20 @@ void DriveSubsystem::SetModuleStates(std::array<frc::SwerveModuleState, 4> &desi
       rearLeft.speed == 0.0_mps &&
       rearRight.speed == 0.0_mps)
   {
+    frc::SmartDashboard::PutBoolean("Stopped", true);
     m_frontLeftSwerveModule->SetDriveVelocity(0.0_mps);
     m_frontRightSwerveModule->SetDriveVelocity(0.0_mps);
     m_rearLeftSwerveModule->SetDriveVelocity(0.0_mps);
     m_rearRightSwerveModule->SetDriveVelocity(0.0_mps);
 
+    m_frontLeftSwerveModule->StopTurning();
+    m_frontRightSwerveModule->StopTurning();
+    m_rearLeftSwerveModule->StopTurning();
+    m_rearRightSwerveModule->StopTurning();
     return;
   }
+
+  frc::SmartDashboard::PutBoolean("Stopped", false);
 
   // m_limit is always unity, except in Test Mode.  So, by default, it does not
   // modify anything here.  In Test Mode, it can be used to slow things down.
@@ -1083,7 +1104,6 @@ void DriveSubsystem::SetModuleStates(std::array<frc::SwerveModuleState, 4> &desi
   m_frontRightSwerveModule->SetDesiredState(frontRight);
   m_rearLeftSwerveModule->SetDesiredState(rearLeft);
   m_rearRightSwerveModule->SetDesiredState(rearRight);
-
 }
 
 units::degree_t DriveSubsystem::GetHeading() noexcept
@@ -1094,7 +1114,7 @@ units::degree_t DriveSubsystem::GetHeading() noexcept
             {
     if (m_ahrs)
     {
-      heading = units::degree_t{-m_ahrs->GetAngle()}; // In degrees already.
+      heading = units::degree_t{m_ahrs->GetAngle()}; // In degrees already.
     } });
 
   return heading;
@@ -1118,7 +1138,7 @@ double DriveSubsystem::GetTurnRate() noexcept
             {
     if (m_ahrs)
     {
-      rate = -m_ahrs->GetRate(); // In degrees/second (units not used in WPILib).
+      rate = m_ahrs->GetRate(); // In degrees/second (units not used in WPILib).
     } });
 
   return rate;

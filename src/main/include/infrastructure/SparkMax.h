@@ -412,7 +412,7 @@ namespace SparkFactory
         {"kAltEncoderVelocityFactor", double{1.0}},
         {"kCurrentChop", double{115.0}}, // Amps
         {"kCurrentChopCycles", uint{0}},
-        {"kSmartCurrentStallLimit", uint{80}}, // Amps
+        {"kSmartCurrentStallLimit", uint{40}}, // Amps
         {"kSmartCurrentFreeLimit", uint{20}},  // Amps
         {"kSmartCurrentConfig", uint{10000}},  // RPM
         {"kP_0", double{0.0}},

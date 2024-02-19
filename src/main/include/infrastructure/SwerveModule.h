@@ -140,7 +140,7 @@ public:
       const int driveMotorCanID,
       const int turningMotorCanID,
       const int turningEncoderPort,
-      const int alignmentOffset) noexcept;
+      const units::turn_t alignmentOffset) noexcept;
 
   // No copy/assign.
   SwerveModule(const SwerveModule &) = delete;
@@ -177,7 +177,10 @@ public:
 
   // Determine if commanded turning position has been achieved, to within
   // specified tolerance.
-  bool CheckTurningPosition(const units::angle::degree_t tolerance = 2.5_deg) noexcept;
+  bool CheckTurningPosition(const units::angle::degree_t tolerance = 5_deg) noexcept;
+
+  // Stop all output to turning motors to save power when stationary.
+  void StopTurning() noexcept;
 
   // Drive is normally oriented around velocity, but distance enables odometry,
   // simple dead reckoning, etc.  Possibly useful for autonomous driving.
@@ -274,6 +277,7 @@ private:
   // roboRIO.  Setting m_rio false allows testing turning PID on the SPARK MAX.
   const bool m_rio{true};
   bool m_brakeApplied{true};
+  bool m_turningStopped{false};
   double m_rioPID_F{pidf::kTurningPositionF};
   std::unique_ptr<frc::ProfiledPIDController<units::angle::degrees>> m_rioPIDController;
 
@@ -285,8 +289,8 @@ private:
   double m_turningPosition_D{pidf::kTurningPositionD};
   double m_turningPosition_DF{pidf::kTurningPositionDF};
   double m_turningPosition_F{pidf::kTurningPositionF};
-  double m_turningPosition_V{pidf::kTurningPositionMaxVelocity};
-  double m_turningPosition_A{pidf::kTurningPositionMaxAcceleration};
+  units::degrees_per_second_t m_turningPosition_V{pidf::kTurningPositionMaxVelocity};
+  units::degrees_per_second_squared_t m_turningPosition_A{pidf::kTurningPositionMaxAcceleration};
 
   // Drive position PID
   double m_drivePosition_P{pidf::kDrivePositionP};
