@@ -18,23 +18,22 @@
  * Command will *not* work!
  */
 class ShootCommands
-    : public frc2::CommandHelper<frc2::Command, ShootCommands> 
+    : public frc2::CommandHelper<frc2::Command, ShootCommands>
 {
- public:
-  explicit ShootCommands(ShooterSubsystem *shooterSubsystem) 
+public:
+  explicit ShootCommands(ShooterSubsystem *shooterSubsystem)
+      : shooterSubsystem{shooterSubsystem},
   {
     AddRequirements(shooterSubsystem);
   }
-
-  ShootCommands();
 
   void Initialize() override;
   void Execute() override;
   void End(bool interrupted) override;
   bool IsFinished() override;
 
- private:
-   ShooterSubsystem *shooterSubsystem{nullptr};
-   frc::Timer timer{};
-   bool finished{false};
+private:
+  ShooterSubsystem *shooterSubsystem{nullptr};
+  frc::Timer timer{};
+  bool finished{false};
 };
