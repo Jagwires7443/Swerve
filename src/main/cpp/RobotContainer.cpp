@@ -290,10 +290,10 @@ void RobotContainer::ConfigureBindings() noexcept
                                           { m_shooterSubsystem.StopShooter(); },
                                           {&m_shooterSubsystem})
                          .ToPtr());
-  m_xbox.X().OnTrue(frc2::InstantCommand.&m_shooterSubsystem}
+ /* m_xbox.X().OnTrue(PositionTransferArm()
                                           {ShootCommands[&]}
-                        .ToPtr ());
- 
+                        .ToPtr ());*/
+  m_xbox.Y().OnTrue(ShootCommands(&m_shooterSubsystem).ToPtr());
                                   
 
 }
