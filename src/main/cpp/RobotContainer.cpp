@@ -260,19 +260,6 @@ void RobotContainer::ConfigureBindings() noexcept
                            {})
           .ToPtr());
 
-  // TODO: decide if we want this
-  // m_xbox.X().OnTrue(frc2::InstantCommand([&]() -> void
-  //                                        { m_fieldOriented = false; },
-  //                                        {})
-  //                       .ToPtr());
-  // m_xbox.Y().OnTrue(frc2::InstantCommand([&]() -> void
-  //                                        { m_driveSubsystem.ZeroHeading();
-  //                                          m_fieldOriented = true; },
-  //                                        {&m_driveSubsystem})
-  //                       .ToPtr());
-
-  // TODO: decide if we want to bind wheel lock
-
   m_xbox.A().OnTrue(frc2::InstantCommand([&]() -> void
                                          { m_intakeSubsystem.SetSpinMotorVoltagePercent(intake::kIntakeSpinMotorVoltagePercent); },
                                          {&m_intakeSubsystem})
@@ -292,6 +279,8 @@ void RobotContainer::ConfigureBindings() noexcept
                          .ToPtr());
 
   m_xbox.Y().OnTrue(ShootCommands(&m_shooterSubsystem).ToPtr());
+                         
+  m_xbox.X().OnTrue(PositionTransferArm(&m_transferArmSubsystem, 90_deg).ToPtr()); // Example Only
 }
 #pragma endregion
 
