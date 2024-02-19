@@ -23,6 +23,7 @@
 #include <networktables/NetworkTableValue.h>
 #include <units/voltage.h>
 #include <wpi/StringMap.h>
+#include <frc/smartdashboard/SmartDashboard.h>
 
 #include <bitset>
 #include <cmath>
@@ -38,7 +39,7 @@ SwerveModule::SwerveModule(
     const int driveMotorCanID,
     const int turningMotorCanID,
     const int turningEncoderPort,
-    const int alignmentOffset) noexcept : m_name{name}
+    const units::turn_t alignmentOffset) noexcept : m_name{name}
 {
     // Set up onboard printf-style logging.
     std::string logName{"/SwerveModule/"};
@@ -55,7 +56,7 @@ SwerveModule::SwerveModule(
         pidf::kTurningPositionD,
         std::move(frc::TrapezoidProfile<units::angle::degrees>::Constraints{
             pidf::kTurningPositionMaxVelocity,
-            pidf::kTurningPositionMaxAcceleration}));
+            pidf::kTurningPositionMaxAcceleration}), 100_ms);
 
     m_rioPIDController->EnableContinuousInput(-180.0_deg, +180.0_deg);
 
@@ -65,12 +66,17 @@ SwerveModule::SwerveModule(
     // and it's incremental encoder in order to make things work out/line up.
     m_turningPositionPWM = std::make_unique<AngleSensor>(turningEncoderPort, alignmentOffset);
 
+    // test printout for alignment calibration
+    if (m_turningPositionPWM->GetAbsolutePosition().has_value()) {
+        frc::SmartDashboard::PutNumber("Initial Alignment " + std::string(name), m_turningPositionPWM->GetAbsolutePosition().value().value());
+    }
+
     // Motor controller configurations are only checked (or saved) in test mode
     // but a minimal amount is set up in these methods.
-    m_turningMotorBase = SparkMaxFactory::CreateSparkMax(m_name + std::string(" Turning"), turningMotorCanID, m_turningMotorInverted);
+    m_turningMotorBase = SparkFactory::CreateSparkMax(m_name + std::string(" Turning"), turningMotorCanID, m_turningMotorInverted);
     m_turningMotor = std::make_unique<SmartMotor<units::angle::degrees>>(*m_turningMotorBase);
 
-    m_driveMotorBase = SparkMaxFactory::CreateSparkMax(m_name + std::string(" Drive"), driveMotorCanID, m_driveMotorInverted);
+    m_driveMotorBase = SparkFactory::CreateSparkMax(m_name + std::string(" Drive"), driveMotorCanID, m_driveMotorInverted);
     m_driveMotor = std::make_unique<SmartMotor<units::length::meters>>(*m_driveMotorBase);
 
     // kStatus1 includes velocity; kStatus2 includes position -- these are made
@@ -82,6 +88,7 @@ SwerveModule::SwerveModule(
         {"kStatus2", uint{250}}, // ms
         {"kPositionConversionFactor", double{360.0}},
         {"kVelocityConversionFactor", double{360.0 / 60.0}},
+        {"kSmartCurrentStallLimit", uint{40}}, // Amps
     });
     m_turningMotor->ApplyConfig(false);
 
@@ -91,6 +98,7 @@ SwerveModule::SwerveModule(
         {"kStatus2", uint{250}}, // ms
         {"kPositionConversionFactor", double{physical::kDriveMetersPerRotation}},
         {"kVelocityConversionFactor", double{physical::kDriveMetersPerRotation / 60.0}},
+        {"kSmartCurrentStallLimit", uint{40}}, // Amps
     });
     m_driveMotor->ApplyConfig(false);
 
@@ -208,6 +216,14 @@ void SwerveModule::Periodic() noexcept
         return;
     }
 
+    // If no drive speed is applied, don't bother turning
+    if (m_turningStopped)
+    {
+        m_turningMotor->Set(0);
+        m_turningStopped = false;
+        return;
+    }
+
     // Update (and apply below) turning position PID.
     double calculated = m_rioPIDController->Calculate(m_turningPosition);
 
@@ -224,6 +240,8 @@ void SwerveModule::Periodic() noexcept
     {
         calculated -= m_rioPID_F;
     }
+
+    frc::SmartDashboard::PutNumber(std::string(m_name) + "_TurningOutput", calculated);
 
     // Use voltage compensation, to offset low battery voltage.
     m_turningMotor->SetVoltage(calculated * 12.0_V);
@@ -306,6 +324,7 @@ void SwerveModule::SetTurningPosition(const units::angle::degree_t position) noe
     m_commandedHeading = adjustedPosition;
 
     m_rioPIDController->SetGoal(adjustedPosition);
+    frc::SmartDashboard::PutNumber(m_name + " Turning PID Setpoint Angle: ", adjustedPosition.value());
 
     if (m_rio || m_testModeControl || m_testModeTurningVoltage != 0.0)
     {
@@ -329,6 +348,11 @@ bool SwerveModule::CheckTurningPosition(const units::angle::degree_t tolerance) 
     }
 
     return error >= -tolerance && error < tolerance;
+}
+
+void SwerveModule::StopTurning() noexcept
+{
+    m_turningStopped = true;
 }
 
 // Drive position and velocity are in rotations and rotations/second,
@@ -403,6 +427,8 @@ void SwerveModule::SetDriveVelocity(units::velocity::meters_per_second_t velocit
     const units::angle::degree_t angleError = m_turningPosition - m_commandedHeading;
     const double vectorAlignment = std::cos(units::angle::radian_t{angleError}.to<double>());
 
+    frc::SmartDashboard::PutNumber(std::string(m_name) + "_VectorAlignment", vectorAlignment);
+
 #if 0
     m_driveMotor->SeekVelocity(velocity * vectorAlignment);
 #else
@@ -441,6 +467,7 @@ void SwerveModule::SetDesiredState(const frc::SwerveModuleState &referenceState)
     {
         m_turningPosition = position.value();
         state = frc::SwerveModuleState::Optimize(referenceState, frc::Rotation2d(m_turningPosition));
+        frc::SmartDashboard::PutNumber(std::string(m_name) + " Angle Optimization Delta", referenceState.angle.Degrees().value() - state.angle.Degrees().value());
     }
 
     SetTurningPosition(state.angle.Degrees());
@@ -570,8 +597,8 @@ void SwerveModule::TestPeriodic() noexcept
         m_driveMotor->CheckConfig();
     }
 
-    // [-2048, +2048)
-    std::optional<int> position = m_turningPositionPWM->GetAbsolutePositionWithoutAlignment();
+    // [-180, +180)
+    std::optional<units::degree_t> position = m_turningPositionPWM->GetAbsolutePositionWithoutAlignment();
 
     // This provides a rough means of zeroing the turning position.
     if (position.has_value())
@@ -579,29 +606,29 @@ void SwerveModule::TestPeriodic() noexcept
         if (zeroTurning)
         {
             // Work out new alignment so position becomes zero.
-            int alignmentOffset = -position.value();
-            if (alignmentOffset == +2048)
+            units::turn_t alignmentOffset = -position.value();
+            if (alignmentOffset == 180_deg)
             {
-                alignmentOffset = -2048;
+                alignmentOffset = -180_deg;
             }
 
             m_turningPositionPWM->SetAlignment(alignmentOffset);
-            position = 0;
+            position = 0.0_deg;
             m_turningPosition = 0.0_deg;
         }
         else
         {
             // Alignment is [-2048, +2048).
             position = position.value() + m_turningPositionPWM->GetAlignment();
-            if (position > 2047)
+            if (position > 180_deg)
             {
-                position = position.value() - 4096;
+                position = position.value() - 360_deg;
             }
-            if (position < -2048)
+            if (position < -180_deg)
             {
-                position = position.value() + 4096;
+                position = position.value() + 360_deg;
             }
-            m_turningPosition = position.value() / 2048.0 * 180.0_deg;
+            m_turningPosition = position.value();
         }
     }
 
@@ -771,8 +798,8 @@ void SwerveModule::TurningPositionPID(double P, double I, double IZ, double IM, 
     m_turningPosition_D = D;
     m_turningPosition_DF = DF;
     m_turningPosition_F = F;
-    m_turningPosition_V = V;
-    m_turningPosition_A = A;
+    m_turningPosition_V = units::degrees_per_second_t{V};
+    m_turningPosition_A = units::degrees_per_second_squared_t{A};
 
     SetTurningPositionPID();
 }
