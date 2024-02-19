@@ -166,3 +166,27 @@ namespace arm
     constexpr double kArmPositionD = 0.0005;
     constexpr double kArmPositionF = 0.0;
 }
+
+namespace climber
+{
+    //Climber parameters
+    constexpr int kClimberMotorCanID = 18;
+    constexpr bool kClimberMotorIsInverted = false;
+    constexpr double kClimberMotorVoltagePercent = .15;
+
+    constexpr int kClimberSolenoidCanID = 19;
+
+}
+
+namespace amp 
+{
+    //Bosch motor for extending out and back
+    constexpr int kAmpExtendMotorCanID = 20;
+    constexpr bool kAmpExtendMotorIsInverted = false;
+    constexpr double kAmpExtendMotorVoltagePercent = .15;
+
+    //Johnson Electric for raising and lowering 
+    constexpr int kAmpRaiseMotorCanID = 21;
+    constexpr bool kAmpRaiseMotorIsInverted = false;
+    constexpr double kAmpRaiseMotorVoltagePercent = .15;
+}
