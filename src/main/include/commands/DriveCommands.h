@@ -7,10 +7,7 @@
 #include <frc2/command/Command.h>
 #include <frc2/command/CommandHelper.h>
 #include <frc2/command/CommandPtr.h>
-
 #include "subsystems/DriveSubsystem.h"
-
-#include <memory>
 
 // Home all swerve modules to zero heading.
 class ZeroTurningModules
@@ -35,7 +32,7 @@ private:
     bool finished{false};
 };
 
-// Expose turning maximum velocity and acceleration.
+// TODO: decide what inputs this will accept
 class DriveCommand
     : public frc2::CommandHelper<frc2::Command, DriveCommand>
 {

@@ -9,12 +9,8 @@
 #include <frc2/command/CommandPtr.h>
 #include <units/angle.h>
 #include <frc/Timer.h>
-
 #include "subsystems/TransferArmSubsystem.h"
 
-#include <memory>
-
-// Expose turning maximum velocity and acceleration.
 class PositionTransferArm
     : public frc2::CommandHelper<frc2::Command, PositionTransferArm>
 {

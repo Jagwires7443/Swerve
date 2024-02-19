@@ -9,14 +9,10 @@
 #include <frc2/command/CommandPtr.h>
 #include <frc/RobotController.h>
 #include <frc/trajectory/Trajectory.h>
-
 #include "subsystems/DriveSubsystem.h"
 #include "subsystems/IntakeSubsystem.h"
 #include "subsystems/Infrastructure.h"
 #include "subsystems/ShooterSubsystem.h"
-
-#include <memory>
-#include <string_view>
 
 class TimedAutoBase : public frc2::CommandHelper<frc2::Command, TimedAutoBase>
 {

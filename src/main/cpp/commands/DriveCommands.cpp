@@ -4,8 +4,6 @@
 
 #include "commands/DriveCommands.h"
 
-#include <cmath>
-
 void ZeroTurningModules::Execute() noexcept { (void)driveSubsystem->ZeroModules(); }
 
 void DriveCommand::Initialize() noexcept

@@ -9,7 +9,6 @@
 #include <frc2/command/CommandPtr.h>
 
 #include "commands/AutonomousCommands.h"
-#include "commands/TestModeCommands.h"
 #include "subsystems/DriveSubsystem.h"
 #include "subsystems/IntakeSubsystem.h"
 #include "subsystems/TransferArmSubsystem.h"
