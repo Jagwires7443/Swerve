@@ -90,8 +90,6 @@ private:
   TransferArmSubsystem m_transferArmSubsystem;
   ShooterSubsystem m_shooterSubsystem;
   
-  frc2::CommandPtr ShootCommands();
-
   // declared for the infrastructure subsystem
   uint m_LEDPattern{29};
   uint m_LEDPatternCount{0};

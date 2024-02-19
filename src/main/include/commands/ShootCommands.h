@@ -22,7 +22,7 @@ class ShootCommands
 {
 public:
   explicit ShootCommands(ShooterSubsystem *shooterSubsystem)
-      : shooterSubsystem{shooterSubsystem},
+      : shooterSubsystem{shooterSubsystem}
   {
     AddRequirements(shooterSubsystem);
   }
