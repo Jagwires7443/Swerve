@@ -59,8 +59,6 @@ private:
   bool m_lock{false};
   bool triggerSpeedEnabled{false};
 
-
-
   frc2::CommandXboxController m_xbox{0};
   // frc2::CommandXboxController m_xbox{1}; TODO: update for second controller
 #pragma endregion
@@ -89,7 +87,7 @@ private:
   IntakeSubsystem m_intakeSubsystem;
   TransferArmSubsystem m_transferArmSubsystem;
   ShooterSubsystem m_shooterSubsystem;
-  
+
   // declared for the infrastructure subsystem
   uint m_LEDPattern{29};
   uint m_LEDPatternCount{0};
