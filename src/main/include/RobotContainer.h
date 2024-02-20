@@ -13,6 +13,7 @@
 #include "subsystems/IntakeSubsystem.h"
 #include "subsystems/TransferArmSubsystem.h"
 #include "subsystems/Infrastructure.h"
+#include "subsystems/ClimberSubsystem.h"
 #include "subsystems/ShooterSubsystem.h"
 #include <frc/shuffleboard/Shuffleboard.h>
 
@@ -87,6 +88,7 @@ private:
   IntakeSubsystem m_intakeSubsystem;
   TransferArmSubsystem m_transferArmSubsystem;
   ShooterSubsystem m_shooterSubsystem;
+  ClimberSubsystem m_climberSubsystem;
 
   // declared for the infrastructure subsystem
   uint m_LEDPattern{29};

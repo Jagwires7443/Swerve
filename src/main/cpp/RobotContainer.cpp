@@ -16,6 +16,9 @@
 #include <frc2/command/CommandScheduler.h>
 #include <frc2/command/InstantCommand.h>
 #include <frc2/command/RunCommand.h>
+#include "commands/ClimberLowerCommand.h"
+#include "commands/ClimberRaiseCommand.h"
+#include "commands/ClimberStopCommand.h"
 #include "commands/ShootCommands.h"
 #include "commands/PositionTransferArmCommand.h"
 
@@ -281,6 +284,16 @@ void RobotContainer::ConfigureBindings() noexcept
   m_xbox.Y().OnTrue(ShootCommands(&m_shooterSubsystem).ToPtr());
                          
   m_xbox.X().OnTrue(PositionTransferArm(&m_transferArmSubsystem, 90_deg).ToPtr()); // Example Only
+
+  m_xbox.LeftBumper().WhileTrue(ClimberRaiseCommand(&m_climberSubsystem).ToPtr()); // Raise the climber while button is pressed.
+  m_xbox.LeftBumper().OnFalse(ClimberStopCommand(&m_climberSubsystem).ToPtr());   // on false stop the climber motor
+
+  m_xbox.LeftTrigger().WhileTrue(ClimberLowerCommand(&m_climberSubsystem).ToPtr()); //Lower the climber while button is pressed
+  m_xbox.LeftTrigger().OnFalse(ClimberStopCommand(&m_climberSubsystem).ToPtr());   // on false stop the climber motor
+
+
+
+
 }
 #pragma endregion
 
