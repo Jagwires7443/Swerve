@@ -16,6 +16,7 @@
 #include <frc2/command/CommandScheduler.h>
 #include <frc2/command/InstantCommand.h>
 #include <frc2/command/RunCommand.h>
+#include "commands/IntakeCommand.h"
 #include "commands/ShootCommands.h"
 #include "commands/PositionTransferArmCommand.h"
 
@@ -260,6 +261,7 @@ void RobotContainer::ConfigureBindings() noexcept
                            {})
           .ToPtr());
 
+  /* Commented out, changing A to run the IntakeCommand for picking up a note
   m_xbox.A().OnTrue(frc2::InstantCommand([&]() -> void
                                          { m_intakeSubsystem.SetSpinMotorVoltagePercent(intake::kIntakeSpinMotorVoltagePercent); },
                                          {&m_intakeSubsystem})
@@ -267,8 +269,11 @@ void RobotContainer::ConfigureBindings() noexcept
   m_xbox.A().OnFalse(frc2::InstantCommand([&]() -> void
                                           { m_intakeSubsystem.StopIntake(); },
                                           {&m_intakeSubsystem})
-                         .ToPtr());
+                         .ToPtr());  */
+  m_xbox.A().OnTrue(IntakeCommand(&m_intakeSubsystem).ToPtr());
 
+
+  /* Commented out, shooter functions are in Y now.  Reusing B for the intake eject command
   m_xbox.B().OnTrue(frc2::InstantCommand([&]() -> void
                                          { m_shooterSubsystem.SetShooterMotorVoltagePercent(shooter::kShooterMotorVoltagePercent); },
                                          {&m_shooterSubsystem})
@@ -277,7 +282,18 @@ void RobotContainer::ConfigureBindings() noexcept
                                           { m_shooterSubsystem.StopShooter(); },
                                           {&m_shooterSubsystem})
                          .ToPtr());
+                         */
 
+  m_xbox.B().OnTrue(frc2::InstantCommand([&]() -> void
+                                         { m_intakeSubsystem.SetSpinMotorVoltagePercent(intake::kIntakeSpinMotorEjectVoltagePercent); },
+                                         {&m_intakeSubsystem})
+                        .ToPtr());
+  m_xbox.B().OnFalse(frc2::InstantCommand([&]() -> void
+                                          { m_intakeSubsystem.StopIntake(); },
+                                          {&m_intakeSubsystem})
+                         .ToPtr());
+
+  // Runs shoot command to move arm into postion, start up the shooting motors and eject the note                     
   m_xbox.Y().OnTrue(ShootCommands(&m_shooterSubsystem).ToPtr());
                          
   m_xbox.X().OnTrue(PositionTransferArm(&m_transferArmSubsystem, 90_deg).ToPtr()); // Example Only
