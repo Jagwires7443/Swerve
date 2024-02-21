@@ -8,6 +8,7 @@ void PositionTransferArm::Initialize() noexcept
 {
     transferArmSubsystem->SetTransferArmPosition(position);
     timer.Reset();
+    timer.Start();
 }
 
 void PositionTransferArm::Execute() noexcept
