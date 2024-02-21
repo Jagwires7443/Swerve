@@ -8,6 +8,7 @@
 #include <frc2/command/CommandHelper.h>
 #include "subsystems/ClimberSubsystem.h"
 #include "Constants.h"
+#include <frc/Timer.h>
 
 /**
  * An example command.
@@ -32,5 +33,6 @@ class ClimberRaiseCommand
 
   private:
     ClimberSubsystem *climberSubsystem{nullptr};
+    frc::Timer timer{};
     bool finished{false};
 };

@@ -6,12 +6,17 @@
 
 
 // Called when the command is initially scheduled.
-void ClimberRaiseCommand::Initialize() {}
+void ClimberRaiseCommand::Initialize() {
+  timer.Reset();
+  timer.Start();
+}
 
 // Called repeatedly when this Command is scheduled to run
 void ClimberRaiseCommand::Execute() {
-      //Start the climber motor to move climbing hook up. 
-      climberSubsystem->SetClimberMotorVoltagePercent(climber::kClimberMotorRaiseVoltagePercent);
+  //Start the climber motor to move climbing hook up. 
+  climberSubsystem->SetClimberMotorVoltagePercent(climber::kClimberMotorRaiseVoltagePercent);
+  // End command after time defined in constants file.
+  if (timer.HasElapsed(climber::kClimberRaiseTimer)) { finished = true; }
 }
 
 // Called once the command ends or is interrupted.
@@ -21,5 +26,5 @@ void ClimberRaiseCommand::End(bool interrupted) {
 
 // Returns true when the command should end.
 bool ClimberRaiseCommand::IsFinished() {
-  return false;
+  return finished;
 }

@@ -11,13 +11,17 @@ ClimberLowerCommand::ClimberLowerCommand() {
 */
 
 // Called when the command is initially scheduled.
-void ClimberLowerCommand::Initialize() {}
+void ClimberLowerCommand::Initialize() {
+  timer.Reset();
+  timer.Start();
+}
 
 // Called repeatedly when this Command is scheduled to run
 void ClimberLowerCommand::Execute() {
   //Start the climber motor to move climbing hook up. 
   climberSubsystem->SetClimberMotorVoltagePercent(climber::kClimberMotorLowerVoltagePercent);
-}
+  // End command after time defined in constants file.
+  if (timer.HasElapsed(climber::kClimberLowerTimer)) { finished = true; }}
 
 // Called once the command ends or is interrupted.
 void ClimberLowerCommand::End(bool interrupted) {
@@ -26,5 +30,5 @@ void ClimberLowerCommand::End(bool interrupted) {
 
 // Returns true when the command should end.
 bool ClimberLowerCommand::IsFinished() {
-  return false;
+  return finished;
 }

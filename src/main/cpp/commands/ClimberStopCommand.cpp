@@ -6,18 +6,20 @@
 
 
 // Called when the command is initially scheduled.
-void ClimberStopCommand::Initialize() {}
-
-// Called repeatedly when this Command is scheduled to run
-void ClimberStopCommand::Execute() {
+void ClimberStopCommand::Initialize()
+{
   //Stop the motors
   climberSubsystem->StopClimber();
+  finished = true;
 }
+
+// Called repeatedly when this Command is scheduled to run
+void ClimberStopCommand::Execute() {}
 
 // Called once the command ends or is interrupted.
 void ClimberStopCommand::End(bool interrupted) {}
 
 // Returns true when the command should end.
 bool ClimberStopCommand::IsFinished() {
-  return false;
+  return finished;
 }
