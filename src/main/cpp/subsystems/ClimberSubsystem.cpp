@@ -6,7 +6,7 @@
 
 ClimberSubsystem::ClimberSubsystem() noexcept
 {
-    m_ClimberMotor.SetInverted(climber::kClimberMotorCanID);
+    m_ClimberMotor.SetInverted(climber::kClimberMotorIsInverted);
 }
 
 void ClimberSubsystem::StopClimber() noexcept
