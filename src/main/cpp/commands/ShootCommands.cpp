@@ -9,7 +9,6 @@ void ShootCommands::Initialize() {
 
   //Start the shooter motors and timer
   shooterSubsystem->SetShooterMotorVoltagePercent(shooter::kShooterMotorVoltagePercent);
-  finished = false;
   timer.Reset();
   timer.Start();
 }
