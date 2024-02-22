@@ -144,13 +144,13 @@ std::tuple<double, double, double, bool> RobotContainer::GetDriveTeleopControls(
   Finally, the other controller joystick is used for commanding rotation and
   things work out so that this is also an inverted X axis.
   */
-  double LeftStickX = -m_xbox.GetLeftY();
-  double LeftStickY = -m_xbox.GetLeftX();
-  double rightStickRot = -m_xbox.GetRightX();
+  double LeftStickX = -m_xboxDrive.GetLeftY();
+  double LeftStickY = -m_xboxDrive.GetLeftX();
+  double rightStickRot = -m_xboxDrive.GetRightX();
 
   if (triggerSpeedEnabled) // scale speed by analog trigger
   {
-    double RightTrigAnalogVal = m_xbox.GetRightTriggerAxis();
+    double RightTrigAnalogVal = m_xboxDrive.GetRightTriggerAxis();
     RightTrigAnalogVal = ConditionRawTriggerInput(RightTrigAnalogVal);
 
     if (LeftStickX != 0 || LeftStickY != 0)
@@ -190,7 +190,7 @@ std::tuple<double, double, double, bool> RobotContainer::GetDriveTeleopControls(
 double RobotContainer::ConditionRawTriggerInput(double RawTrigVal) noexcept
 {
   // Set a raw trigger value using the right trigger
-  RawTrigVal = m_xbox.GetRightTriggerAxis();
+  RawTrigVal = m_xboxDrive.GetRightTriggerAxis();
   double deadZoneVal = 0.05;
   double deadZoneCorrection = 1.0 / (1.0 - deadZoneVal);
 
@@ -257,39 +257,39 @@ double RobotContainer::ConditionRawJoystickInput(double RawJoystickVal, double m
 void RobotContainer::ConfigureBindings() noexcept
 {
   // TODO: define Keybindings here
-  m_xbox.Start().OnTrue(
+  m_xboxDrive.Start().OnTrue(
       frc2::InstantCommand([&]() -> void
                            { triggerSpeedEnabled = !triggerSpeedEnabled; },
                            {})
           .ToPtr());
 
-  m_xbox.A().OnTrue(frc2::InstantCommand([&]() -> void
+  m_xboxOperate.A().OnTrue(frc2::InstantCommand([&]() -> void
                                          { m_intakeSubsystem.SetSpinMotorVoltagePercent(intake::kIntakeSpinMotorVoltagePercent); },
                                          {&m_intakeSubsystem})
                         .ToPtr());
-  m_xbox.A().OnFalse(frc2::InstantCommand([&]() -> void
+  m_xboxOperate.A().OnFalse(frc2::InstantCommand([&]() -> void
                                           { m_intakeSubsystem.StopIntake(); },
                                           {&m_intakeSubsystem})
                          .ToPtr());
 
-  m_xbox.B().OnTrue(frc2::InstantCommand([&]() -> void
+  m_xboxOperate.B().OnTrue(frc2::InstantCommand([&]() -> void
                                          { m_shooterSubsystem.SetShooterMotorVoltagePercent(shooter::kShooterMotorVoltagePercent); },
                                          {&m_shooterSubsystem})
                         .ToPtr());
-  m_xbox.B().OnFalse(frc2::InstantCommand([&]() -> void
+  m_xboxOperate.B().OnFalse(frc2::InstantCommand([&]() -> void
                                           { m_shooterSubsystem.StopShooter(); },
                                           {&m_shooterSubsystem})
                          .ToPtr());
 
-  m_xbox.Y().OnTrue(ShootCommands(&m_shooterSubsystem).ToPtr());
+  m_xboxOperate.Y().OnTrue(ShootCommands(&m_shooterSubsystem).ToPtr());
                          
-  m_xbox.X().OnTrue(PositionTransferArm(&m_transferArmSubsystem, 90_deg).ToPtr()); // Example Only
+  m_xboxOperate.X().OnTrue(PositionTransferArm(&m_transferArmSubsystem, 90_deg).ToPtr()); // Example Only
 
-  m_xbox.LeftBumper().WhileTrue(ClimberRaiseCommand(&m_climberSubsystem).ToPtr()); // Raise the climber while button is pressed.
-  m_xbox.LeftBumper().OnFalse(ClimberStopCommand(&m_climberSubsystem).ToPtr());   // on false stop the climber motor
+  m_xboxOperate.LeftBumper().WhileTrue(ClimberRaiseCommand(&m_climberSubsystem).ToPtr()); // Raise the climber while button is pressed.
+  m_xboxOperate.LeftBumper().OnFalse(ClimberStopCommand(&m_climberSubsystem).ToPtr());   // on false stop the climber motor
 
-  m_xbox.LeftTrigger().WhileTrue(ClimberLowerCommand(&m_climberSubsystem).ToPtr()); //Lower the climber while button is pressed
-  m_xbox.LeftTrigger().OnFalse(ClimberStopCommand(&m_climberSubsystem).ToPtr());   // on false stop the climber motor
+  m_xboxOperate.LeftTrigger().WhileTrue(ClimberLowerCommand(&m_climberSubsystem).ToPtr()); //Lower the climber while button is pressed
+  m_xboxOperate.LeftTrigger().OnFalse(ClimberStopCommand(&m_climberSubsystem).ToPtr());   // on false stop the climber motor
 
 
 
