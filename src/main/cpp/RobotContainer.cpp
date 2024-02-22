@@ -19,6 +19,7 @@
 #include "commands/IntakeCommand.h"
 #include "commands/ShootCommands.h"
 #include "commands/PositionTransferArmCommand.h"
+#include "commands/IntakeEjectCommand.h"
 
 #include <cmath>
 #include <cstdio>
@@ -284,6 +285,8 @@ void RobotContainer::ConfigureBindings() noexcept
                          .ToPtr());
                          */
 
+  m_xbox.B().OnTrue(IntakeEjectCommand(&m_intakeSubsystem).ToPtr());
+  /*                  
   m_xbox.B().OnTrue(frc2::InstantCommand([&]() -> void
                                          { m_intakeSubsystem.SetSpinMotorVoltagePercent(intake::kIntakeSpinMotorEjectVoltagePercent); },
                                          {&m_intakeSubsystem})
@@ -292,11 +295,14 @@ void RobotContainer::ConfigureBindings() noexcept
                                           { m_intakeSubsystem.StopIntake(); },
                                           {&m_intakeSubsystem})
                          .ToPtr());
+*/
 
   // Runs shoot command to move arm into postion, start up the shooting motors and eject the note                     
   m_xbox.Y().OnTrue(ShootCommands(&m_shooterSubsystem).ToPtr());
                          
   m_xbox.X().OnTrue(PositionTransferArm(&m_transferArmSubsystem, 90_deg).ToPtr()); // Example Only
+
+
 }
 #pragma endregion
 

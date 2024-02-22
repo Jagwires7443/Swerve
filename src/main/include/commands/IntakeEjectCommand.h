@@ -6,18 +6,21 @@
 
 #include <frc2/command/Command.h>
 #include <frc2/command/CommandHelper.h>
-#include "frc/DigitalInput.h"
 #include "subsystems/IntakeSubsystem.h"
 #include "Constants.h"
-#include "subsystems/TransferArmSubsystem.h"
+#include <frc/Timer.h>
+
+
 
 /**
- * This command is for picking up a note and moving to the home position with the arm
+ * This command is for ejecting the note from the intake.  
+ * This can be called by the shootcommand to feed into the shooter 
+ * Or used to eject a note onto the field
  */
-class IntakeCommand
-    : public frc2::CommandHelper<frc2::Command, IntakeCommand> {
+class IntakeEjectCommand
+    : public frc2::CommandHelper<frc2::Command, IntakeEjectCommand> {
  public:
-  explicit IntakeCommand(IntakeSubsystem *intakeSubsystem) 
+  explicit IntakeEjectCommand(IntakeSubsystem *intakeSubsystem)
       : intakeSubsystem{intakeSubsystem}
       {
         AddRequirements(intakeSubsystem);
@@ -27,11 +30,9 @@ class IntakeCommand
   void Execute() override;
   void End(bool interrupted) override;
   bool IsFinished() override;
-
-  private:
+ 
+ private: 
     IntakeSubsystem *intakeSubsystem{nullptr};
     bool finished{false};
-    frc::DigitalInput limit1{1};
-    frc::DigitalInput limit2{2};
-
+    frc::Timer timer{};
 };
