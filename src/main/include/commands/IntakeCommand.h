@@ -31,7 +31,7 @@ class IntakeCommand
   private:
     IntakeSubsystem *intakeSubsystem{nullptr};
     bool finished{false};
-    frc::DigitalInput limit1{1};
-    frc::DigitalInput limit2{2};
+    frc::DigitalInput limit1{8};
+    frc::DigitalInput limit2{9};
 
 };

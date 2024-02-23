@@ -152,8 +152,8 @@ namespace intake
     constexpr units::degree_t kIntakeArmPickup = 180.0_deg;
     constexpr units::degree_t kIntakeArmLoad = 0.0_deg;
 
-    constexpr double kIntakeSpinMotorVoltagePercent = .15;
-    constexpr double kIntakeSpinMotorEjectVoltagePercent = -.15;
+    constexpr double kIntakeSpinMotorVoltagePercent = .50;
+    constexpr double kIntakeSpinMotorEjectVoltagePercent = -.40;
 }
 
 namespace arm
