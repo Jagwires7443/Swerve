@@ -6,6 +6,8 @@ TransferArmSubsystem::TransferArmSubsystem() noexcept
 {
     m_TransferArmMotor.SetInverted(arm::kTransferArmMotorIsInverted);
 
+    m_encoder.SetMeasurementPeriod(10);
+
     // set PID coefficients
     m_pidController.SetP(kP);
     m_pidController.SetI(kI);
@@ -19,6 +21,8 @@ TransferArmSubsystem::TransferArmSubsystem() noexcept
     frc::SmartDashboard::PutNumber("Arm D Gain ", kD);
     frc::SmartDashboard::PutNumber("Arm F ", kFF);
 
+    frc::SmartDashboard::PutNumber("Arm Init Position ", m_encoder.GetPosition());
+
     StopTransferArm();
 }
 
@@ -27,17 +31,23 @@ void TransferArmSubsystem::StopTransferArm() noexcept
     m_TransferArmMotor.StopMotor();
 }
 
+void TransferArmSubsystem::SetArmMotorVoltagePercent(const double percent) noexcept
+{
+    frc::SmartDashboard::PutNumber("Arm Position ", m_encoder.GetPosition());
+    m_TransferArmMotor.SetVoltage(percent * 12_V);
+}
+
 void TransferArmSubsystem::SetTransferArmPosition(const units::turn_t position) noexcept
 {
     m_pidController.SetReference(position.value(), rev::CANSparkMax::ControlType::kPosition);
     frc::SmartDashboard::PutNumber("SetPoint", position.value());
-    // frc::SmartDashboard::PutNumber("ProcessVariable", m_encoder.GetPosition());
+    frc::SmartDashboard::PutNumber("ProcessVariable", m_encoder.GetPosition());
 }
 
-// units::turn_t TransferArmSubsystem::GetTransferArmPosition() noexcept
-// {
-//     return units::turn_t(m_encoder.GetPosition());
-// }
+units::turn_t TransferArmSubsystem::GetTransferArmPosition() noexcept
+{
+    return units::turn_t(m_encoder.GetPosition());
+}
 
 void TransferArmSubsystem::UpdatePIDValues() noexcept
 {

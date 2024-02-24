@@ -6,17 +6,19 @@
 
 void PositionTransferArm::Initialize() noexcept
 {
-    transferArmSubsystem->SetTransferArmPosition(position);
+    // transferArmSubsystem->SetTransferArmPosition(position);
     timer.Reset();
+    timer.Start();
 }
 
 void PositionTransferArm::Execute() noexcept
 {
-    transferArmSubsystem->UpdatePIDValues();
-    if (timer.HasElapsed(5_s)) { finished = true; }
+    // transferArmSubsystem->UpdatePIDValues();s
+    transferArmSubsystem->SetArmMotorVoltagePercent(-.05);
+    if (timer.HasElapsed(2_s)) { finished = true; }
 }
 
 void PositionTransferArm::End(bool interrupted) noexcept
 {
-
+    transferArmSubsystem->StopTransferArm();
 }

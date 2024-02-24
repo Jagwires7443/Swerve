@@ -152,7 +152,7 @@ namespace intake
     constexpr units::degree_t kIntakeArmPickup = 180.0_deg;
     constexpr units::degree_t kIntakeArmLoad = 0.0_deg;
 
-    constexpr double kIntakeSpinMotorVoltagePercent = .50;
+    constexpr double kIntakeSpinMotorVoltagePercent = .1;
     constexpr double kIntakeSpinMotorEjectVoltagePercent = -.40;
 }
 
@@ -163,7 +163,7 @@ namespace arm
     constexpr bool kTransferArmMotorIsInverted = false;
 
     // Arm Controller
-    constexpr double kArmPositionP = 0.005;
+    constexpr double kArmPositionP = 0.1;
     constexpr double kArmPositionD = 0.0005;
     constexpr double kArmPositionF = 0.0;
 }
