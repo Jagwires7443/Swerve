@@ -166,6 +166,8 @@ namespace arm
     constexpr double kArmPositionP = 0.1;
     constexpr double kArmPositionD = 0.0005;
     constexpr double kArmPositionF = 0.0;
+
+    constexpr units::turn_t kIntakeToShooterAngle = 90_deg;
 }
 
 namespace climber
