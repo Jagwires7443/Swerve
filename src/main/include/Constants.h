@@ -152,22 +152,22 @@ namespace intake
     constexpr units::degree_t kIntakeArmPickup = 180.0_deg;
     constexpr units::degree_t kIntakeArmLoad = 0.0_deg;
 
-    constexpr double kIntakeSpinMotorVoltagePercent = .1;
-    constexpr double kIntakeSpinMotorEjectVoltagePercent = -.40;
+    constexpr double kIntakeSpinMotorVoltagePercent = .75;
+    constexpr double kIntakeSpinMotorEjectVoltagePercent = -.90;
 }
 
 namespace arm
 {
     // Arm Motor Parameters
     constexpr int kTransferArmMotorCanID = 17;
-    constexpr bool kTransferArmMotorIsInverted = false;
+    constexpr bool kTransferArmMotorIsInverted = true;
 
     // Arm Controller
-    constexpr double kArmPositionP = 0.1;
-    constexpr double kArmPositionD = 0.0005;
+    constexpr double kArmPositionP = 10.0;
+    constexpr double kArmPositionD = .10;
     constexpr double kArmPositionF = 0.0;
 
-    constexpr units::turn_t kIntakeToShooterAngle = 90_deg;
+    constexpr units::turn_t kIntakeToShooterAngle = 200_deg;
 }
 
 namespace climber
