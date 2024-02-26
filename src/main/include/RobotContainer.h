@@ -59,8 +59,9 @@ private:
   bool m_fieldOriented{true};
   bool m_lock{false};
   bool triggerSpeedEnabled{false};
-
-  frc2::CommandXboxController m_xbox{0};
+  
+  frc2::CommandXboxController m_xboxDrive{0};
+  frc2::CommandXboxController m_xboxOperate{1};
   // frc2::CommandXboxController m_xbox{1}; TODO: update for second controller
 #pragma endregion
 

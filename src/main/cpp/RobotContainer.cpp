@@ -147,13 +147,13 @@ std::tuple<double, double, double, bool> RobotContainer::GetDriveTeleopControls(
   Finally, the other controller joystick is used for commanding rotation and
   things work out so that this is also an inverted X axis.
   */
-  double LeftStickX = -m_xbox.GetLeftY();
-  double LeftStickY = -m_xbox.GetLeftX();
-  double rightStickRot = -m_xbox.GetRightX();
+  double LeftStickX = -m_xboxDrive.GetLeftY();
+  double LeftStickY = -m_xboxDrive.GetLeftX();
+  double rightStickRot = -m_xboxDrive.GetRightX();
 
   if (triggerSpeedEnabled) // scale speed by analog trigger
   {
-    double RightTrigAnalogVal = m_xbox.GetRightTriggerAxis();
+    double RightTrigAnalogVal = m_xboxDrive.GetRightTriggerAxis();
     RightTrigAnalogVal = ConditionRawTriggerInput(RightTrigAnalogVal);
 
     if (LeftStickX != 0 || LeftStickY != 0)
@@ -193,7 +193,7 @@ std::tuple<double, double, double, bool> RobotContainer::GetDriveTeleopControls(
 double RobotContainer::ConditionRawTriggerInput(double RawTrigVal) noexcept
 {
   // Set a raw trigger value using the right trigger
-  RawTrigVal = m_xbox.GetRightTriggerAxis();
+  RawTrigVal = m_xboxDrive.GetRightTriggerAxis();
   double deadZoneVal = 0.05;
   double deadZoneCorrection = 1.0 / (1.0 - deadZoneVal);
 
@@ -260,27 +260,27 @@ double RobotContainer::ConditionRawJoystickInput(double RawJoystickVal, double m
 void RobotContainer::ConfigureBindings() noexcept
 {
   // TODO: define Keybindings here
-  m_xbox.Start().OnTrue(
+  m_xboxDrive.Start().OnTrue(
       frc2::InstantCommand([&]() -> void
                            { triggerSpeedEnabled = !triggerSpeedEnabled; },
                            {})
           .ToPtr());
 
-  m_xbox.A().OnTrue(IntakeCommand(&m_intakeSubsystem).ToPtr());
-  m_xbox.B().OnTrue(IntakeEjectCommand(&m_intakeSubsystem).ToPtr());
+  m_xboxOperate.A().OnTrue(IntakeCommand(&m_intakeSubsystem).ToPtr());
+  m_xboxOperate.B().OnTrue(IntakeEjectCommand(&m_intakeSubsystem).ToPtr());
 
   // Runs shoot command to move arm into postion, start up the shooting motors and eject the note                     
-  m_xbox.Y().OnTrue(ShootCommands(&m_shooterSubsystem).ToPtr());
+  m_xboxOperate.Y().OnTrue(ShootCommands(&m_shooterSubsystem).ToPtr());
   
-  m_xbox.X().OnTrue(PIDPositionTransferArm(arm::kShooterToAmpAngle, &m_transferArmSubsystem).ToPtr()); // Example Only
-  m_xbox.LeftBumper().OnTrue(PIDPositionTransferArm(arm::kShooterToIntakeAngle, &m_transferArmSubsystem).ToPtr()); // Intake
-  m_xbox.RightBumper().OnTrue(PIDPositionTransferArm(0_deg, &m_transferArmSubsystem).ToPtr()); // Shooter
+  m_xboxOperate.X().OnTrue(PIDPositionTransferArm(arm::kShooterToAmpAngle, &m_transferArmSubsystem).ToPtr()); // Example Only
+  m_xboxOperate.LeftBumper().OnTrue(PIDPositionTransferArm(arm::kShooterToIntakeAngle, &m_transferArmSubsystem).ToPtr()); // Intake
+  m_xboxOperate.RightBumper().OnTrue(PIDPositionTransferArm(0_deg, &m_transferArmSubsystem).ToPtr()); // Shooter
 
-  m_xbox.RightTrigger().OnTrue(ClimberRaiseCommand(&m_climberSubsystem).ToPtr()); // Raise the climber while button is pressed.
-  m_xbox.RightTrigger().OnFalse(ClimberStopCommand(&m_climberSubsystem).ToPtr());   // on false stop the climber motor
+  m_xboxOperate.RightTrigger().OnTrue(ClimberRaiseCommand(&m_climberSubsystem).ToPtr()); // Raise the climber while button is pressed.
+  m_xboxOperate.RightTrigger().OnFalse(ClimberStopCommand(&m_climberSubsystem).ToPtr());   // on false stop the climber motor
 
-  m_xbox.LeftTrigger().OnTrue(ClimberLowerCommand(&m_climberSubsystem).ToPtr()); //Lower the climber while button is pressed
-  m_xbox.LeftTrigger().OnFalse(ClimberStopCommand(&m_climberSubsystem).ToPtr());   // on false stop the climber motor
+  m_xboxOperate.LeftTrigger().OnTrue(ClimberLowerCommand(&m_climberSubsystem).ToPtr()); //Lower the climber while button is pressed
+  m_xboxOperate.LeftTrigger().OnFalse(ClimberStopCommand(&m_climberSubsystem).ToPtr());   // on false stop the climber motor
 }
 #pragma endregion
 
