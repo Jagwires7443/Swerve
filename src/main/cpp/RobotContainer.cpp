@@ -16,11 +16,14 @@
 #include <frc2/command/CommandScheduler.h>
 #include <frc2/command/InstantCommand.h>
 #include <frc2/command/RunCommand.h>
+#include "commands/IntakeCommand.h"
 #include "commands/ClimberLowerCommand.h"
 #include "commands/ClimberRaiseCommand.h"
 #include "commands/ClimberStopCommand.h"
 #include "commands/ShootCommands.h"
 #include "commands/PositionTransferArmCommand.h"
+#include "commands/PIDTransferArmCommand.h"
+#include "commands/IntakeEjectCommand.h"
 
 #include <cmath>
 #include <cstdio>
@@ -263,37 +266,21 @@ void RobotContainer::ConfigureBindings() noexcept
                            {})
           .ToPtr());
 
-  m_xboxOperate.A().OnTrue(frc2::InstantCommand([&]() -> void
-                                         { m_intakeSubsystem.SetSpinMotorVoltagePercent(intake::kIntakeSpinMotorVoltagePercent); },
-                                         {&m_intakeSubsystem})
-                        .ToPtr());
-  m_xboxOperate.A().OnFalse(frc2::InstantCommand([&]() -> void
-                                          { m_intakeSubsystem.StopIntake(); },
-                                          {&m_intakeSubsystem})
-                         .ToPtr());
+  m_xboxOperate.A().OnTrue(IntakeCommand(&m_intakeSubsystem).ToPtr());
+  m_xboxOperate.B().OnTrue(IntakeEjectCommand(&m_intakeSubsystem).ToPtr());
 
-  m_xboxOperate.B().OnTrue(frc2::InstantCommand([&]() -> void
-                                         { m_shooterSubsystem.SetShooterMotorVoltagePercent(shooter::kShooterMotorVoltagePercent); },
-                                         {&m_shooterSubsystem})
-                        .ToPtr());
-  m_xboxOperate.B().OnFalse(frc2::InstantCommand([&]() -> void
-                                          { m_shooterSubsystem.StopShooter(); },
-                                          {&m_shooterSubsystem})
-                         .ToPtr());
-
+  // Runs shoot command to move arm into postion, start up the shooting motors and eject the note                     
   m_xboxOperate.Y().OnTrue(ShootCommands(&m_shooterSubsystem).ToPtr());
-                         
-  m_xboxOperate.X().OnTrue(PositionTransferArm(&m_transferArmSubsystem, 90_deg).ToPtr()); // Example Only
+  
+  m_xboxOperate.X().OnTrue(PIDPositionTransferArm(arm::kShooterToAmpAngle, &m_transferArmSubsystem).ToPtr()); // Example Only
+  m_xboxOperate.LeftBumper().OnTrue(PIDPositionTransferArm(arm::kShooterToIntakeAngle, &m_transferArmSubsystem).ToPtr()); // Intake
+  m_xboxOperate.RightBumper().OnTrue(PIDPositionTransferArm(0_deg, &m_transferArmSubsystem).ToPtr()); // Shooter
 
-  m_xboxOperate.LeftBumper().WhileTrue(ClimberRaiseCommand(&m_climberSubsystem).ToPtr()); // Raise the climber while button is pressed.
-  m_xboxOperate.LeftBumper().OnFalse(ClimberStopCommand(&m_climberSubsystem).ToPtr());   // on false stop the climber motor
+  m_xboxOperate.RightTrigger().OnTrue(ClimberRaiseCommand(&m_climberSubsystem).ToPtr()); // Raise the climber while button is pressed.
+  m_xboxOperate.RightTrigger().OnFalse(ClimberStopCommand(&m_climberSubsystem).ToPtr());   // on false stop the climber motor
 
-  m_xboxOperate.LeftTrigger().WhileTrue(ClimberLowerCommand(&m_climberSubsystem).ToPtr()); //Lower the climber while button is pressed
+  m_xboxOperate.LeftTrigger().OnTrue(ClimberLowerCommand(&m_climberSubsystem).ToPtr()); //Lower the climber while button is pressed
   m_xboxOperate.LeftTrigger().OnFalse(ClimberStopCommand(&m_climberSubsystem).ToPtr());   // on false stop the climber motor
-
-
-
-
 }
 #pragma endregion
 
