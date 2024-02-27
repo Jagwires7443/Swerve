@@ -8,10 +8,8 @@
 #include <frc2/command/CommandHelper.h>
 #include <frc/Timer.h>
 #include "subsystems/ShooterSubsystem.h"
-#include "subsystems/TransferArmSubsystem.h"
-#include "subsystems/IntakeSubsystem.h"
 
-/**
+/*
  * An example command.
  *
  * <p>Note that this extends CommandHelper, rather extending Command
@@ -35,7 +33,6 @@ public:
 
 private:
   ShooterSubsystem *shooterSubsystem{nullptr};
-  IntakeSubsystem *intakeSubsystem{nullptr};
   frc::Timer timer{};
   bool finished{false};
 };

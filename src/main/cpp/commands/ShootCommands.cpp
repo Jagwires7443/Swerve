@@ -3,30 +3,22 @@
 // the WPILib BSD license file in the root directory of this project.
 
 #include "commands/ShootCommands.h"
-#include "commands/IntakeEjectCommand.h"
-<<<<<<< Updated upstream
-#include <frc2/command/RunCommand.h>
 
-
-=======
-#include <frc2/command/Command.h>
->>>>>>> Stashed changes
 // Called when the command is initially scheduled.
 void ShootCommands::Initialize() {
 
   //Start the shooter motors and timer
-  frc2::RunCommand(IntakeEjectCommand(&intakeSubsystem));
   shooterSubsystem->SetShooterMotorVoltagePercent(shooter::kShooterMotorVoltagePercent);
   finished = false;
   timer.Reset();
   timer.Start();
-  frc2::Command(IntakeEjectCommand());
+  
 
 }
 
 // Called repeatedly when this Command is scheduled to run
 void ShootCommands::Execute() {
-  //When the timer has run for 5 seconds set finished to true to stop the motors
+  //When the timer has run for 5 seconds set finished to true to stop the motors 
   if (timer.HasElapsed(5_s)) {
     finished = true;
     shooterSubsystem->StopShooter();

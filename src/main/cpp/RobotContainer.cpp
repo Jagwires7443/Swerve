@@ -24,6 +24,7 @@
 #include "commands/PositionTransferArmCommand.h"
 #include "commands/PIDTransferArmCommand.h"
 #include "commands/IntakeEjectCommand.h"
+#include "commands/ShootProcedureCommand.h"
 
 #include <cmath>
 #include <cstdio>
@@ -270,8 +271,10 @@ void RobotContainer::ConfigureBindings() noexcept
   m_xboxOperate.B().OnTrue(IntakeEjectCommand(&m_intakeSubsystem).ToPtr());
 
   // Runs shoot command to move arm into postion, start up the shooting motors and eject the note                     
-  m_xboxOperate.Y().OnTrue(ShootCommands(&m_shooterSubsystem).ToPtr());
+  //m_xboxOperate.Y().OnTrue(ShootCommands(&m_shooterSubsystem).ToPtr());
   
+  m_xboxOperate.Y().OnTrue(ShootProcedureCommand().ToPtr());
+
   m_xboxOperate.X().OnTrue(PIDPositionTransferArm(arm::kShooterToAmpAngle, &m_transferArmSubsystem).ToPtr()); // Example Only
   m_xboxOperate.LeftBumper().OnTrue(PIDPositionTransferArm(arm::kShooterToIntakeAngle, &m_transferArmSubsystem).ToPtr()); // Intake
   m_xboxOperate.RightBumper().OnTrue(PIDPositionTransferArm(0_deg, &m_transferArmSubsystem).ToPtr()); // Shooter
