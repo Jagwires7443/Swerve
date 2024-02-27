@@ -63,7 +63,11 @@ void RobotContainer::AutonomousInit() noexcept
                                                                {&m_infrastructureSubsystem}));
 }
 
-void RobotContainer::AutonomousPeriodic() noexcept {}
+void RobotContainer::AutonomousPeriodic() noexcept 
+{
+  // ShootCommands(&m_shooterSubsystem).ToPtr();
+  // frc2::CommandScheduler::GetInstance().Schedule(new DriveCommandFactory(5.0));
+}
 
 void RobotContainer::AutonomousExit() noexcept {}
 
