@@ -4,9 +4,13 @@
 
 #include "commands/ShootCommands.h"
 #include "commands/IntakeEjectCommand.h"
+<<<<<<< Updated upstream
 #include <frc2/command/RunCommand.h>
 
 
+=======
+#include <frc2/command/Command.h>
+>>>>>>> Stashed changes
 // Called when the command is initially scheduled.
 void ShootCommands::Initialize() {
 
@@ -16,6 +20,8 @@ void ShootCommands::Initialize() {
   finished = false;
   timer.Reset();
   timer.Start();
+  frc2::Command(IntakeEjectCommand());
+
 }
 
 // Called repeatedly when this Command is scheduled to run
