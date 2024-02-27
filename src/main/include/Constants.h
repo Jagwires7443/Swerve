@@ -167,7 +167,7 @@ namespace arm
     constexpr double kArmPositionD = .10;
     constexpr double kArmPositionF = 0.0;
 
-    constexpr units::turn_t kShooterToAmpAngle = -100_deg;
+    constexpr units::turn_t kShooterToAmpAngle = -50_deg;
     constexpr units::turn_t kShooterToIntakeAngle = -200_deg;
 }
 

@@ -9,6 +9,7 @@
 #include <frc/Timer.h>
 #include "subsystems/ShooterSubsystem.h"
 #include "subsystems/TransferArmSubsystem.h"
+#include "subsystems/IntakeSubsystem.h"
 
 /**
  * An example command.
@@ -34,6 +35,7 @@ public:
 
 private:
   ShooterSubsystem *shooterSubsystem{nullptr};
+  IntakeSubsystem *intakeSubsystem{nullptr};
   frc::Timer timer{};
   bool finished{false};
 };
