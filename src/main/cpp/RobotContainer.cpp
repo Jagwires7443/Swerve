@@ -21,7 +21,6 @@
 #include "commands/ClimberRaiseCommand.h"
 #include "commands/ClimberStopCommand.h"
 #include "commands/ShootCommands.h"
-#include "commands/PositionTransferArmCommand.h"
 #include "commands/PIDTransferArmCommand.h"
 #include "commands/IntakeEjectCommand.h"
 
