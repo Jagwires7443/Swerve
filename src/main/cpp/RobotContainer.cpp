@@ -78,14 +78,14 @@ std::optional<frc2::CommandPtr> RobotContainer::GetAutonomousCommand() noexcept
 
   trajectoryConfig.SetKinematics(kinematics);
 
-  // TODO: Update trajectory path to our autonomous path
+  // TODO: Update trajectory path to our autonomous paeth
   frc::Trajectory trajectory = frc::TrajectoryGenerator::GenerateTrajectory(
       {/*frc::Pose2d{},*/
        frc::Pose2d{1.0_m, 0.0_m, frc::Rotation2d{}}},
        
     trajectoryConfig);
   
-  return ShootCommands(&m_shooterSubsystem).ToPtr()
+  return PIDPositionTransferArm(0_deg, &m_transferArmSubsystem).ToPtr().AndThen(ShootCommands(&m_shooterSubsystem).ToPtr()).AlongWith(IntakeEjectCommand(&m_intakeSubsystem).ToPtr())
   .AndThen(TrajectoryAuto::TrajectoryAutoCommandFactory(&m_driveSubsystem, "test trajectory", trajectory));
 }
 #pragma endregion
