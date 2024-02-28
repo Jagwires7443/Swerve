@@ -16,6 +16,7 @@
 #include <frc2/command/CommandScheduler.h>
 #include <frc2/command/InstantCommand.h>
 #include <frc2/command/RunCommand.h>
+#include <frc2/command/Commands.h>
 #include "commands/IntakeCommand.h"
 #include "commands/ClimberLowerCommand.h"
 #include "commands/ClimberRaiseCommand.h"
@@ -24,7 +25,6 @@
 #include "commands/PositionTransferArmCommand.h"
 #include "commands/PIDTransferArmCommand.h"
 #include "commands/IntakeEjectCommand.h"
-#include "commands/ShootProcedureCommand.h"
 
 #include <cmath>
 #include <cstdio>
@@ -273,7 +273,7 @@ void RobotContainer::ConfigureBindings() noexcept
   // Runs shoot command to move arm into postion, start up the shooting motors and eject the note                     
   //m_xboxOperate.Y().OnTrue(ShootCommands(&m_shooterSubsystem).ToPtr());
   
-  m_xboxOperate.Y().OnTrue(ShootProcedureCommand().ToPtr());
+  m_xboxOperate.Y().OnTrue(PIDPositionTransferArm(0_deg, &m_transferArmSubsystem).ToPtr().AndThen(ShootCommands(&m_shooterSubsystem).ToPtr()).AlongWith(IntakeEjectCommand(&m_intakeSubsystem).ToPtr()));
 
   m_xboxOperate.X().OnTrue(PIDPositionTransferArm(arm::kShooterToAmpAngle, &m_transferArmSubsystem).ToPtr()); // Example Only
   m_xboxOperate.LeftBumper().OnTrue(PIDPositionTransferArm(arm::kShooterToIntakeAngle, &m_transferArmSubsystem).ToPtr()); // Intake
