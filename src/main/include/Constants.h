@@ -191,9 +191,11 @@ namespace amp
     constexpr int kAmpExtendMotorCanID = 20;
     constexpr bool kAmpExtendMotorIsInverted = false;
     constexpr double kAmpExtendMotorVoltagePercent = .15;
+    constexpr double kAmpRetractMotorVoltagePercent = -.15;
 
     //Johnson Electric for raising and lowering 
-    constexpr int kAmpRaiseMotorCanID = 21;
-    constexpr bool kAmpRaiseMotorIsInverted = false;
-    constexpr double kAmpRaiseMotorVoltagePercent = .15;
+    constexpr int kAmpHolderMotorCanID = 21;
+    constexpr bool kAmpHolderMotorIsInverted = false;
+    constexpr double kAmpHolderMotorVoltagePercent = .15;
+    constexpr double kAmpDropMotorVoltagePercent = -.15;
 }

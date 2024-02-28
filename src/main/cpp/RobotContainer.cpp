@@ -280,6 +280,9 @@ void RobotContainer::ConfigureBindings() noexcept
 
   m_xboxOperate.LeftTrigger().OnTrue(ClimberLowerCommand(&m_climberSubsystem).ToPtr()); //Lower the climber while button is pressed
   m_xboxOperate.LeftTrigger().OnFalse(ClimberStopCommand(&m_climberSubsystem).ToPtr());   // on false stop the climber motor
+
+  //Amp mechanism controls
+
 }
 #pragma endregion
 
