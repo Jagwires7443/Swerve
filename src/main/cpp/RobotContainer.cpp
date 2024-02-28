@@ -283,6 +283,15 @@ void RobotContainer::ConfigureBindings() noexcept
 
   m_xboxOperate.LeftTrigger().OnTrue(ClimberLowerCommand(&m_climberSubsystem).ToPtr()); //Lower the climber while button is pressed
   m_xboxOperate.LeftTrigger().OnFalse(ClimberStopCommand(&m_climberSubsystem).ToPtr());   // on false stop the climber motor
+
+  // create dpad buttons
+  frc2::POVButton dpadUp{&m_xboxOperate, 0};  // 0 degrees for up
+  frc2::POVButton dpadRight{&m_xboxOperate, 90};  // 90 degrees for right
+  frc2::POVButton dpadDown{&m_xboxOperate, 180}; // 180 degrees for down
+  frc2::POVButton dpadLeft{&m_xboxOperate, 270};  // 270 degrees for left
+
+  // dpadUp.OnTrue(IntakeCommand(&m_intakeSubsystem).ToPtr());
+  // dpadDown.OnTrue(IntakeEjectCommand(&m_intakeSubsystem).ToPtr());
 }
 #pragma endregion
 
