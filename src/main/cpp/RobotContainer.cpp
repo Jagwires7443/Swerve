@@ -16,6 +16,7 @@
 #include <frc2/command/CommandScheduler.h>
 #include <frc2/command/InstantCommand.h>
 #include <frc2/command/RunCommand.h>
+#include <frc2/command/Commands.h>
 #include "commands/IntakeCommand.h"
 #include "commands/ClimberLowerCommand.h"
 #include "commands/ClimberRaiseCommand.h"
@@ -275,8 +276,10 @@ void RobotContainer::ConfigureBindings() noexcept
   m_xboxOperate.B().OnTrue(IntakeEjectCommand(&m_intakeSubsystem).ToPtr());
 
   // Runs shoot command to move arm into postion, start up the shooting motors and eject the note                     
-  m_xboxOperate.Y().OnTrue(ShootCommands(&m_shooterSubsystem).ToPtr());
+  //m_xboxOperate.Y().OnTrue(ShootCommands(&m_shooterSubsystem).ToPtr());
   
+  m_xboxOperate.Y().OnTrue(PIDPositionTransferArm(0_deg, &m_transferArmSubsystem).ToPtr().AndThen(ShootCommands(&m_shooterSubsystem).ToPtr()).AlongWith(IntakeEjectCommand(&m_intakeSubsystem).ToPtr()));
+
   m_xboxOperate.X().OnTrue(PIDPositionTransferArm(arm::kShooterToAmpAngle, &m_transferArmSubsystem).ToPtr()); // Example Only
   m_xboxOperate.LeftBumper().OnTrue(PIDPositionTransferArm(arm::kShooterToIntakeAngle, &m_transferArmSubsystem).ToPtr()); // Intake
   m_xboxOperate.RightBumper().OnTrue(PIDPositionTransferArm(0_deg, &m_transferArmSubsystem).ToPtr()); // Shooter
@@ -286,6 +289,15 @@ void RobotContainer::ConfigureBindings() noexcept
 
   m_xboxOperate.LeftTrigger().OnTrue(ClimberLowerCommand(&m_climberSubsystem).ToPtr()); //Lower the climber while button is pressed
   m_xboxOperate.LeftTrigger().OnFalse(ClimberStopCommand(&m_climberSubsystem).ToPtr());   // on false stop the climber motor
+
+  // create dpad buttons
+  frc2::POVButton dpadUp{&m_xboxOperate, 0};  // 0 degrees for up
+  frc2::POVButton dpadRight{&m_xboxOperate, 90};  // 90 degrees for right
+  frc2::POVButton dpadDown{&m_xboxOperate, 180}; // 180 degrees for down
+  frc2::POVButton dpadLeft{&m_xboxOperate, 270};  // 270 degrees for left
+
+  // dpadUp.OnTrue(IntakeCommand(&m_intakeSubsystem).ToPtr());
+  // dpadDown.OnTrue(IntakeEjectCommand(&m_intakeSubsystem).ToPtr());
 }
 #pragma endregion
 

@@ -137,7 +137,7 @@ namespace shooter
     constexpr int kRightShooterMotorCanID = 15;
     constexpr bool kRightShooterMotorIsInverted = true;
 
-    constexpr int kShooterMotorVoltagePercent = 1;
+    constexpr int kShooterMotorVoltagePercent = .80;
 }
 
 namespace intake
@@ -152,7 +152,7 @@ namespace intake
     constexpr units::degree_t kIntakeArmPickup = 180.0_deg;
     constexpr units::degree_t kIntakeArmLoad = 0.0_deg;
 
-    constexpr double kIntakeSpinMotorVoltagePercent = .75;
+    constexpr double kIntakeSpinMotorVoltagePercent = .80;
     constexpr double kIntakeSpinMotorEjectVoltagePercent = -.90;
 }
 
@@ -167,7 +167,7 @@ namespace arm
     constexpr double kArmPositionD = .10;
     constexpr double kArmPositionF = 0.0;
 
-    constexpr units::turn_t kShooterToAmpAngle = -100_deg;
+    constexpr units::turn_t kShooterToAmpAngle = -50_deg;
     constexpr units::turn_t kShooterToIntakeAngle = -200_deg;
 }
 

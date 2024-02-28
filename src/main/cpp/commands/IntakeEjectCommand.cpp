@@ -10,16 +10,23 @@ void IntakeEjectCommand::Initialize() {
   /* Start the intake motors in the reverse direction
      Set finished to false to allow multiple calls of this command
   */
-  intakeSubsystem->SetSpinMotorVoltagePercent(intake::kIntakeSpinMotorEjectVoltagePercent);
+  
+  
   finished = false;
   timer.Reset();
   timer.Start();
+  
 }
 
 // Called repeatedly when this Command is scheduled to run
 void IntakeEjectCommand::Execute() {
-  //Run the intake motors in reverse for 2 seconds then stop the intake
+  
   if (timer.HasElapsed(2_s)){
+    intakeSubsystem->SetSpinMotorVoltagePercent(intake::kIntakeSpinMotorEjectVoltagePercent);
+  }
+
+  //Run the intake motors in reverse for 2 seconds then stop the intake
+  if (timer.HasElapsed(4_s)){
     finished = true;
     intakeSubsystem->StopIntake();
   }
