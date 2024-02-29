@@ -72,9 +72,9 @@ std::optional<frc2::CommandPtr> RobotContainer::GetAutonomousCommand() noexcept
   // DriveCommand(xspeed, yspeed, rotation, time, &driveSubsystem)
   // will move in the given x and y direction while rotating for time seconds
   // xspeed, yspeed, and rotation will likely be between -1 and 1, but they do not need to be in these bounds
-  return DriveCommand(.2, 0, 0, 1_s, &m_driveSubsystem).ToPtr()
-  .AndThen(DriveCommand(0, .2, 0, 1_s, &m_driveSubsystem).ToPtr())
-  .AndThen(ShootCommands(&m_shooterSubsystem).ToPtr());
+  return ShootCommands(&m_shooterSubsystem).ToPtr()
+  .AndThen(DriveCommand(.2, 0, 0, 1_s, &m_driveSubsystem).ToPtr())
+  .AndThen(DriveCommand(0, .2, 0, 1_s, &m_driveSubsystem).ToPtr());
 }
 #pragma endregion
 
