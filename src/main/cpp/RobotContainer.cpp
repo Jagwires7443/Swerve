@@ -23,6 +23,7 @@
 #include "commands/ShootCommands.h"
 #include "commands/PIDTransferArmCommand.h"
 #include "commands/IntakeEjectCommand.h"
+#include "commands/DriveCommands.h"
 
 #include <cmath>
 #include <cstdio>
@@ -62,30 +63,18 @@ void RobotContainer::AutonomousInit() noexcept
                                                                {&m_infrastructureSubsystem}));
 }
 
-void RobotContainer::AutonomousPeriodic() noexcept 
-{
-  // ShootCommands(&m_shooterSubsystem).ToPtr();
-  // frc2::CommandScheduler::GetInstance().Schedule(new DriveCommandFactory(5.0));
-}
+void RobotContainer::AutonomousPeriodic() noexcept {}
 
 void RobotContainer::AutonomousExit() noexcept {}
 
 std::optional<frc2::CommandPtr> RobotContainer::GetAutonomousCommand() noexcept
 {
-  frc::TrajectoryConfig trajectoryConfig{4.0_mps, 2.0_mps_sq};
-  frc::SwerveDriveKinematics<4> kinematics{m_driveSubsystem.kDriveKinematics};
-
-  trajectoryConfig.SetKinematics(kinematics);
-
-  // TODO: Update trajectory path to our autonomous paeth
-  frc::Trajectory trajectory = frc::TrajectoryGenerator::GenerateTrajectory(
-      {frc::Pose2d{},
-       frc::Pose2d{1.0_m, 0.0_m, frc::Rotation2d{}}},
-       
-    trajectoryConfig);
-  
-  return PIDPositionTransferArm(0_deg, &m_transferArmSubsystem).ToPtr().AndThen(ShootCommands(&m_shooterSubsystem).ToPtr()).AlongWith(IntakeEjectCommand(&m_intakeSubsystem).ToPtr())
-  .AndThen(TrajectoryAuto::TrajectoryAutoCommandFactory(&m_driveSubsystem, "test trajectory", trajectory));
+  // DriveCommand(xspeed, yspeed, rotation, time, &driveSubsystem)
+  // will move in the given x and y direction while rotating for time seconds
+  // xspeed, yspeed, and rotation will likely be between -1 and 1, but they do not need to be in these bounds
+  return DriveCommand(.2, 0, 0, 1_s, &m_driveSubsystem).ToPtr()
+  .AndThen(DriveCommand(0, .2, 0, 1_s, &m_driveSubsystem).ToPtr())
+  .AndThen(ShootCommands(&m_shooterSubsystem).ToPtr());
 }
 #pragma endregion
 
