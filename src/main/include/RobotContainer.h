@@ -7,6 +7,7 @@
 #include <frc2/command/button/CommandGenericHID.h>
 #include <frc2/command/button/CommandXboxController.h>
 #include <frc2/command/CommandPtr.h>
+#include <frc2/command/button/POVButton.h>
 
 #include "commands/AutonomousCommands.h"
 #include "subsystems/DriveSubsystem.h"
@@ -62,7 +63,11 @@ private:
   
   frc2::CommandXboxController m_xboxDrive{0};
   frc2::CommandXboxController m_xboxOperate{1};
-  // frc2::CommandXboxController m_xbox{1}; TODO: update for second controller
+  // create dpad buttons
+  frc2::POVButton dpadUp{&m_xboxOperate, 0};  // 0 degrees for up
+  frc2::POVButton dpadRight{&m_xboxOperate, 90};  // 90 degrees for right
+  frc2::POVButton dpadDown{&m_xboxOperate, 180}; // 180 degrees for down
+  frc2::POVButton dpadLeft{&m_xboxOperate, 270};  // 270 degrees for left
 #pragma endregion
 
 #pragma region Test

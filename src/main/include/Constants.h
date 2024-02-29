@@ -176,9 +176,9 @@ namespace climber
     //Climber parameters
     constexpr int kClimberMotorCanID = 18;
     constexpr bool kClimberMotorIsInverted = false;
-    constexpr double kClimberMotorRaiseVoltagePercent = .15;
+    constexpr double kClimberMotorRaiseVoltagePercent = .50;
     constexpr units::second_t kClimberRaiseTimer = 2_s;
-    constexpr double kClimberMotorLowerVoltagePercent = -.15;
+    constexpr double kClimberMotorLowerVoltagePercent = -.50;
     constexpr units::second_t kClimberLowerTimer = 2_s;
 
     constexpr int kClimberSolenoidCanID = 19;
