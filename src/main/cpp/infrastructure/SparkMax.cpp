@@ -9,8 +9,8 @@
 #include <rev/CANSparkMaxLowLevel.h>
 #include <rev/RelativeEncoder.h>
 #include <rev/REVLibError.h>
-#include <rev/SparkMaxLimitSwitch.h>
-#include <rev/SparkMaxPIDController.h>
+#include <rev/SparkLimitSwitch.h>
+#include <rev/SparkPIDController.h>
 
 #include <bitset>
 #include <cmath>
@@ -132,12 +132,12 @@ namespace
         // Underlying REV object holders.
         std::unique_ptr<rev::CANSparkMax> motor_;
         std::unique_ptr<rev::RelativeEncoder> encoder_;
-        std::unique_ptr<rev::SparkMaxPIDController> controller_;
+        std::unique_ptr<rev::SparkPIDController> controller_;
 
         // REV object holders, only used when not using an external
         // ("alternate") encoder.
-        std::unique_ptr<rev::SparkMaxLimitSwitch> forward_;
-        std::unique_ptr<rev::SparkMaxLimitSwitch> reverse_;
+        std::unique_ptr<rev::SparkLimitSwitch> forward_;
+        std::unique_ptr<rev::SparkLimitSwitch> reverse_;
 
         // Shuffleboard UI elements, used by ShuffleboardCreate() and
         // ShuffleboardPeriodic() only.
@@ -167,22 +167,22 @@ namespace
         std::string updateConfigReporting_;
 
         // Config parameters which are not individually settable.
-        double outputRangeMin0_ = std::get<double>(SparkMaxFactory::configDefaults.at("kOutputMin_0"));
-        double outputRangeMax0_ = std::get<double>(SparkMaxFactory::configDefaults.at("kOutputMax_0"));
-        double outputRangeMin1_ = std::get<double>(SparkMaxFactory::configDefaults.at("kOutputMin_1"));
-        double outputRangeMax1_ = std::get<double>(SparkMaxFactory::configDefaults.at("kOutputMax_1"));
-        uint followerID_ = std::get<uint>(SparkMaxFactory::configDefaults.at("kFollowerID"));
-        uint followerConfig_ = std::get<uint>(SparkMaxFactory::configDefaults.at("kFollowerConfig"));
-        double currentChop_ = std::get<double>(SparkMaxFactory::configDefaults.at("kCurrentChop"));
-        uint currentChopCycles_ = std::get<uint>(SparkMaxFactory::configDefaults.at("kCurrentChopCycles"));
-        uint smartCurrentStallLimit_ = std::get<uint>(SparkMaxFactory::configDefaults.at("kSmartCurrentStallLimit"));
-        uint smartCurrentFreeLimit_ = std::get<uint>(SparkMaxFactory::configDefaults.at("kSmartCurrentFreeLimit"));
-        uint smartCurrentConfig_ = std::get<uint>(SparkMaxFactory::configDefaults.at("kSmartCurrentConfig"));
+        double outputRangeMin0_ = std::get<double>(SparkFactory::configDefaults.at("kOutputMin_0"));
+        double outputRangeMax0_ = std::get<double>(SparkFactory::configDefaults.at("kOutputMax_0"));
+        double outputRangeMin1_ = std::get<double>(SparkFactory::configDefaults.at("kOutputMin_1"));
+        double outputRangeMax1_ = std::get<double>(SparkFactory::configDefaults.at("kOutputMax_1"));
+        uint followerID_ = std::get<uint>(SparkFactory::configDefaults.at("kFollowerID"));
+        uint followerConfig_ = std::get<uint>(SparkFactory::configDefaults.at("kFollowerConfig"));
+        double currentChop_ = std::get<double>(SparkFactory::configDefaults.at("kCurrentChop"));
+        uint currentChopCycles_ = std::get<uint>(SparkFactory::configDefaults.at("kCurrentChopCycles"));
+        uint smartCurrentStallLimit_ = std::get<uint>(SparkFactory::configDefaults.at("kSmartCurrentStallLimit"));
+        uint smartCurrentFreeLimit_ = std::get<uint>(SparkFactory::configDefaults.at("kSmartCurrentFreeLimit"));
+        uint smartCurrentConfig_ = std::get<uint>(SparkFactory::configDefaults.at("kSmartCurrentConfig"));
 
         // Config parameters which are needed before SetConfig()/AddConfig().
-        uint status0_ = std::get<uint>(SparkMaxFactory::configDefaults.at("kStatus0"));
-        uint status1_ = std::get<uint>(SparkMaxFactory::configDefaults.at("kStatus1"));
-        uint status2_ = std::get<uint>(SparkMaxFactory::configDefaults.at("kStatus2"));
+        uint status0_ = std::get<uint>(SparkFactory::configDefaults.at("kStatus0"));
+        uint status1_ = std::get<uint>(SparkFactory::configDefaults.at("kStatus1"));
+        uint status2_ = std::get<uint>(SparkFactory::configDefaults.at("kStatus2"));
 
         // The next two data members are used to implement pacing of the config
         // state machines.
@@ -305,7 +305,7 @@ namespace
     }
 }
 
-void SparkMaxFactory::ConfigIndex() noexcept
+void SparkFactory::ConfigIndex() noexcept
 {
     for (const auto &elem : configDefaults)
     {
@@ -317,7 +317,7 @@ void SparkMaxFactory::ConfigIndex() noexcept
     }
 }
 
-std::unique_ptr<SmartMotorBase> SparkMaxFactory::CreateSparkMax(const std::string_view name, const int canId, const bool inverted, const int encoderCounts) noexcept
+std::unique_ptr<SmartMotorBase> SparkFactory::CreateSparkMax(const std::string_view name, const int canId, const bool inverted, const int encoderCounts) noexcept
 {
     return std::make_unique<SparkMax>(name, canId, inverted, encoderCounts);
 }
@@ -341,8 +341,8 @@ void SparkMax::SetConfig(const ConfigMap config) noexcept
 
     // Ensure at least these two config parameters are managed.
     config_.clear();
-    config_["Firmware Version"] = std::get<uint>(SparkMaxFactory::configDefaults.at("Firmware Version"));
-    config_["kIdleMode"] = std::get<uint>(SparkMaxFactory::configDefaults.at("kIdleMode"));
+    config_["Firmware Version"] = std::get<uint>(SparkFactory::configDefaults.at("Firmware Version"));
+    config_["kIdleMode"] = std::get<uint>(SparkFactory::configDefaults.at("kIdleMode"));
 
     // The order matters here, hence the somewhat convoluted logic.
     tmp.merge(config_);
@@ -691,7 +691,7 @@ void SparkMax::ConfigPeriodic() noexcept
     {
         DoSafely("motor_", [&]() -> void
                  {
-            motor_ = std::make_unique<rev::CANSparkMax>(canId_, rev::CANSparkMaxLowLevel::MotorType::kBrushless);
+            motor_ = std::make_unique<rev::CANSparkMax>(canId_, rev::CANSparkLowLevel::MotorType::kBrushless);
             if (!motor_)
             {
                 ++throws_;
@@ -736,7 +736,10 @@ void SparkMax::ConfigPeriodic() noexcept
                  {
             if (encoderCounts_ == 0)
             {
-                encoder_ = std::make_unique<rev::SparkMaxRelativeEncoder>(motor_->GetEncoder());
+                // FIXME: Once Rev updates the library to not include
+                // conflicting API definitions, the parameter to Get Encoder
+                // can be removed.
+                encoder_ = std::make_unique<rev::SparkRelativeEncoder>(motor_->GetEncoder(rev::SparkRelativeEncoder::Type::kHallSensor));
             }
             else
             {
@@ -756,7 +759,7 @@ void SparkMax::ConfigPeriodic() noexcept
     {
         DoSafely("controller_", [&]() -> void
                  {
-            controller_ = std::make_unique<rev::SparkMaxPIDController>(motor_->GetPIDController());
+            controller_ = std::make_unique<rev::SparkPIDController>(motor_->GetPIDController());
             if (!controller_)
             {
                 ++throws_;
@@ -838,17 +841,17 @@ void SparkMax::ConfigPeriodic() noexcept
             }
             else
             {
-                uint tmp = std::get<uint>(SparkMaxFactory::configDefaults.at("kLimitSwitchFwdPolarity"));
+                uint tmp = std::get<uint>(SparkFactory::configDefaults.at("kLimitSwitchFwdPolarity"));
 
                 if (config_.count("kLimitSwitchFwdPolarity") != 0)
                 {
                     tmp = std::get<uint>(config_.at("kLimitSwitchFwdPolarity"));
                 }
 
-                const rev::SparkMaxLimitSwitch::Type polarity = tmp == 0 ? rev::SparkMaxLimitSwitch::Type::kNormallyOpen : rev::SparkMaxLimitSwitch::Type::kNormallyClosed;
+                const rev::SparkLimitSwitch::Type polarity = tmp == 0 ? rev::SparkLimitSwitch::Type::kNormallyOpen : rev::SparkLimitSwitch::Type::kNormallyClosed;
                 DoSafely("forward_", [&]() -> void
                          {
-                forward_ = std::make_unique<rev::SparkMaxLimitSwitch>(motor_->GetForwardLimitSwitch(polarity));
+                forward_ = std::make_unique<rev::SparkLimitSwitch>(motor_->GetForwardLimitSwitch(polarity));
                 if (!forward_)
                 {
                     ++throws_;
@@ -873,17 +876,17 @@ void SparkMax::ConfigPeriodic() noexcept
             }
             else
             {
-                uint tmp = std::get<uint>(SparkMaxFactory::configDefaults.at("kLimitSwitchRevPolarity"));
+                uint tmp = std::get<uint>(SparkFactory::configDefaults.at("kLimitSwitchRevPolarity"));
 
                 if (config_.count("kLimitSwitchRevPolarity") != 0)
                 {
                     tmp = std::get<uint>(config_.at("kLimitSwitchRevPolarity"));
                 }
 
-                const rev::SparkMaxLimitSwitch::Type polarity = tmp == 0 ? rev::SparkMaxLimitSwitch::Type::kNormallyOpen : rev::SparkMaxLimitSwitch::Type::kNormallyClosed;
+                const rev::SparkLimitSwitch::Type polarity = tmp == 0 ? rev::SparkLimitSwitch::Type::kNormallyOpen : rev::SparkLimitSwitch::Type::kNormallyClosed;
                 DoSafely("reverse_", [&]() -> void
                          {
-                reverse_ = std::make_unique<rev::SparkMaxLimitSwitch>(motor_->GetReverseLimitSwitch(polarity));
+                reverse_ = std::make_unique<rev::SparkLimitSwitch>(motor_->GetReverseLimitSwitch(polarity));
                 if (!reverse_)
                 {
                     ++throws_;
@@ -1378,9 +1381,9 @@ void SparkMax::DoSafely(const char *const what, std::function<void()> work) noex
 // latter function.
 std::tuple<bool, bool, std::string> SparkMax::VerifyConfig(const std::string_view key, const ConfigValue &value) noexcept
 {
-    const auto kv = SparkMaxFactory::configDefaults.find(std::string(key));
+    const auto kv = SparkFactory::configDefaults.find(std::string(key));
 
-    if (kv == SparkMaxFactory::configDefaults.end())
+    if (kv == SparkFactory::configDefaults.end())
     {
         return std::make_tuple(false, false, "Invalid");
     }
@@ -1393,7 +1396,7 @@ std::tuple<bool, bool, std::string> SparkMax::VerifyConfig(const std::string_vie
     // In order to avoid switching on a string, obtain the index into defaults.
     // The complication here is that maps are sorted, so the indices are not in
     // an easy-to-maintain order.
-    const auto ndx = std::distance(kv, SparkMaxFactory::configDefaults.end());
+    const auto ndx = std::distance(kv, SparkFactory::configDefaults.end());
 
     // Some settings only apply to one encoder type or the other.
     const bool altMode = (encoderCounts_ != 0);
@@ -1909,9 +1912,9 @@ std::tuple<bool, bool, std::string> SparkMax::VerifyConfig(const std::string_vie
 // if there was some problem (or empty string, if not).
 std::string SparkMax::ApplyConfig(const std::string_view key, const ConfigValue &value) noexcept
 {
-    const auto kv = SparkMaxFactory::configDefaults.find(std::string(key));
+    const auto kv = SparkFactory::configDefaults.find(std::string(key));
 
-    if (kv == SparkMaxFactory::configDefaults.end())
+    if (kv == SparkFactory::configDefaults.end())
     {
         return std::string("Invalid");
     }
@@ -1919,7 +1922,7 @@ std::string SparkMax::ApplyConfig(const std::string_view key, const ConfigValue 
     // In order to avoid switching on a string, obtain the index into defaults.
     // The complication here is that maps are sorted, so the indices are not in
     // an easy-to-maintain order.
-    const auto ndx = std::distance(kv, SparkMaxFactory::configDefaults.end());
+    const auto ndx = std::distance(kv, SparkFactory::configDefaults.end());
 
     // Some settings only apply to one encoder type or the other.
     const bool altMode = (encoderCounts_ != 0);

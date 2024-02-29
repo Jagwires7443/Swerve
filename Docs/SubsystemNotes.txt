@@ -1,0 +1,8 @@
+Shooter subsystems
+    2 motors
+        both shoot and one inverted
+
+Intake subsystems
+    2 motors
+        one moves arm position and needs control loop
+        one moves intake
