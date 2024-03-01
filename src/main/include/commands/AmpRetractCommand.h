@@ -19,7 +19,11 @@
 class AmpRetractCommand
     : public frc2::CommandHelper<frc2::Command, AmpRetractCommand> {
  public:
-  AmpRetractCommand();
+  AmpRetractCommand(AmpSubsystem *ampSubsystem)
+      : ampSubsystem{ampSubsystem}
+   {
+      AddRequirements(ampSubsystem);
+   }
 
   void Initialize() override;
   void Execute() override;

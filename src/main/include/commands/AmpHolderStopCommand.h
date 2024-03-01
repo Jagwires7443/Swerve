@@ -16,9 +16,9 @@ class AmpHolderStopCommand
     : public frc2::CommandHelper<frc2::Command, AmpHolderStopCommand> {
  public:
   explicit AmpHolderStopCommand(AmpSubsystem *ampSubsystem)
-      : shooterSubsystem{shooterSubsystem}
+      : ampSubsystem{ampSubsystem}
       {
-        AddRequirements(shooterSubsystem);
+        AddRequirements(ampSubsystem);
       }
 
   void Initialize() override;
@@ -27,6 +27,6 @@ class AmpHolderStopCommand
   bool IsFinished() override;
 
 private:
-  AmpSubsystem *AmpSubsystem{nullptr};
+  AmpSubsystem *ampSubsystem{nullptr};
   bool finished{false};
 };

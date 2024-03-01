@@ -15,8 +15,12 @@
 class AmpExtendCommand
     : public frc2::CommandHelper<frc2::Command, AmpExtendCommand> {
  public:
-  AmpExtendCommand();
-
+  AmpExtendCommand(AmpSubsystem *ampSubsystem)
+      : ampSubsystem{ampSubsystem}
+   {
+      AddRequirements(ampSubsystem);
+   }
+   
   void Initialize() override;
   void Execute() override;
   void End(bool interrupted) override;

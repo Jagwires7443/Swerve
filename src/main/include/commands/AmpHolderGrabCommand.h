@@ -17,7 +17,11 @@
 class AmpHolderGrabCommand
     : public frc2::CommandHelper<frc2::Command, AmpHolderGrabCommand> {
  public:
-  AmpHolderGrabCommand();
+  AmpHolderGrabCommand(AmpSubsystem *ampSubsystem)
+      : ampSubsystem{ampSubsystem}
+   {
+      AddRequirements(ampSubsystem);
+   }
 
   void Initialize() override;
   void Execute() override;

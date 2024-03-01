@@ -7,6 +7,7 @@
 #include <frc2/command/button/CommandGenericHID.h>
 #include <frc2/command/button/CommandXboxController.h>
 #include <frc2/command/CommandPtr.h>
+#include <frc2/command/button/POVButton.h>
 
 #include "commands/AutonomousCommands.h"
 #include "subsystems/DriveSubsystem.h"
@@ -65,11 +66,10 @@ private:
   frc2::CommandXboxController m_xboxOperate{1};
   
   //Code for adding the controllers
-  frc::POVButton dpadUp{&m_xboxOperate, 0}; //0 degree for pulling in note to Amp
-  frc::POVButton dpadRight{&m_xboxOperate, 90} //90 degree to right for extending Amp 
-  frc::POVButton dpadDown{&m_xboxOperate, 180} //180 degree for releasing the note from the Amp
-  frc::POVButton dpadLeft{&m_xboxOperate, 270}  //270 degrees for retracting the Amp
-
+  frc2::POVButton dpadUp{&m_xboxOperate, 0}; //0 degree for pulling in note to Amp
+  frc2::POVButton dpadRight{&m_xboxOperate, 90}; //90 degree to right for extending Amp 
+  frc2::POVButton dpadDown{&m_xboxOperate, 180}; //180 degree for releasing the note from the Amp
+  frc2::POVButton dpadLeft{&m_xboxOperate, 270}; //270 degrees for retracting the Amp
 #pragma endregion
 
 #pragma region Test

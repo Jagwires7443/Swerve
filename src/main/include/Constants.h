@@ -197,5 +197,5 @@ namespace amp
     constexpr int kAmpHolderMotorCanID = 20;
     constexpr bool kAmpHolderMotorIsInverted = false;
     constexpr double kAmpHolderMotorVoltagePercent = .15;
-    constexpr double kAmp
+    constexpr double kAmpDropMotorVoltagePercent = .15;
 }
