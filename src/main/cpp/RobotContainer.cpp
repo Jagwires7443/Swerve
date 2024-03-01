@@ -175,7 +175,7 @@ std::tuple<double, double, double, bool> RobotContainer::GetDriveTeleopControls(
     LeftStickY = ConditionRawJoystickInput(LeftStickY);
   }
 
-  rightStickRot = ConditionRawJoystickInput(rightStickRot, 0.0);
+  rightStickRot = ConditionRawJoystickInput(rightStickRot);
 
   // TODO: decide if this is still needed
   LeftStickX *= 2.0;
