@@ -15,7 +15,11 @@ class ZeroTurningModules
 {
 public:
     explicit ZeroTurningModules(DriveSubsystem *driveSubsystem) noexcept
-        : driveSubsystem{driveSubsystem} { SetName("Zero"); }
+        : driveSubsystem{driveSubsystem}
+    {
+        SetName("Zero");
+        AddRequirements(driveSubsystem);
+    }
 
     void Initialize() noexcept override {}
     void Execute() noexcept override;
@@ -43,7 +47,10 @@ public:
         yspeed{yspeed},
         rotation{rotation},
         time{time}
-        { SetName("DriveCommand"); }
+    {
+        SetName("DriveCommand");
+        AddRequirements(driveSubsystem);
+    }
 
     void Initialize() noexcept override;
     void Execute() noexcept override;
