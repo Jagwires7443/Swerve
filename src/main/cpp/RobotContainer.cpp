@@ -260,7 +260,7 @@ void RobotContainer::ConfigureBindings() noexcept
                            {})
           .ToPtr());
 
-  m_xboxOperate.A().OnTrue(IntakeCommand(&m_intakeSubsystem).ToPtr().AndThen(PIDPositionTransferArm(arm::kShooterToAmpAngle, &m_transferArmSubsystem).ToPtr()));
+  m_xboxOperate.A().OnTrue(IntakeCommand(&m_intakeSubsystem).ToPtr());
   m_xboxOperate.B().OnTrue(IntakeEjectCommand(&m_intakeSubsystem).ToPtr());
 
   // Runs shoot command to move arm into postion, start up the shooting motors and eject the note                     
