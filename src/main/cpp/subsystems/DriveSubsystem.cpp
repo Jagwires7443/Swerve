@@ -10,7 +10,6 @@
 #include "infrastructure/SwerveModule.h"
 
 #include <frc/DataLogManager.h>
-#include <frc/smartdashboard/SmartDashboard.h>
 #include <frc/shuffleboard/BuiltInWidgets.h>
 #include <frc/shuffleboard/Shuffleboard.h>
 #include <frc/shuffleboard/ShuffleboardContainer.h>
@@ -999,15 +998,12 @@ void DriveSubsystem::Drive(units::meters_per_second_t xSpeed,
     if (m_ahrs)
     {
       botRot = m_ahrs->GetRotation2d();
-      frc::SmartDashboard::PutNumber("BotRot", botRot.Degrees().value());
     } });
 
   if (!m_ahrs)
   {
     fieldRelative = false;
   }
-
-  frc::SmartDashboard::PutBoolean("Field Relative", fieldRelative);
 
   // Center of rotation argument is defaulted to the center of the robot above,
   // but it is also possible to rotate about a different point.
@@ -1040,16 +1036,6 @@ void DriveSubsystem::SetModuleStates(std::array<frc::SwerveModuleState, 4> &desi
   m_commandedStateRearLeft = rearLeft;
   m_commandedStateRearRight = rearRight;
 
-  frc::SmartDashboard::PutNumber("LeftFront Desired Speed", frontLeft.speed.value());
-  frc::SmartDashboard::PutNumber("RightFront Desired Speed", frontRight.speed.value());
-  frc::SmartDashboard::PutNumber("LeftRear Desired Speed", rearLeft.speed.value());
-  frc::SmartDashboard::PutNumber("RightRear Desired Speed", rearRight.speed.value());
-
-  frc::SmartDashboard::PutNumber("LeftFront Desired Angle", frontLeft.angle.Degrees().value());
-  frc::SmartDashboard::PutNumber("RightFront Desired Angle", frontRight.angle.Degrees().value());
-  frc::SmartDashboard::PutNumber("LeftRear Desired Angle", rearLeft.angle.Degrees().value());
-  frc::SmartDashboard::PutNumber("RightRear Desired Angle", rearRight.angle.Degrees().value());
-
   // Don't command turning if there is no drive; this is used from Drive(), and
   // it winds up causing the modules to all home to zero any time there is no
   // joystick input.  This check causes them to stay where they are, which is
@@ -1060,7 +1046,6 @@ void DriveSubsystem::SetModuleStates(std::array<frc::SwerveModuleState, 4> &desi
       rearLeft.speed == 0.0_mps &&
       rearRight.speed == 0.0_mps)
   {
-    frc::SmartDashboard::PutBoolean("Stopped", true);
     m_frontLeftSwerveModule->SetDriveVelocity(0.0_mps);
     m_frontRightSwerveModule->SetDriveVelocity(0.0_mps);
     m_rearLeftSwerveModule->SetDriveVelocity(0.0_mps);
@@ -1072,8 +1057,6 @@ void DriveSubsystem::SetModuleStates(std::array<frc::SwerveModuleState, 4> &desi
     m_rearRightSwerveModule->StopTurning();
     return;
   }
-
-  frc::SmartDashboard::PutBoolean("Stopped", false);
 
   // m_limit is always unity, except in Test Mode.  So, by default, it does not
   // modify anything here.  In Test Mode, it can be used to slow things down.

@@ -31,7 +31,6 @@
 #include <units/acceleration.h>
 #include <units/velocity.h>
 #include <frc/shuffleboard/Shuffleboard.h>
-#include <frc/smartdashboard/SmartDashboard.h>
 
 RobotContainer::RobotContainer() noexcept
 {
@@ -181,10 +180,6 @@ std::tuple<double, double, double, bool> RobotContainer::GetDriveTeleopControls(
   LeftStickX *= 2.0;
   LeftStickY *= 2.0;
   rightStickRot *= 1.6;
-
-  frc::SmartDashboard::PutNumber("X", LeftStickX);
-  frc::SmartDashboard::PutNumber("Y", LeftStickY);
-  frc::SmartDashboard::PutNumber("Z", rightStickRot);
 
   return std::make_tuple(LeftStickX, LeftStickY, rightStickRot, m_fieldOriented);
 }

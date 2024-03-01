@@ -3,14 +3,12 @@
 // the WPILib BSD license file in the root directory of this project.
 
 #include "commands/PIDTransferArmCommand.h"
-#include <frc/smartdashboard/SmartDashboard.h>
 
 PIDPositionTransferArm::PIDPositionTransferArm(units::turn_t targetPosition, TransferArmSubsystem* transferArmSubsystem)
     : CommandHelper{frc::PIDController{arm::kArmPositionP, 0, arm::kArmPositionD},
                     // Close loop on heading
                     [transferArmSubsystem]
                     {
-                        frc::SmartDashboard::PutNumber("Arm Position ", transferArmSubsystem->GetTransferArmPosition().value());
                         return transferArmSubsystem->GetTransferArmPosition().value();
                     },
                     // Set reference to targetPosition
@@ -18,7 +16,6 @@ PIDPositionTransferArm::PIDPositionTransferArm(units::turn_t targetPosition, Tra
                     // Pipe output to turn transfer arm
                     [transferArmSubsystem](double output)
                     {
-                        frc::SmartDashboard::PutNumber("Arm PID Output ", output);
                         transferArmSubsystem->SetArmMotorVoltagePercent(output);
                     },
                     // Require the transfer arm
@@ -31,14 +28,8 @@ PIDPositionTransferArm::PIDPositionTransferArm(units::turn_t targetPosition, Tra
   m_controller.SetTolerance(.01, .01);
 
   AddRequirements(transferArmSubsystem);
-
-    frc::SmartDashboard::PutBoolean("PID Command Reset ", true);
 }
 
 bool PIDPositionTransferArm::IsFinished() {
-    if(m_controller.AtSetpoint())
-    {
-        frc::SmartDashboard::PutBoolean("PID Command Reset ", false);
-    }
     return m_controller.AtSetpoint();
 }

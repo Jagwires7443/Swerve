@@ -23,7 +23,6 @@
 #include <networktables/NetworkTableValue.h>
 #include <units/voltage.h>
 #include <wpi/StringMap.h>
-#include <frc/smartdashboard/SmartDashboard.h>
 
 #include <bitset>
 #include <cmath>
@@ -65,11 +64,6 @@ SwerveModule::SwerveModule(
     // Note this has no explicit SetInverted() method; flip the turning motor
     // and it's incremental encoder in order to make things work out/line up.
     m_turningPositionPWM = std::make_unique<AngleSensor>(turningEncoderPort, alignmentOffset);
-
-    // test printout for alignment calibration
-    if (m_turningPositionPWM->GetAbsolutePosition().has_value()) {
-        frc::SmartDashboard::PutNumber("Initial Alignment " + std::string(name), m_turningPositionPWM->GetAbsolutePosition().value().value());
-    }
 
     // Motor controller configurations are only checked (or saved) in test mode
     // but a minimal amount is set up in these methods.
@@ -241,8 +235,6 @@ void SwerveModule::Periodic() noexcept
         calculated -= m_rioPID_F;
     }
 
-    frc::SmartDashboard::PutNumber(std::string(m_name) + "_TurningOutput", calculated);
-
     // Use voltage compensation, to offset low battery voltage.
     m_turningMotor->SetVoltage(calculated * 12.0_V);
 }
@@ -324,7 +316,6 @@ void SwerveModule::SetTurningPosition(const units::angle::degree_t position) noe
     m_commandedHeading = adjustedPosition;
 
     m_rioPIDController->SetGoal(adjustedPosition);
-    frc::SmartDashboard::PutNumber(m_name + " Turning PID Setpoint Angle: ", adjustedPosition.value());
 
     if (m_rio || m_testModeControl || m_testModeTurningVoltage != 0.0)
     {
@@ -427,8 +418,6 @@ void SwerveModule::SetDriveVelocity(units::velocity::meters_per_second_t velocit
     const units::angle::degree_t angleError = m_turningPosition - m_commandedHeading;
     const double vectorAlignment = std::cos(units::angle::radian_t{angleError}.to<double>());
 
-    frc::SmartDashboard::PutNumber(std::string(m_name) + "_VectorAlignment", vectorAlignment);
-
 #if 0
     m_driveMotor->SeekVelocity(velocity * vectorAlignment);
 #else
@@ -467,7 +456,6 @@ void SwerveModule::SetDesiredState(const frc::SwerveModuleState &referenceState)
     {
         m_turningPosition = position.value();
         state = frc::SwerveModuleState::Optimize(referenceState, frc::Rotation2d(m_turningPosition));
-        frc::SmartDashboard::PutNumber(std::string(m_name) + " Angle Optimization Delta", referenceState.angle.Degrees().value() - state.angle.Degrees().value());
     }
 
     SetTurningPosition(state.angle.Degrees());
