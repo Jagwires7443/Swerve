@@ -137,7 +137,7 @@ namespace shooter
     constexpr int kRightShooterMotorCanID = 15;
     constexpr bool kRightShooterMotorIsInverted = true;
 
-    constexpr int kShooterMotorVoltagePercent = 1;
+    constexpr int kShooterMotorVoltagePercent = .80;
 }
 
 namespace intake
@@ -152,8 +152,8 @@ namespace intake
     constexpr units::degree_t kIntakeArmPickup = 180.0_deg;
     constexpr units::degree_t kIntakeArmLoad = 0.0_deg;
 
-    constexpr double kIntakeSpinMotorVoltagePercent = .75;
-    constexpr double kIntakeSpinMotorEjectVoltagePercent = -.90;
+    constexpr double kIntakeSpinMotorVoltagePercent = .80;
+    constexpr double kIntakeSpinMotorEjectVoltagePercent = -1.0;
 }
 
 namespace arm
@@ -167,7 +167,7 @@ namespace arm
     constexpr double kArmPositionD = .10;
     constexpr double kArmPositionF = 0.0;
 
-    constexpr units::turn_t kShooterToAmpAngle = -100_deg;
+    constexpr units::turn_t kShooterToAmpAngle = -50_deg;
     constexpr units::turn_t kShooterToIntakeAngle = -200_deg;
 }
 
@@ -176,9 +176,9 @@ namespace climber
     //Climber parameters
     constexpr int kClimberMotorCanID = 18;
     constexpr bool kClimberMotorIsInverted = false;
-    constexpr double kClimberMotorRaiseVoltagePercent = .15;
+    constexpr double kClimberMotorRaiseVoltagePercent = .50;
     constexpr units::second_t kClimberRaiseTimer = 2_s;
-    constexpr double kClimberMotorLowerVoltagePercent = -.15;
+    constexpr double kClimberMotorLowerVoltagePercent = -.50;
     constexpr units::second_t kClimberLowerTimer = 2_s;
 
     constexpr int kClimberSolenoidCanID = 19;
@@ -188,14 +188,14 @@ namespace climber
 namespace amp 
 {
     //Bosch motor for extending out and back
-    constexpr int kAmpExtendMotorCanID = 20;
+    constexpr int kAmpExtendMotorCanID = 21;
     constexpr bool kAmpExtendMotorIsInverted = false;
     constexpr double kAmpExtendMotorVoltagePercent = .15;
     constexpr double kAmpRetractMotorVoltagePercent = -.15;
 
     //Johnson Electric for raising and lowering 
-    constexpr int kAmpHolderMotorCanID = 21;
+    constexpr int kAmpHolderMotorCanID = 20;
     constexpr bool kAmpHolderMotorIsInverted = false;
     constexpr double kAmpHolderMotorVoltagePercent = .15;
-    constexpr double kAmpDropMotorVoltagePercent = -.15;
+    constexpr double kAmp
 }

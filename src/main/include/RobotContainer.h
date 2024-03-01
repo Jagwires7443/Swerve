@@ -15,6 +15,7 @@
 #include "subsystems/Infrastructure.h"
 #include "subsystems/ClimberSubsystem.h"
 #include "subsystems/ShooterSubsystem.h"
+#include "subsystems/AmpSubsystem.h"
 #include <frc/shuffleboard/Shuffleboard.h>
 
 #include <memory>
@@ -62,7 +63,13 @@ private:
   
   frc2::CommandXboxController m_xboxDrive{0};
   frc2::CommandXboxController m_xboxOperate{1};
-  // frc2::CommandXboxController m_xbox{1}; TODO: update for second controller
+  
+  //Code for adding the controllers
+  frc::POVButton dpadUp{&m_xboxOperate, 0}; //0 degree for pulling in note to Amp
+  frc::POVButton dpadRight{&m_xboxOperate, 90} //90 degree to right for extending Amp 
+  frc::POVButton dpadDown{&m_xboxOperate, 180} //180 degree for releasing the note from the Amp
+  frc::POVButton dpadLeft{&m_xboxOperate, 270}  //270 degrees for retracting the Amp
+
 #pragma endregion
 
 #pragma region Test
@@ -90,6 +97,7 @@ private:
   TransferArmSubsystem m_transferArmSubsystem;
   ShooterSubsystem m_shooterSubsystem;
   ClimberSubsystem m_climberSubsystem;
+  AmpSubsystem m_ampSubsystem;
 
   // declared for the infrastructure subsystem
   uint m_LEDPattern{29};

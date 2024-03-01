@@ -23,6 +23,11 @@
 #include "commands/ShootCommands.h"
 #include "commands/PIDTransferArmCommand.h"
 #include "commands/IntakeEjectCommand.h"
+#include "commands/AmpExtendCommand.h"
+#include "commands/AmpHolderDropCommand.h"
+#include "commands/AmpHolderGrabCommand.h"
+#include "commands/AmpRetractCommand.h"
+#include "commands/AmpHolderStopCommand.h"
 
 #include <cmath>
 #include <cstdio>
@@ -78,8 +83,8 @@ std::optional<frc2::CommandPtr> RobotContainer::GetAutonomousCommand() noexcept
       {frc::Pose2d{},
        frc::Pose2d{1.0_m, 0.0_m, frc::Rotation2d{}}},
       trajectoryConfig);
-
-  return TrajectoryAuto::TrajectoryAutoCommandFactory(&m_driveSubsystem, "Test Trajectory", trajectory);
+  return ShootCommands(&m_shooterSubsystem).ToPtr()
+  .AndThen(TrajectoryAuto::TrajectoryAutoCommandFactory(&m_driveSubsystem, "Test Trajectory", trajectory));
 }
 #pragma endregion
 
@@ -281,8 +286,18 @@ void RobotContainer::ConfigureBindings() noexcept
   m_xboxOperate.LeftTrigger().OnTrue(ClimberLowerCommand(&m_climberSubsystem).ToPtr()); //Lower the climber while button is pressed
   m_xboxOperate.LeftTrigger().OnFalse(ClimberStopCommand(&m_climberSubsystem).ToPtr());   // on false stop the climber motor
 
-  //Amp mechanism controls
+  dpadUp.OnTrue(AmpHolderGrabCommand(&m_ampSubsystem).ToPtr()); //Grabs the note from the intake system
+  dpadUp.OnFalse(AmpHolderStopCommand(&m_ampSubsystem).ToPtr()); //Stops the grabber motors
 
+  dpadDown.OnTrue(AmpHolderDropCommand(&m_ampSubsystem).ToPtr()); //Release the note from the holder
+  dpadDown.OnFalse(AmpHolderStopCommand(&m_ampSubsystem).ToPtr()); //Stops the grabber motors
+
+  dpadRight.OnTrue(AmpExtendCommand(&m_ampSubsystem).ToPtr()); //Extend the amp mechanism
+  dpadRight.OnFalse(AmpExtendCommand(&m_ampSubsystem).ToPtr()); //Stops the extension motors
+
+  dpadLeft.OnTrue(AmpRetractCommand(&m_ampSubsystem).ToPtr()); //Retracts the amp mechanism
+  dpadLeft.OnFalse(AmpRetractCommand(&m_ampSubsystem).ToPtr()); //Stops the extension motors
+  
 }
 #pragma endregion
 
