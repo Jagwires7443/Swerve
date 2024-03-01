@@ -3,8 +3,6 @@
 // the WPILib BSD license file in the root directory of this project.
 
 #include "subsystems/ClimberSubsystem.h"
-#include "subsystems/SolenoidSubsystem.h"
-#include solenoidsubsystem.cpp
 
 ClimberSubsystem::ClimberSubsystem() noexcept
 {
