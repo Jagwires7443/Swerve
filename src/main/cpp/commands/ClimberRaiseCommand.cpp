@@ -9,6 +9,8 @@
 void ClimberRaiseCommand::Initialize() {
   timer.Reset();
   timer.Start();
+  finished = false;
+  climberSubsystem->SolenoidUp();
 }
 
 // Called repeatedly when this Command is scheduled to run
@@ -22,6 +24,7 @@ void ClimberRaiseCommand::Execute() {
 // Called once the command ends or is interrupted.
 void ClimberRaiseCommand::End(bool interrupted) {
     climberSubsystem->StopClimber();
+    climberSubsystem->SolenoidDown();
 }
 
 // Returns true when the command should end.

@@ -19,6 +19,8 @@ class ClimberSubsystem : public frc2::SubsystemBase
 
   void StopClimber() noexcept;
   void SetClimberMotorVoltagePercent(const double percent) noexcept;
+  void SolenoidUp() noexcept;
+  void SolenoidDown() noexcept;
 
  private:
   // Components (e.g. motor controllers and sensors) should generally be

@@ -15,6 +15,7 @@ void ClimberLowerCommand::Initialize() {
   timer.Reset();
   timer.Start();
   finished = false;
+  climberSubsystem->SolenoidUp();
 }
 
 // Called repeatedly when this Command is scheduled to run
