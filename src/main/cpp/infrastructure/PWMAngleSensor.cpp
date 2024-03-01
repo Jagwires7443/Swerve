@@ -3,7 +3,6 @@
 #include "infrastructure/ShuffleboardWidgets.h"
 #include <iostream>
 #include <frc/shuffleboard/Shuffleboard.h>
-#include <frc/smartdashboard/SmartDashboard.h>
 #include <frc/MathUtil.h>
 
 AngleSensor::AngleSensor(int deviceID, units::turn_t alignment) noexcept
@@ -17,7 +16,6 @@ AngleSensor::AngleSensor(int deviceID, units::turn_t alignment) noexcept
     );
     int deviceId = canCoder_.GetDeviceID(); // Obtain the CANCoder device ID
     std::string deviceIdStr = std::to_string(deviceId); // Convert the device ID to string
-    frc::SmartDashboard::PutNumber("Alignment Device ID: " + deviceIdStr, alignment.value());
 }
 
 void AngleSensor::Periodic() noexcept
@@ -129,27 +127,15 @@ void AngleSensor::SetAlignment(const units::turn_t alignment) noexcept {
             .WithMagnetOffset(alignment.value())
     );
 };
-/*
-std::optional<units::angle::degree_t> AngleSensor::GetAbsolutePosition() noexcept {
-    units::degree_t position = canCoder_.GetPosition().GetValue();
-    // Position will already within [-180 to 180) degree range, offset to match magnet position
-    frc::SmartDashboard::PutNumber("AngleSensor::GetAbsolutePosition Value", position.value());
-    return position;
-}
-*/
+
 std::optional<units::angle::degree_t> AngleSensor::GetAbsolutePosition() noexcept {
     units::degree_t position = canCoder_.GetPosition().GetValue();  // Assuming this returns units::angle::degree_t
     int deviceId = canCoder_.GetDeviceID(); // Obtain the CANCoder device ID
     std::string deviceIdStr = std::to_string(deviceId); // Convert the device ID to string
 
-    // Use the device ID in the SmartDashboard key
-    frc::SmartDashboard::PutNumber("AngleSensor::GetAbsolutePosition Absolute ID: " + deviceIdStr, position.value());
-
     // Convert to radians and back to use MathUtil AngleModulus
     units::degree_t normalizedPosition = frc::AngleModulus(position);
 
-    // Use the device ID in the adjusted position SmartDashboard key as well
-    frc::SmartDashboard::PutNumber("AngleSensor::GetAbsolutePosition Adjusted ID: " + deviceIdStr, normalizedPosition.value());
     return normalizedPosition;
 }
 
@@ -159,12 +145,9 @@ std::optional<units::angle::turn_t> AngleSensor::GetAbsolutePositionWithoutAlign
     int deviceId = canCoder_.GetDeviceID(); // Obtain the CANCoder device ID
     std::string deviceIdStr = std::to_string(deviceId); // Convert the device ID to string
 
-    frc::SmartDashboard::PutNumber("AngleSensor::GetAbsolutePositionWithoutAlignment Absolute ID: " + deviceIdStr, position.value());
-
     position -= GetAlignment();
 
     // Convert to radians and back to use MathUtil AngleModulus
     units::degree_t normalizedPosition = frc::AngleModulus(position);
-    frc::SmartDashboard::PutNumber("AngleSensor::GetAbsolutePositionWithoutAlignment Adjusted ID: " + deviceIdStr, normalizedPosition.value());
     return normalizedPosition;
 }

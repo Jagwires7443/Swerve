@@ -15,7 +15,11 @@ class ZeroTurningModules
 {
 public:
     explicit ZeroTurningModules(DriveSubsystem *driveSubsystem) noexcept
-        : driveSubsystem{driveSubsystem} { SetName("Zero"); }
+        : driveSubsystem{driveSubsystem}
+    {
+        SetName("Zero");
+        AddRequirements(driveSubsystem);
+    }
 
     void Initialize() noexcept override {}
     void Execute() noexcept override;
@@ -37,20 +41,26 @@ class DriveCommand
     : public frc2::CommandHelper<frc2::Command, DriveCommand>
 {
 public:
-    explicit DriveCommand(DriveSubsystem *driveSubsystem) noexcept
-        : driveSubsystem{driveSubsystem} { SetName("DriveCommand"); }
+    explicit DriveCommand(float xspeed, float yspeed, float rotation, units::second_t time, DriveSubsystem *driveSubsystem) noexcept
+        : driveSubsystem{driveSubsystem},
+        xspeed{xspeed},
+        yspeed{yspeed},
+        rotation{rotation},
+        time{time}
+    {
+        SetName("DriveCommand");
+        AddRequirements(driveSubsystem);
+    }
 
     void Initialize() noexcept override;
     void Execute() noexcept override;
     void End(bool interrupted) noexcept override;
     bool IsFinished() noexcept override { return finished; }
 
-    static frc2::CommandPtr DriveCommandFactory(DriveSubsystem *driveSubsystem) noexcept
-    {
-        return frc2::CommandPtr{std::make_unique<DriveCommand>(driveSubsystem)};
-    }
-
 private:
+    float xspeed, yspeed, rotation;
+    units::second_t time;
     DriveSubsystem *driveSubsystem{nullptr};
+    frc::Timer timer{};
     bool finished{false};
 };
