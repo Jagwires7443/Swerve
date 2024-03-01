@@ -3,7 +3,6 @@
 // the WPILib BSD license file in the root directory of this project.
 
 #include "commands/IntakeCommand.h"
-#include <frc/smartdashboard/SmartDashboard.h>
 #include <frc/DataLogManager.h>
 #include <frc/RobotController.h>
 #include <frc/shuffleboard/BuiltInWidgets.h>
