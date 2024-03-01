@@ -7,7 +7,7 @@
 #include <frc2/command/SubsystemBase.h>
 #include "Constants.h"
 #include "rev/CANSparkMax.h"
-
+#include <frc/DigitalOutput.h>
 
 class ClimberSubsystem : public frc2::SubsystemBase 
 {
@@ -25,4 +25,5 @@ class ClimberSubsystem : public frc2::SubsystemBase
   // declared private and exposed only through public methods.
 
   rev::CANSparkMax m_ClimberMotor{climber::kClimberMotorCanID, rev::CANSparkMax::MotorType::kBrushed};
+  frc::DigitalOutput SolenoidSwitch{7};
 };
