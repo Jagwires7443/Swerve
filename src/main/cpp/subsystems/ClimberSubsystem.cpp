@@ -21,10 +21,10 @@ void ClimberSubsystem::SetClimberMotorVoltagePercent(const double percent) noexc
 
 void ClimberSubsystem::SolenoidUp() noexcept
 {
-    SolenoidSwitch.Set(true);
+    SolenoidSwitch.Set(false);
 }
 
 void ClimberSubsystem::SolenoidDown() noexcept
 {
-    SolenoidSwitch.Set(false);
+    SolenoidSwitch.Set(true);
 }

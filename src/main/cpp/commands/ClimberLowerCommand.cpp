@@ -4,12 +4,6 @@
 
 #include "commands/ClimberLowerCommand.h"
 
-/*
-ClimberLowerCommand::ClimberLowerCommand() {
-  // Use addRequirements() here to declare subsystem dependencies.
-}
-*/
-
 // Called when the command is initially scheduled.
 void ClimberLowerCommand::Initialize() {
   timer.Reset();
