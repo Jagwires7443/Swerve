@@ -255,6 +255,12 @@ void RobotContainer::ConfigureBindings() noexcept
                            {})
           .ToPtr());
 
+  m_xboxDrive.X().OnTrue(
+          frc2::InstantCommand([&]() -> void
+                           { m_driveSubsystem.ZeroHeading(); },
+                           {})
+          .ToPtr());
+
   m_xboxOperate.A().OnTrue(IntakeCommand(&m_intakeSubsystem).ToPtr());
   m_xboxOperate.B().OnTrue(IntakeEjectCommand(&m_intakeSubsystem).ToPtr());
 
