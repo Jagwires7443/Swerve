@@ -9,6 +9,10 @@
 void ClimberRaiseCommand::Initialize() {
   timer.Reset();
   timer.Start();
+
+  solenoidTimer.Reset();
+  solenoidTimer.Start();
+
   finished = false;
   climberSubsystem->SolenoidDown();
 }
@@ -16,7 +20,11 @@ void ClimberRaiseCommand::Initialize() {
 // Called repeatedly when this Command is scheduled to run
 void ClimberRaiseCommand::Execute() {
   //Start the climber motor to move climbing hook up. 
-  climberSubsystem->SetClimberMotorVoltagePercent(climber::kClimberMotorRaiseVoltagePercent);
+  if (solenoidTimer.HasElapsed(.5_s))
+  {
+    climberSubsystem->SetClimberMotorVoltagePercent(climber::kClimberMotorRaiseVoltagePercent);
+  }
+
   // End command after time defined in constants file.
   if (timer.HasElapsed(climber::kClimberRaiseTimer)) { finished = true; }
 }
