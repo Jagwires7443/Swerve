@@ -11,7 +11,6 @@
 #include <frc/trajectory/TrajectoryConfig.h>
 #include <frc/trajectory/TrajectoryGenerator.h>
 #include <frc2/command/button/JoystickButton.h>
-#include <frc2/command/button/POVButton.h>
 #include <frc2/command/Command.h>
 #include <frc2/command/CommandScheduler.h>
 #include <frc2/command/InstantCommand.h>
@@ -38,7 +37,6 @@
 #include <units/acceleration.h>
 #include <units/velocity.h>
 #include <frc/shuffleboard/Shuffleboard.h>
-#include <frc/smartdashboard/SmartDashboard.h>
 
 RobotContainer::RobotContainer() noexcept
 {
@@ -178,16 +176,12 @@ std::tuple<double, double, double, bool> RobotContainer::GetDriveTeleopControls(
     LeftStickY = ConditionRawJoystickInput(LeftStickY);
   }
 
-  rightStickRot = ConditionRawJoystickInput(rightStickRot, 0.0);
+  rightStickRot = ConditionRawJoystickInput(rightStickRot);
 
   // TODO: decide if this is still needed
   LeftStickX *= 2.0;
   LeftStickY *= 2.0;
   rightStickRot *= 1.6;
-
-  frc::SmartDashboard::PutNumber("X", LeftStickX);
-  frc::SmartDashboard::PutNumber("Y", LeftStickY);
-  frc::SmartDashboard::PutNumber("Z", rightStickRot);
 
   return std::make_tuple(LeftStickX, LeftStickY, rightStickRot, m_fieldOriented);
 }
@@ -268,12 +262,20 @@ void RobotContainer::ConfigureBindings() noexcept
                            {})
           .ToPtr());
 
+  m_xboxDrive.X().OnTrue(
+          frc2::InstantCommand([&]() -> void
+                           { m_driveSubsystem.ZeroHeading(); },
+                           {})
+          .ToPtr());
+
   m_xboxOperate.A().OnTrue(IntakeCommand(&m_intakeSubsystem).ToPtr());
   m_xboxOperate.B().OnTrue(IntakeEjectCommand(&m_intakeSubsystem).ToPtr());
 
   // Runs shoot command to move arm into postion, start up the shooting motors and eject the note                     
   m_xboxOperate.Y().OnTrue(PIDPositionTransferArm(0_deg, &m_transferArmSubsystem).ToPtr().AndThen(ShootCommands(&m_shooterSubsystem).ToPtr()).AlongWith(IntakeEjectCommand(&m_intakeSubsystem).ToPtr()));
   
+  m_xboxOperate.Y().OnTrue(PIDPositionTransferArm(0_deg, &m_transferArmSubsystem).ToPtr().AndThen(ShootCommands(&m_shooterSubsystem).ToPtr()).AlongWith(IntakeEjectCommand(&m_intakeSubsystem).ToPtr()));
+
   m_xboxOperate.X().OnTrue(PIDPositionTransferArm(arm::kShooterToAmpAngle, &m_transferArmSubsystem).ToPtr()); // Example Only
   m_xboxOperate.LeftBumper().OnTrue(PIDPositionTransferArm(arm::kShooterToIntakeAngle, &m_transferArmSubsystem).ToPtr()); // Intake
   m_xboxOperate.RightBumper().OnTrue(PIDPositionTransferArm(0_deg, &m_transferArmSubsystem).ToPtr()); // Shooter

@@ -8,17 +8,19 @@ void ZeroTurningModules::Execute() noexcept { (void)driveSubsystem->ZeroModules(
 
 void DriveCommand::Initialize() noexcept
 {
-    driveSubsystem->Drive(0.0_mps, 0.0_mps, 0.0_rad_per_s, true);
+    timer.Reset();
+    timer.Start();
+    finished = false;
+    driveSubsystem->Drive(
+    xspeed * physical::kMaxDriveSpeed,
+    yspeed * physical::kMaxDriveSpeed,
+    rotation * physical::kMaxTurnRate,
+    true); // this boolean enables field relative
 }
 
 void DriveCommand::Execute() noexcept
 {
-    // TODO: call handle drive subsystem drive
-    // this will need to accept a parameter in the constructor
-    // and will be implemented similar to RobotContainer.cpp
-    // drivecommandfactory.
-    // Instead of reading the values from the controller input
-    // they will be passed in as parameters.
+    if (timer.HasElapsed(time)) { finished = true; }
 }
 
 void DriveCommand::End(bool interrupted) noexcept

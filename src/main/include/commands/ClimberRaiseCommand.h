@@ -34,5 +34,6 @@ class ClimberRaiseCommand
   private:
     ClimberSubsystem *climberSubsystem{nullptr};
     frc::Timer timer{};
+    frc::Timer solenoidTimer{};
     bool finished{false};
 };

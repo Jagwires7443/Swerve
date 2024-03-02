@@ -10,6 +10,7 @@ void ClimberStopCommand::Initialize()
 {
   //Stop the motors
   climberSubsystem->StopClimber();
+  climberSubsystem->SolenoidUp();
   finished = true;
 }
 

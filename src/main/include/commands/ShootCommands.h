@@ -8,9 +8,8 @@
 #include <frc2/command/CommandHelper.h>
 #include <frc/Timer.h>
 #include "subsystems/ShooterSubsystem.h"
-#include "subsystems/TransferArmSubsystem.h"
 
-/**
+/*
  * An example command.
  *
  * <p>Note that this extends CommandHelper, rather extending Command

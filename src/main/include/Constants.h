@@ -153,7 +153,7 @@ namespace intake
     constexpr units::degree_t kIntakeArmLoad = 0.0_deg;
 
     constexpr double kIntakeSpinMotorVoltagePercent = .80;
-    constexpr double kIntakeSpinMotorEjectVoltagePercent = -1.0;
+    constexpr double kIntakeSpinMotorEjectVoltagePercent = -.90;
 }
 
 namespace arm
