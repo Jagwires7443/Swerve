@@ -8,7 +8,7 @@
 AmpSubsystem::AmpSubsystem() noexcept
 {
     //Adjust the inverted status of the motors
-    //m_AmpHolderMotor.SetInverted(amp::kAmpHolderMotorIsInverted);
+    m_AmpHolderMotor.SetInverted(amp::kAmpHolderMotorIsInverted);
     m_AmpExtendMotor.SetInverted(amp::kAmpExtendMotorIsInverted);
     StopAmpExtend();
     StopAmpHolder();
@@ -21,7 +21,7 @@ void AmpSubsystem::StopAmpExtend() noexcept
 
 void AmpSubsystem::StopAmpHolder() noexcept
 {
-    //m_AmpHolderMotor.StopMotor();
+    m_AmpHolderMotor.StopMotor();
 }
 
 void AmpSubsystem::SetAmpExtendMotorVoltagePercent(const double percent) noexcept
@@ -31,6 +31,6 @@ void AmpSubsystem::SetAmpExtendMotorVoltagePercent(const double percent) noexcep
 
 void AmpSubsystem::SetAmpHolderMotorVoltagePercent(const double percent) noexcept
 {
-    //m_AmpHolderMotor.SetVoltage(percent * 12.00_V);
+    m_AmpHolderMotor.SetVoltage(percent * 12.00_V);
 }
 

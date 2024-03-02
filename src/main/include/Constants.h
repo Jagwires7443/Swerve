@@ -137,7 +137,7 @@ namespace shooter
     constexpr int kRightShooterMotorCanID = 15;
     constexpr bool kRightShooterMotorIsInverted = true;
 
-    constexpr int kShooterMotorVoltagePercent = .80;
+    constexpr double kShooterMotorVoltagePercent = .80;
 }
 
 namespace intake
@@ -190,8 +190,8 @@ namespace amp
     //Bosch motor for extending out and back
     constexpr int kAmpExtendMotorCanID = 21;
     constexpr bool kAmpExtendMotorIsInverted = false;
-    constexpr double kAmpExtendMotorVoltagePercent = .15;
-    constexpr double kAmpRetractMotorVoltagePercent = -.15;
+    constexpr double kAmpExtendMotorVoltagePercent = .3;
+    constexpr double kAmpRetractMotorVoltagePercent = -.3;
 
     //Johnson Electric for raising and lowering 
     constexpr int kAmpHolderMotorCanID = 20;
