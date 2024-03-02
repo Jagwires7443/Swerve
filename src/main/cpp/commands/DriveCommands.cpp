@@ -15,7 +15,7 @@ void DriveCommand::Initialize() noexcept
     xspeed * physical::kMaxDriveSpeed,
     yspeed * physical::kMaxDriveSpeed,
     rotation * physical::kMaxTurnRate,
-    true);
+    true); // this boolean enables field relative
 }
 
 void DriveCommand::Execute() noexcept
