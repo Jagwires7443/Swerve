@@ -30,6 +30,6 @@ class AmpSubsystem : public frc2::SubsystemBase {
   // Components (e.g. motor controllers and sensors) should generally be
   // declared private and exposed only through public methods.
   rev::CANSparkMax m_AmpExtendMotor{amp::kAmpExtendMotorCanID, rev::CANSparkMax::MotorType::kBrushed};
-  rev::CANSparkMax m_AmpHolderMotor{amp::kAmpHolderMotorCanID, rev::CANSparkMax::MotorType::kBrushed};
+  //rev::CANSparkMax m_AmpHolderMotor{amp::kAmpHolderMotorCanID, rev::CANSparkMax::MotorType::kBrushed};
 
 };
