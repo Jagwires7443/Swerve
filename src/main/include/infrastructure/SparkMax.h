@@ -4,7 +4,7 @@
 
 #include "infrastructure/SmartMotor.h"
 
-namespace SparkMaxFactory
+namespace SparkFactory
 {
     // Print out string to index mapping (for updating switch/cases).
     void ConfigIndex() noexcept;
@@ -109,8 +109,8 @@ namespace SparkMaxFactory
 // kDataPortConfig; 0 = Default (limit switches are enabled), 1 = Alternate
 //  Encoder Mode (limit switches are disabled / alternate encoder is enabled)
 //   This configuration parameter also has no explicit set and no get at all.
-//   By constructing a SparkMax, either a rev::SparkMaxRelativeEncoder or a
-//   rev::SparkMaxAlternateEncoder is constructed, setting this as a side
+//   By constructing a SparkMax, either a rev::SparkRelativeEncoder or a
+//   rev::SparkAlternateEncoder is constructed, setting this as a side
 //   effect.  This is otherwise the same as the two prior parameters.  This
 //   is the fourth of the four parameters to be manually set and saved, and the
 //   fifth of the six parameters that persist.
@@ -205,7 +205,7 @@ namespace SparkMaxFactory
 //   Limit switches (hard limits) only work when not in Alternate Encoder Mode.
 //   For polarity, there are similar issues with get (none) and set (side
 //   effect of calling GetForwardLimitSwitch() or GetReverseLimitSwitch()) as
-//   with analog feedback.  Enable get and set are via SparkMaxLimitSwitch.  By
+//   with analog feedback.  Enable get and set are via SparkLimitSwitch.  By
 //   definition, there isn't much code to handle a hard limit switch, leaving
 //   this mainly to configuration.  It may be useful to be able to report the
 //   status, and to enable/disable the limits.  Changing the polarity via
@@ -378,7 +378,7 @@ namespace SparkMaxFactory
 
 // Also note that SmartMotionAccelStrategy does not appear to be implemented;
 // if it is set to kSCurve, this succeeds -- but it reads back as kTrapezoidal.
-namespace SparkMaxFactory
+namespace SparkFactory
 {
     // Version 1.5.2; all configuration parameters are current at this release.
     // **** DO NOT ALTER THIS LIST WITHOUT UNDERSTANDING THE IMPLICATIONS! ****
@@ -412,7 +412,7 @@ namespace SparkMaxFactory
         {"kAltEncoderVelocityFactor", double{1.0}},
         {"kCurrentChop", double{115.0}}, // Amps
         {"kCurrentChopCycles", uint{0}},
-        {"kSmartCurrentStallLimit", uint{80}}, // Amps
+        {"kSmartCurrentStallLimit", uint{40}}, // Amps
         {"kSmartCurrentFreeLimit", uint{20}},  // Amps
         {"kSmartCurrentConfig", uint{10000}},  // RPM
         {"kP_0", double{0.0}},

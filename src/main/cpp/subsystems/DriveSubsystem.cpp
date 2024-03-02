@@ -1,5 +1,5 @@
 // Copyright (c) FIRST and other WPILib contributors.
-// Open Source Software; you can modify and/or share it under the terms of
+// Open Source Softwares; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
 
 // See https://docs.wpilib.org/en/latest/docs/software/kinematics-and-odometry/swerve-drive-kinematics.html.
@@ -16,7 +16,7 @@
 #include <frc/shuffleboard/ShuffleboardLayout.h>
 #include <frc/shuffleboard/ShuffleboardTab.h>
 #include <frc/shuffleboard/SimpleWidget.h>
-#include <frc2/command/CommandBase.h>
+#include <frc2/command/Command.h>
 #include <frc2/command/CommandScheduler.h>
 #include <networktables/NetworkTableEntry.h>
 #include <networktables/NetworkTableInstance.h>
@@ -162,7 +162,7 @@ void DriveSubsystem::Periodic() noexcept
             {
     if (m_ahrs)
     {
-      botRot = -m_ahrs->GetRotation2d();
+      botRot = m_ahrs->GetRotation2d();
     }
     else
     {
@@ -222,7 +222,7 @@ void DriveSubsystem::ResetOdometry(frc::Pose2d pose) noexcept
             {
     if (m_ahrs)
     {
-      botRot = -m_ahrs->GetRotation2d();
+      botRot = m_ahrs->GetRotation2d();
     } });
 
   m_odometry->ResetPosition(botRot, GetModulePositions(), pose);
@@ -991,14 +991,13 @@ void DriveSubsystem::Drive(units::meters_per_second_t xSpeed,
   m_rotation = rot / physical::kMaxTurnRate;
   m_x = xSpeed / physical::kMaxDriveSpeed;
   m_y = ySpeed / physical::kMaxDriveSpeed;
-
   frc::Rotation2d botRot;
 
   DoSafeIMU("GetRotation2d()", [&]() -> void
             {
     if (m_ahrs)
     {
-      botRot = -m_ahrs->GetRotation2d();
+      botRot = m_ahrs->GetRotation2d();
     } });
 
   if (!m_ahrs)
@@ -1029,6 +1028,7 @@ void DriveSubsystem::ResetEncoders() noexcept
 
 void DriveSubsystem::SetModuleStates(std::array<frc::SwerveModuleState, 4> &desiredStates) noexcept
 {
+
   auto [frontLeft, frontRight, rearLeft, rearRight] = desiredStates;
 
   m_commandedStateFrontLeft = frontLeft;
@@ -1051,6 +1051,10 @@ void DriveSubsystem::SetModuleStates(std::array<frc::SwerveModuleState, 4> &desi
     m_rearLeftSwerveModule->SetDriveVelocity(0.0_mps);
     m_rearRightSwerveModule->SetDriveVelocity(0.0_mps);
 
+    m_frontLeftSwerveModule->StopTurning();
+    m_frontRightSwerveModule->StopTurning();
+    m_rearLeftSwerveModule->StopTurning();
+    m_rearRightSwerveModule->StopTurning();
     return;
   }
 
@@ -1093,7 +1097,7 @@ units::degree_t DriveSubsystem::GetHeading() noexcept
             {
     if (m_ahrs)
     {
-      heading = units::degree_t{-m_ahrs->GetAngle()}; // In degrees already.
+      heading = units::degree_t{m_ahrs->GetAngle()}; // In degrees already.
     } });
 
   return heading;
@@ -1117,7 +1121,7 @@ double DriveSubsystem::GetTurnRate() noexcept
             {
     if (m_ahrs)
     {
-      rate = -m_ahrs->GetRate(); // In degrees/second (units not used in WPILib).
+      rate = m_ahrs->GetRate(); // In degrees/second (units not used in WPILib).
     } });
 
   return rate;
