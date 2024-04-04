@@ -1,9 +1,11 @@
 #pragma once
 
-#include <frc/Compressor.h>
 #include <frc/motorcontrol/Spark.h>
 #include <frc/PowerDistribution.h>
 #include <frc2/command/SubsystemBase.h>
+
+#include <frc/DigitalInput.h>
+#include "Constants.h"
 
 #include <units/pressure.h>
 
@@ -18,6 +20,8 @@ public:
     InfrastructureSubsystem(const InfrastructureSubsystem &) = delete;
     InfrastructureSubsystem &operator=(const InfrastructureSubsystem &) = delete;
 
+    bool NoteSensor() noexcept;
+
     /**
      * Will be called periodically whenever the CommandScheduler runs.
      */
@@ -27,16 +31,16 @@ public:
 
     void Disable() noexcept;
 
-    units::pressure::pounds_per_square_inch_t GetPressure() noexcept;
+    uint32_t GetLEDPatternCount() noexcept;
 
-    uint GetLEDPatternCount() noexcept;
+    std::string_view GetLEDPatternDescription(uint32_t pattern) noexcept;
 
-    std::string_view GetLEDPatternDescription(uint pattern) noexcept;
+    void SetLEDPattern(uint32_t pattern) noexcept;
 
-    void SetLEDPattern(uint pattern) noexcept;
+    void SetNumberLights(bool on) noexcept;
 
 private:
     std::unique_ptr<frc::PowerDistribution> pdh_;
-    std::unique_ptr<frc::Compressor> ph_;
     std::unique_ptr<frc::Spark> leds_;
+    std::unique_ptr<frc::DigitalInput> m_notesensor;
 };

@@ -19,6 +19,7 @@
 #include <frc/shuffleboard/ComplexWidget.h>
 #include <frc/shuffleboard/SimpleWidget.h>
 #include <frc/smartdashboard/SendableChooser.h>
+#include <frc/sysid/SysIdRoutineLog.h>
 #include <frc2/command/CommandPtr.h>
 #include <frc2/command/SubsystemBase.h>
 #include <units/angle.h>
@@ -29,6 +30,7 @@
 #include <wpi/sendable/Sendable.h>
 #include <wpi/sendable/SendableBuilder.h>
 #include <wpi/sendable/SendableHelper.h>
+//#include <frc/DriverStation.h>
 
 #include <array>
 #include <functional>
@@ -98,11 +100,20 @@ public:
              units::meters_per_second_t ySpeed, units::radians_per_second_t rot,
              bool fieldRelative, units::meter_t x_center, units::meter_t y_center) noexcept;
 
+  void Drive(frc::ChassisSpeeds speeds);
+
+  frc::ChassisSpeeds GetSpeed();
+
+
+
+
+
   /**
    * Resets the drive encoder to zero, and the turning encoder based on the
    * absolute position sensor.
    */
-  void ResetEncoders() noexcept;
+  void
+  ResetEncoders() noexcept;
 
   /**
    * Sets the drive MotorControllers to a power from -1 to 1.
@@ -158,6 +169,9 @@ public:
     m_testModeTurningVoltage = voltage;
     m_testModeDriveVoltage = 0.0;
   }
+
+  void SysIdLogDrive(frc::sysid::SysIdRoutineLog *logger) noexcept;
+  void SysIdLogSteer(frc::sysid::SysIdRoutineLog *logger) noexcept;
 
   // Test mode method to power drive motors for characterization.
   void TestModeDriveVoltage(const double voltage) noexcept
@@ -289,3 +303,5 @@ private:
   std::string m_rearLeftGraphScroll;
   std::string m_rearRightGraphScroll;
 };
+
+// class Autobuilder

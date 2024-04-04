@@ -11,12 +11,15 @@
 #include "commands/AutonomousCommands.h"
 #include "commands/TestModeCommands.h"
 #include "subsystems/DriveSubsystem.h"
-#include "subsystems/FeederSubsystem.h"
 #include "subsystems/Infrastructure.h"
-#include "subsystems/ShooterSubsystem.h"
+#include "subsystems/IntakeSubsystem.h"
+#include "subsystems/ArmSubsystem.h"
 
+#include <bitset>
 #include <memory>
 #include <tuple>
+// #include <frc/DriverStation.h>
+#include <pathplanner/lib/commands/PathPlannerAuto.h>
 
 /**
  * This class is where the bulk of the robot should be declared.  Since
@@ -30,6 +33,10 @@ class RobotContainer
 public:
   RobotContainer() noexcept;
 
+  void RobotPeriodic() noexcept;
+  void LightButton(unsigned button) noexcept;
+  void ClearButton(unsigned button) noexcept;
+
   RobotContainer(const RobotContainer &) = delete;
   RobotContainer &operator=(const RobotContainer &) = delete;
 
@@ -38,6 +45,7 @@ public:
   void TestInit() noexcept;
   void TestExit() noexcept;
   void TestPeriodic() noexcept;
+  void Periodic() noexcept;
 
   void DisabledInit() noexcept;
   void DisabledExit() noexcept;
@@ -55,15 +63,16 @@ private:
   bool m_fieldOriented{false};
   bool m_lock{false};
   bool m_slow{false};
-  double m_shooterVelocity{0.0};
-  uint m_LEDPattern{29};
-  uint m_LEDPatternCount{0};
+  uint32_t m_LEDPattern{30};
+  uint32_t m_LEDPatternCount{0};
+  uint32_t m_buttonlights{0};
+  std::bitset<12> m_buttonLights{0};
 
   // The robot's subsystems and commands are defined here...
   DriveSubsystem m_driveSubsystem;
-  FeederSubsystem m_feederSubsystem;
   InfrastructureSubsystem m_infrastructureSubsystem;
-  ShooterSubsystem m_shooterSubsystem;
+  IntakeSubsystem IntakeSubsystem_;
+  ArmSubsystem arm_;
 
   frc2::CommandXboxController m_xbox{0};
   frc2::CommandGenericHID m_buttonBoard{1};

@@ -38,7 +38,8 @@ SwerveModule::SwerveModule(
     const int driveMotorCanID,
     const int turningMotorCanID,
     const int turningEncoderPort,
-    const int alignmentOffset) noexcept : m_name{name}
+    const int alignmentOffset,
+    const bool inverted) noexcept : m_name{name}, m_driveMotorInverted{inverted}
 {
     // Set up onboard printf-style logging.
     std::string logName{"/SwerveModule/"};
@@ -70,7 +71,7 @@ SwerveModule::SwerveModule(
     m_turningMotorBase = SparkMaxFactory::CreateSparkMax(m_name + std::string(" Turning"), turningMotorCanID, m_turningMotorInverted);
     m_turningMotor = std::make_unique<SmartMotor<units::angle::degrees>>(*m_turningMotorBase);
 
-    m_driveMotorBase = SparkMaxFactory::CreateSparkMax(m_name + std::string(" Drive"), driveMotorCanID, m_driveMotorInverted);
+    m_driveMotorBase = SparkMaxFactory::CreateSparkFlex(m_name + std::string(" Drive"), driveMotorCanID, m_driveMotorInverted);
     m_driveMotor = std::make_unique<SmartMotor<units::length::meters>>(*m_driveMotorBase);
 
     // kStatus1 includes velocity; kStatus2 includes position -- these are made
@@ -406,7 +407,7 @@ void SwerveModule::SetDriveVelocity(units::velocity::meters_per_second_t velocit
 #if 0
     m_driveMotor->SeekVelocity(velocity * vectorAlignment);
 #else
-    m_driveMotor->SetVoltage(velocity * vectorAlignment / physical::kMaxDriveSpeed * 12.0_V);
+    m_driveMotor->SetVoltage(velocity * vectorAlignment / physical::kMaxDriveSpeed * 24.0_V);
 #endif
 }
 
@@ -453,6 +454,32 @@ void SwerveModule::ResetEncoders() noexcept
     ResetTurning();
     ResetDrive();
 }
+
+
+
+void SwerveModule::SysIdLogDrive(frc::sysid::SysIdRoutineLog *logger) noexcept
+{
+    logger->Motor(m_driveMotor->GetName())
+        .voltage(m_driveMotor->GetVoltage())
+        .current(m_driveMotor->GetCurrent())
+        .position(m_driveMotor->GetPosition())
+        .velocity(m_driveMotor->GetVelocity());
+}
+
+void SwerveModule::SysIdLogSteer(frc::sysid::SysIdRoutineLog *logger) noexcept
+{
+    // Use the external/absolute position sensor for turning data.  Given a
+    // target velocity of zero, the velocity should be the same as the error.
+    units::angle::turn_t turning_position = m_turningPosition;
+    units::angular_velocity::turns_per_second_t turning_velocity = m_rioPIDController->GetVelocityError();
+
+    logger->Motor(m_turningMotor->GetName())
+        .voltage(m_turningMotor->GetVoltage())
+        .current(m_turningMotor->GetCurrent())
+        .position(turning_position)
+        .velocity(turning_velocity);
+}
+
 
 // This sets up the test mode shuffleboard tab; everything is specified
 // programmatically.

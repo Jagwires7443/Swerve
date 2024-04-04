@@ -43,6 +43,8 @@ public:
     SmartMotorBase(SmartMotorBase &&) noexcept = default;
     SmartMotorBase &operator=(SmartMotorBase &&) noexcept = default;
 
+  virtual const std::string &GetName() const noexcept = 0;
+
     // This displays a diagnostic and control panel (likely only used in test
     // mode).  Provides basic control of motor and sends telemetry of all major
     // parameters.  Alternatively, this might be specified using wpi::Sendable.
@@ -169,6 +171,10 @@ public:
 
     virtual void SetCurrent(const units::ampere_t current) noexcept = 0;
 
+    virtual units::volt_t GetVoltage() noexcept = 0;
+
+    virtual units::ampere_t GetCurrent() noexcept = 0;
+
     // Used to establish zero position.
     virtual void SpecifyPosition(const double position) noexcept = 0;
 
@@ -198,8 +204,8 @@ public:
     using Velocity = units::compound_unit<Position, units::inverse<units::seconds>>;
     using Velocity_t = units::unit_t<Velocity>;
 
-    static_assert(units::traits::is_convertible_unit<Position_t, units::category::angle_unit>::value ||
-                      units::traits::is_convertible_unit<Position_t, units::category::length_unit>::value,
+    static_assert(units::traits::is_convertible_unit_v<Position_t, units::category::angle_unit> ||
+                      units::traits::is_convertible_unit_v<Position_t, units::category::length_unit>,
                   "SmartMotor must be templated on either an angle_unit or a length_unit.");
 
     // Non-owning reference.
@@ -211,6 +217,10 @@ public:
     SmartMotor(SmartMotor &&) noexcept = default;
     SmartMotor &operator=(SmartMotor &&) noexcept = default;
 
+    const std::string &GetName() const noexcept override
+    {
+        return base_.GetName();
+    }
     void ShuffleboardCreate(frc::ShuffleboardContainer &container,
                             std::function<void(double)> control = nullptr,
                             std::function<void()> reset = nullptr) noexcept override
@@ -301,6 +311,17 @@ public:
     void SetCurrent(const units::ampere_t current) noexcept override
     {
         base_.SetCurrent(current);
+    }
+
+
+    units::volt_t GetVoltage() noexcept override
+    {
+        return base_.GetVoltage();
+    }
+
+    units::ampere_t GetCurrent() noexcept override
+    {
+        return base_.GetCurrent();
     }
 
     void SpecifyPosition(const Position_t position) noexcept

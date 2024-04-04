@@ -11,6 +11,7 @@
 #include <frc/kinematics/SwerveModuleState.h>
 #include <frc/shuffleboard/ComplexWidget.h>
 #include <frc/shuffleboard/SimpleWidget.h>
+#include <frc/sysid/SysIdRoutineLog.h>
 #include <units/angle.h>
 #include <units/length.h>
 #include <units/velocity.h>
@@ -140,7 +141,8 @@ public:
       const int driveMotorCanID,
       const int turningMotorCanID,
       const int turningEncoderPort,
-      const int alignmentOffset) noexcept;
+      const int alignmentOffset,
+      const bool inverted) noexcept;
 
   // No copy/assign.
   SwerveModule(const SwerveModule &) = delete;
@@ -242,6 +244,10 @@ public:
     return std::make_tuple(m_processVariable, m_processError, m_processFirstDerivative, m_processSecondDerivitive);
   }
 
+
+  void SysIdLogDrive(frc::sysid::SysIdRoutineLog *logger) noexcept;
+  void SysIdLogSteer(frc::sysid::SysIdRoutineLog *logger) noexcept;
+
   void TestInit() noexcept;
   void TestExit() noexcept;
   void TestPeriodic() noexcept;
@@ -264,7 +270,9 @@ private:
 
   // These are set based on the mechanical and electrical construction of the
   // robot, and are never expected to change.
-  const bool m_driveMotorInverted{physical::kDriveMotorInverted};
+ // const bool m_LeftdriveMotorInverted{physical:kLeftDriveMotorInverted};
+ // const bool m_RightdriveMotorInverted{physical::kTurningMotorInverted};
+  const bool m_driveMotorInverted{false};
   const bool m_turningMotorInverted{physical::kTurningMotorInverted};
 
   // Used for printf-style logging.

@@ -163,7 +163,7 @@ std::optional<int> AngleSensor::GetAbsolutePosition(const int frequency, const d
     // If the frequency isn't within the range specified in the data sheet,
     // return an error.  This range is [220, 268], with a nominal value of 244.
     // A tolerance of 12 (~5% of nominal) is provided for any measurment error.
-    bool absoluteSensorGood = frequency >= 208 && frequency <= 280;
+    bool absoluteSensorGood = frequency >= 208 && frequency <= 980;
 
     if (!absoluteSensorGood)
     {

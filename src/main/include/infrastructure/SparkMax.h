@@ -9,10 +9,10 @@ namespace SparkMaxFactory
     // Print out string to index mapping (for updating switch/cases).
     void ConfigIndex() noexcept;
 
-    // Create a SPARK MAX motor controller.
+    // Create a SPARK MAX/FLEX motor controller.
     std::unique_ptr<SmartMotorBase> CreateSparkMax(const std::string_view name, const int canId, const bool inverted, const int encoderCounts = 0) noexcept;
+    std::unique_ptr<SmartMotorBase> CreateSparkFlex(const std::string_view name, const int canId, const bool inverted, const int encoderCounts = 0) noexcept;
 }
-
 // Configuration:
 
 // The basic approach here is to only manage settings which relate to
@@ -385,10 +385,10 @@ namespace SparkMaxFactory
     // In particular, std::map is sorted, so the order here is meaningless.
     // The way forward (better readability/maintainability) is a constexpr map.
     const SmartMotorBase::ConfigMap configDefaults = {
-        {"kStatus0", uint{10}}, // ms
-        {"kStatus1", uint{20}}, // ms
-        {"kStatus2", uint{50}}, // ms
-        {"Firmware Version", uint{0x01050002}},
+        {"kStatus0", uint{10}},     // ms.
+        {"kStatus1", uint{20}},     // ms.
+        {"kStatus2", uint{50}},     // ms.
+        {"Firmware Version", uint{0}},   // Differs between MAX and Flex.
         {"kIdleMode", uint{1}},
         {"kLimitSwitchFwdPolarity", uint{0}},
         {"kLimitSwitchRevPolarity", uint{0}},

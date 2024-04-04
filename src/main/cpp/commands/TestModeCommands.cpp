@@ -5,6 +5,7 @@
 #include "commands/TestModeCommands.h"
 
 #include <cmath>
+#include <functional>
 
 void ZeroCommand::Execute() noexcept { (void)m_subsystem->ZeroModules(); }
 
@@ -272,6 +273,11 @@ void SpinCommand::Initialize() noexcept
     m_subsystem->ResetDrive();
 }
 
+void SpinCommand::End(bool interrupted) noexcept
+{
+    m_subsystem->ResetDrive();
+}
+
 void SpinCommand::Execute() noexcept
 {
     if (!m_subsystem->SetTurnInPlace())
@@ -305,7 +311,152 @@ void SpinCommand::Execute() noexcept
     }
 }
 
-void SpinCommand::End(bool interrupted) noexcept
+void SysIdCommand::Initialize() noexcept
 {
+    m_routine = 0;
+    m_mode = 0;
+    m_stage = 0;
+
     m_subsystem->ResetDrive();
+
+    auto driveDrive = [this](units::voltage::volt_t voltage) -> void
+    {
+        m_subsystem->TestModeDriveVoltage(voltage.value()); // XXX fix units for arg
+    };
+
+    auto driveLog = [this](frc::sysid::SysIdRoutineLog *logger) -> void
+    {
+        m_subsystem->SysIdLogDrive(logger);
+    };
+
+    m_driveSysId = std::make_unique<frc2::sysid::SysIdRoutine>(
+        frc2::sysid::Config(std::nullopt, std::nullopt, std::nullopt, std::nullopt),
+        frc2::sysid::Mechanism(driveDrive, driveLog, m_subsystem, "Drive"));
+
+    auto steerDrive = [this](units::voltage::volt_t voltage) -> void
+    {
+        m_subsystem->TestModeTurningVoltage(voltage.value()); // XXX fix units for arg
+    };
+
+    auto steerLog = [this](frc::sysid::SysIdRoutineLog *logger) -> void
+    {
+        m_subsystem->SysIdLogSteer(logger);
+    };
+
+    m_steerSysId = std::make_unique<frc2::sysid::SysIdRoutine>(
+        frc2::sysid::Config(std::nullopt, std::nullopt, std::nullopt, std::nullopt),
+        frc2::sysid::Mechanism(steerDrive, steerLog, m_subsystem, "Drive")); 
+}
+
+void SysIdCommand::End(bool interrupted) noexcept
+{
+    m_commandPtr = nullptr;
+    m_driveSysId = nullptr;
+    m_steerSysId = nullptr;
+
+    m_subsystem->ResetDrive();
+
+}
+
+void SysIdCommand::Execute() noexcept
+{
+    // Sequentially characterize drive base (m_routine counter):
+    //   0) Drive forward/reverse with all swerve modules in the same direction;
+    //   1) Spin clockwise/counterclockwise with all swerve modules on circumference;
+    //   2) Spin all individual swerve modules clockwise/counterclockwise.
+    //   3) Done.
+    // Three-layer iteration:
+    //   1) Each individual mechanism (above);
+    //   2) Two modes, each with two directions (m_mode counter);
+    //   3) Prepare/Initialize/Execute/End (m_stage counter).
+
+    // XXX FIX STATE MACHINE!
+
+    // Outer iteration provides these two elements; increment it when both of
+    // the inner iterations complete.
+    std::function<bool()> prepare{nullptr};
+    frc2::sysid::SysIdRoutine *routine{nullptr};
+
+    switch (m_routine)
+   {
+     case 0:
+        prepare = std::bind(&DriveSubsystem::ZeroModules, m_subsystem);
+        routine = m_driveSysId.get();
+
+        break;
+    case 1:
+        prepare = std::bind(&DriveSubsystem::SetTurnInPlace, m_subsystem);
+        routine = m_driveSysId.get();
+
+        break;
+    case 2:
+        prepare = std::bind(&DriveSubsystem::ZeroModules, m_subsystem);
+        routine = m_steerSysId.get();
+
+        break;
+    case 3:
+        return;
+   }
+
+   switch (m_stage)
+    {
+         case 0: // Prepare.
+        if (prepare())
+        {
+            // Middle iteration provides this element; increment it when the single
+            // inner iteration completes.
+            switch (m_mode)
+            {
+            case 0:
+                m_commandPtr = std::make_unique<frc2::CommandPtr>(routine->Quasistatic(frc2::sysid::Direction::kForward));
+                m_mode = 1;
+
+                break;
+            case 1:
+                m_commandPtr = std::make_unique<frc2::CommandPtr>(routine->Quasistatic(frc2::sysid::Direction::kReverse));
+                m_mode = 2;
+
+                break;
+            case 2:
+                m_commandPtr = std::make_unique<frc2::CommandPtr>(routine->Dynamic(frc2::sysid::Direction::kForward));
+                m_mode = 3;
+
+                break;
+            case 3:
+                m_commandPtr = std::make_unique<frc2::CommandPtr>(routine->Dynamic(frc2::sysid::Direction::kReverse));
+                m_mode = 0;
+
+                break;
+            }
+
+            m_stage = 1;
+        }
+    return;
+    case 1: // Initialize.
+        m_commandPtr->get()->Initialize();
+        m_stage = 2;
+
+
+    return;
+    case 2: // Execute.
+        if (m_commandPtr->get()->IsFinished())
+        {
+            m_stage = 3;
+        }
+        m_commandPtr->get()->Execute();
+
+     return;
+    case 3: // End.
+        m_commandPtr->get()->End(false);
+        m_stage = 0;
+
+     ++m_routine;
+
+        return;
+    }
+}
+
+bool SysIdCommand::IsFinished() noexcept
+{
+    return m_routine >= 3;
 }

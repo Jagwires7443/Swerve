@@ -14,8 +14,8 @@ void Robot::RobotInit() noexcept
   frc::LiveWindow::SetEnabled(false);
   frc::LiveWindow::DisableAllTelemetry();
 
-  frc::DataLogManager::Start();
-  frc::DriverStation::StartDataLog(frc::DataLogManager::GetLog());
+  // frc::DataLogManager::Start();
+  // frc::DriverStation::StartDataLog(frc::DataLogManager::GetLog());
 }
 
 /**
@@ -32,6 +32,7 @@ void Robot::RobotInit() noexcept
 void Robot::RobotPeriodic() noexcept
 {
   frc2::CommandScheduler::GetInstance().Run();
+  m_container.Periodic();
 }
 
 /**
