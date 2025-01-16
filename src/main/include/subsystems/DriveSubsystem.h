@@ -7,7 +7,7 @@
 #include "Constants.h"
 #include "infrastructure/SwerveModule.h"
 
-#include <AHRS.h>
+#include <studica/AHRS.h>
 #include <frc/controller/ProfiledPIDController.h>
 #include <frc/geometry/Pose2d.h>
 #include <frc/geometry/Rotation2d.h>
@@ -30,7 +30,7 @@
 #include <wpi/sendable/Sendable.h>
 #include <wpi/sendable/SendableBuilder.h>
 #include <wpi/sendable/SendableHelper.h>
-//#include <frc/DriverStation.h>
+#include <frc/DriverStation.h>
 
 #include <array>
 #include <functional>
@@ -103,10 +103,6 @@ public:
   void Drive(frc::ChassisSpeeds speeds);
 
   frc::ChassisSpeeds GetSpeed();
-
-
-
-
 
   /**
    * Resets the drive encoder to zero, and the turning encoder based on the
@@ -207,7 +203,7 @@ private:
   wpi::log::StringLogEntry m_stringLog;
 
   // The gyro sensor.
-  std::unique_ptr<AHRS> m_ahrs;
+  std::unique_ptr<studica::AHRS> m_ahrs;
 
   // Theta controller (for keeping steady heading, or for rotating drive base).
   std::unique_ptr<frc::ProfiledPIDController<units::angle::degrees>> m_orientationController;
@@ -303,5 +299,3 @@ private:
   std::string m_rearLeftGraphScroll;
   std::string m_rearRightGraphScroll;
 };
-
-// class Autobuilder

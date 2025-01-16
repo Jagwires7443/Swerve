@@ -7,14 +7,14 @@
 #include <units/velocity.h>
 #include <wpi/DataLog.h>
 
-#include <rev/CANSparkFlex.h>
-#include <rev/CANSparkMax.h>
-#include <rev/CANSparkMaxLowLevel.h>
+#include <rev/SparkFlex.h>
+#include <rev/SparkMax.h>
+#include <rev/SparkLowLevel.h>
 #include <rev/RelativeEncoder.h>
 #include <rev/REVLibError.h>
 #include <rev/SparkFlexExternalEncoder.h>
 #include <rev/SparkLimitSwitch.h>
-#include <rev/SparkPIDController.h>
+#include <rev/SparkClosedLoopController.h>
 
 #include <bitset>
 #include <cmath>
@@ -151,19 +151,19 @@ namespace
         // for either motor controller is used wherever possible.  This keeps
         // the code nearly identical for either (which is most likely how
         // things are in the REV code also).
-        std::unique_ptr<rev::CANSparkFlex> flex_motor_;
-        std::unique_ptr<rev::CANSparkMax> max_motor_;
-        std::unique_ptr<rev::SparkFlexExternalEncoder> flex_encoder_;
-        std::unique_ptr<rev::SparkMaxAlternateEncoder> max_encoder_;
+        std::unique_ptr<rev::spark::SparkFlex> flex_motor_;
+        std::unique_ptr<rev::spark::SparkMax> max_motor_;
+        std::unique_ptr<rev::spark::SparkFlexExternalEncoder> flex_encoder_;
+        std::unique_ptr<rev::spark::SparkMaxAlternateEncoder> max_encoder_;
         std::unique_ptr<rev::RelativeEncoder> builtin_encoder_;
-        std::unique_ptr<rev::SparkPIDController> controller_;
-        rev::CANSparkBase *motor_ = nullptr;
+        std::unique_ptr<rev::spark::SparkClosedLoopController> controller_;
+        rev::spark::SparkBase *motor_ = nullptr;
         rev::RelativeEncoder *encoder_ = nullptr;
 
         // REV object holders, only used when not using an external
         // ("alternate") encoder.
-        std::unique_ptr<rev::SparkLimitSwitch> forward_;
-        std::unique_ptr<rev::SparkLimitSwitch> reverse_;
+        std::unique_ptr<rev::spark::SparkLimitSwitch> forward_;
+        std::unique_ptr<rev::spark::SparkLimitSwitch> reverse_;
 
         // Shuffleboard UI elements, used by ShuffleboardCreate() and
         // ShuffleboardPeriodic() only.
@@ -596,7 +596,7 @@ void SparkMax::ShuffleboardPeriodic() noexcept
     double distance{0.0};
     double velocity{0.0};
 
-    // Obtain raw data from CANSparkMax and set the output.
+    // Obtain raw data from SparkMax and set the output.
     DoSafely("ShuffleboardPeriodic", [&]() -> void
              {
         if (motor_)
@@ -737,13 +737,13 @@ void SparkMax::ConfigPeriodic() noexcept
                  {
                     if (flex_not_max_)
                     {
-                        flex_motor_ = std::make_unique<rev::CANSparkFlex>(canId_, rev::CANSparkLowLevel::MotorType::kBrushless);
-                        motor_ = dynamic_cast<rev::CANSparkBase *>(flex_motor_.get());
+                        flex_motor_ = std::make_unique<rev::spark::SparkFlex>(canId_, rev::spark::SparkLowLevel::MotorType::kBrushless);
+                        motor_ = dynamic_cast<rev::spark::SparkBase *>(flex_motor_.get());
                     }
                     else
                     {
-                        max_motor_ = std::make_unique<rev::CANSparkMax>(canId_, rev::CANSparkLowLevel::MotorType::kBrushless);
-                        motor_ = dynamic_cast<rev::CANSparkBase *>(max_motor_.get());
+                        max_motor_ = std::make_unique<rev::spark::SparkMax>(canId_, rev::spark::SparkLowLevel::MotorType::kBrushless);
+                        motor_ = dynamic_cast<rev::spark::SparkBase *>(max_motor_.get());
                     }
                     if (!motor_)
                     {
@@ -836,7 +836,7 @@ void SparkMax::ConfigPeriodic() noexcept
     // (including resets) is driven by the call to GetStickyFaults() in the
     // main Periodic() method, by the AnyErrors() method, and by the places
     // throw() is used here in the post-reboot state machine.
-    if (motor_->GetStickyFault(rev::CANSparkMax::FaultID::kHasReset))
+    if (motor_->GetStickyFault(rev::spark::SparkMax::FaultID::kHasReset))
     {
         configReboot_ = true;
         configGood_ = false;
@@ -1129,7 +1129,7 @@ void SparkMax::SetIdleMode(const SmartMotorBase::IdleMode mode) noexcept
         return;
     }
 
-    const rev::CANSparkMax::IdleMode tmp = (mode == SmartMotorBase::IdleMode::kBrake) ? rev::CANSparkMax::IdleMode::kBrake : rev::CANSparkMax::IdleMode::kCoast;
+    const rev::spark::SparkMax::IdleMode tmp = (mode == SmartMotorBase::IdleMode::kBrake) ? rev::spark::SparkMax::IdleMode::kBrake : rev::spark::SparkMax::IdleMode::kCoast;
 
     DoSafely("SetIdleMode", [&]() -> void
              { if (motor_) { motor_->SetIdleMode(tmp); } });
@@ -1137,12 +1137,12 @@ void SparkMax::SetIdleMode(const SmartMotorBase::IdleMode mode) noexcept
 
 SmartMotorBase::IdleMode SparkMax::GetIdleMode() noexcept
 {
-    rev::CANSparkMax::IdleMode mode{rev::CANSparkMax::IdleMode::kBrake};
+    rev::spark::SparkMax::IdleMode mode{rev::spark::SparkMax::IdleMode::kBrake};
 
     DoSafely("GetIdleMode", [&]() -> void
              { if (motor_) { mode = motor_->GetIdleMode(); } });
 
-    return mode == rev::CANSparkMax::IdleMode::kBrake ? SmartMotorBase::IdleMode::kBrake : SmartMotorBase::IdleMode::kCoast;
+    return mode == rev::spark::SparkMax::IdleMode::kBrake ? SmartMotorBase::IdleMode::kBrake : SmartMotorBase::IdleMode::kCoast;
 }
 
 void SparkMax::EnableLimit(const Direction direction) noexcept
@@ -1264,7 +1264,7 @@ void SparkMax::SetCurrent(const units::ampere_t current) noexcept
     velocity_ = 0.0;
 
     DoSafely("SetCurrent", [&]() -> void
-             { if (!controller_ || AnyError(controller_->SetReference(current.to<double>(), rev::CANSparkMax::ControlType::kCurrent, 0))) {} });
+             { if (!controller_ || AnyError(controller_->SetReference(current.to<double>(), rev::spark::SparkMax::ControlType::kCurrent, 0))) {} });
 }
 
 units::volt_t SparkMax::GetVoltage() noexcept
@@ -1301,7 +1301,7 @@ void SparkMax::SeekPosition(const double position) noexcept
 
     // Add dynamic FeedForward (from parameter)?
     DoSafely("SeekPosition", [&]() -> void
-             { if (!controller_ || AnyError(controller_->SetReference(position, rev::CANSparkMax::ControlType::kSmartMotion, 0))) {} });
+             { if (!controller_ || AnyError(controller_->SetReference(position, rev::spark::SparkMax::ControlType::kSmartMotion, 0))) {} });
 }
 
 bool SparkMax::CheckPosition(const double tolerance) noexcept
@@ -1328,7 +1328,7 @@ void SparkMax::SeekVelocity(const double velocity) noexcept
 
     // Add dynamic FeedForward (from parameter)?
     DoSafely("SeekVelocity", [&]() -> void
-             { if (!controller_ || AnyError(controller_->SetReference(velocity, rev::CANSparkMax::ControlType::kSmartVelocity, 1))) {} });
+             { if (!controller_ || AnyError(controller_->SetReference(velocity, rev::spark::SparkMax::ControlType::kSmartVelocity, 1))) {} });
 }
 
 bool SparkMax::CheckVelocity(const double tolerance) noexcept
@@ -1535,12 +1535,12 @@ std::tuple<bool, bool, std::string> SparkMax::VerifyConfig(const std::string_vie
         name = "IdleMode";
         if (motor_)
         {
-            const rev::CANSparkMax::IdleMode tmp{motor_->GetIdleMode()};
+            const rev::spark::SparkMax::IdleMode tmp{motor_->GetIdleMode()};
 
-            if (tmp == rev::CANSparkMax::IdleMode::kCoast)
+            if (tmp == rev::spark::SparkMax::IdleMode::kCoast)
             {
                 actual_value = uint{0};
-            } else if (tmp == rev::CANSparkMax::IdleMode::kBrake)
+            } else if (tmp == rev::spark::SparkMax::IdleMode::kBrake)
             {
                 actual_value = uint{1};
 
@@ -1603,14 +1603,14 @@ std::tuple<bool, bool, std::string> SparkMax::VerifyConfig(const std::string_vie
         name = "SoftLimitFwd";
         if (motor_)
         {
-            actual_value = double{motor_->GetSoftLimit(rev::CANSparkMax::SoftLimitDirection::kForward)};
+            actual_value = double{motor_->GetSoftLimit(rev::spark::SparkMax::SoftLimitDirection::kForward)};
         }
         break;
     case 5:
         name = "SoftLimitRev";
         if (motor_)
         {
-            actual_value = double{motor_->GetSoftLimit(rev::CANSparkMax::SoftLimitDirection::kReverse)};
+            actual_value = double{motor_->GetSoftLimit(rev::spark::SparkMax::SoftLimitDirection::kReverse)};
         }
         break;
     case 20:
@@ -2038,7 +2038,7 @@ std::string SparkMax::ApplyConfig(const std::string_view key, const ConfigValue 
         if (puint)
         {
             status0_ = *puint;
-            if (motor_ && !AnyError(motor_->SetPeriodicFramePeriod(rev::CANSparkMaxLowLevel::PeriodicFrame::kStatus0, status0_)))
+            if (motor_ && !AnyError(motor_->SetPeriodicFramePeriod(rev::spark::SparkMaxLowLevel::PeriodicFrame::kStatus0, status0_)))
             {
                 name.clear();
             }
@@ -2049,7 +2049,7 @@ std::string SparkMax::ApplyConfig(const std::string_view key, const ConfigValue 
         if (puint)
         {
             status1_ = *puint;
-            if (motor_ && !AnyError(motor_->SetPeriodicFramePeriod(rev::CANSparkMaxLowLevel::PeriodicFrame::kStatus1, status1_)))
+            if (motor_ && !AnyError(motor_->SetPeriodicFramePeriod(rev::spark::SparkMaxLowLevel::PeriodicFrame::kStatus1, status1_)))
             {
                 name.clear();
             }
@@ -2060,7 +2060,7 @@ std::string SparkMax::ApplyConfig(const std::string_view key, const ConfigValue 
         if (puint)
         {
             status2_ = *puint;
-            if (motor_ && !AnyError(motor_->SetPeriodicFramePeriod(rev::CANSparkMaxLowLevel::PeriodicFrame::kStatus2, status2_)))
+            if (motor_ && !AnyError(motor_->SetPeriodicFramePeriod(rev::spark::SparkMaxLowLevel::PeriodicFrame::kStatus2, status2_)))
             {
                 name.clear();
             }
@@ -2074,7 +2074,7 @@ std::string SparkMax::ApplyConfig(const std::string_view key, const ConfigValue 
         name = "IdleMode";
         if (puint && *puint <= 1)
         {
-            const rev::CANSparkMax::IdleMode tmp = (*puint == 0 ? rev::CANSparkMax::IdleMode::kCoast : rev::CANSparkMax::IdleMode::kBrake);
+            const rev::spark::SparkMax::IdleMode tmp = (*puint == 0 ? rev::spark::SparkMax::IdleMode::kCoast : rev::spark::SparkMax::IdleMode::kBrake);
 
             if (motor_ && !AnyError(motor_->SetIdleMode(tmp)))
             {
@@ -2114,7 +2114,7 @@ std::string SparkMax::ApplyConfig(const std::string_view key, const ConfigValue 
         {
             followerID_ = *puint;
 
-            const rev::CANSparkMax::ExternalFollower tmp{(int)followerID_, (int)followerConfig_};
+            const rev::spark::SparkMax::ExternalFollower tmp{(int)followerID_, (int)followerConfig_};
             const int deviceID = followerID_ & 0x3f;
             const bool invert = (followerConfig_ & 0x00040000) != 0;
 
@@ -2133,7 +2133,7 @@ std::string SparkMax::ApplyConfig(const std::string_view key, const ConfigValue 
         {
             followerConfig_ = *puint;
 
-            const rev::CANSparkMax::ExternalFollower tmp{(int)followerID_, (int)followerConfig_};
+            const rev::spark::SparkMax::ExternalFollower tmp{(int)followerID_, (int)followerConfig_};
             const int deviceID = followerID_ & 0x3f;
             const bool invert = (followerConfig_ & 0x00040000) != 0;
 
@@ -2150,7 +2150,7 @@ std::string SparkMax::ApplyConfig(const std::string_view key, const ConfigValue 
         name = "SoftLimitFwd";
         if (pdouble)
         {
-            if (motor_ && !AnyError(motor_->SetSoftLimit(rev::CANSparkMax::SoftLimitDirection::kForward, *pdouble)))
+            if (motor_ && !AnyError(motor_->SetSoftLimit(rev::spark::SparkMax::SoftLimitDirection::kForward, *pdouble)))
             {
                 name.clear();
             }
@@ -2160,7 +2160,7 @@ std::string SparkMax::ApplyConfig(const std::string_view key, const ConfigValue 
         name = "SoftLimitRev";
         if (pdouble)
         {
-            if (motor_ && !AnyError(motor_->SetSoftLimit(rev::CANSparkMax::SoftLimitDirection::kReverse, *pdouble)))
+            if (motor_ && !AnyError(motor_->SetSoftLimit(rev::spark::SparkMax::SoftLimitDirection::kReverse, *pdouble)))
             {
                 name.clear();
             }

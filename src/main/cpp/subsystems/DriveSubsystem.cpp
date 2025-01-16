@@ -26,12 +26,12 @@
 #include <networktables/NetworkTableValue.h>
 #include <wpi/array.h>
 #include <pathplanner/lib/auto/AutoBuilder.h>
-#include <pathplanner/lib/util/HolonomicPathFollowerConfig.h>
-#include <pathplanner/lib/util/PIDConstants.h>
-#include <pathplanner/lib/util/ReplanningConfig.h>
+// #include <pathplanner/lib/util/HolonomicPathFollowerConfig.h>
+#include <pathplanner/lib/config/PIDConstants.h>
+// #include <pathplanner/lib/util/ReplanningConfig.h>
 #include <frc/geometry/Pose2d.h>
 #include <frc/kinematics/ChassisSpeeds.h>
-//#include <frc/DriverStation.h>
+#include <frc/DriverStation.h>
 
 #include <algorithm>
 #include <chrono>
@@ -57,7 +57,7 @@ DriveSubsystem::DriveSubsystem() noexcept
   // is very clear when this is occurring.
   DoSafeIMU("ctor", [&]() -> void
             {
-    m_ahrs = std::make_unique<AHRS>(frc::SPI::Port::kMXP);
+    m_ahrs = std::make_unique<studica::AHRS>(studica::AHRS::NavXComType::kMXP_SPI);
 
     if (!m_ahrs)
     {
@@ -112,7 +112,7 @@ DriveSubsystem::DriveSubsystem() noexcept
       physical::kFrontRightDriveMotorCanID,
       physical::kFrontRightTurningMotorCanID,
       physical::kFrontRightTurningEncoderPort,
-      physical::kFrontRightAlignmentOffset, 
+      physical::kFrontRightAlignmentOffset,
       physical::kRightDriveMotorInverted);
 
   m_rearLeftSwerveModule = std::make_unique<SwerveModule>(
@@ -1074,7 +1074,6 @@ frc::ChassisSpeeds DriveSubsystem::GetSpeed()
     m_frontRightSwerveModule->GetState(),
     m_rearLeftSwerveModule->GetState(),
     m_rearRightSwerveModule->GetState()
-    
     }
   );
 }
