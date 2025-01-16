@@ -9,7 +9,7 @@
 #include <frc/livewindow/LiveWindow.h>
 #include <frc2/command/CommandScheduler.h>
 
-void Robot::RobotInit() noexcept
+Robot::Robot() noexcept
 {
   frc::LiveWindow::SetEnabled(false);
   frc::LiveWindow::DisableAllTelemetry();
