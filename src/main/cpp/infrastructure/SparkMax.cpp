@@ -7,6 +7,8 @@
 #include <units/velocity.h>
 #include <wpi/DataLog.h>
 
+#include <rev/config/LimitSwitchConfig.h>
+#include <rev/config/AbsoluteEncoderConfig.h>
 #include <rev/SparkFlex.h>
 #include <rev/SparkMax.h>
 #include <rev/SparkLowLevel.h>
@@ -575,6 +577,7 @@ void SparkMax::ShuffleboardCreate(frc::ShuffleboardContainer &container,
 
 void SparkMax::ShuffleboardPeriodic() noexcept
 {
+#if 0
     // Read controls information from Shuffleboard and manage interactive UI.
     const bool reset = resetUI_->GetEntry()->GetBoolean(false);
     double control = controlUI_->GetEntry()->GetDouble(0.0);
@@ -657,6 +660,7 @@ void SparkMax::ShuffleboardPeriodic() noexcept
             Set(control);
         }
     }
+#endif
 }
 
 // Config parameters are managed via a state machine, in order to spread slow
@@ -682,6 +686,7 @@ void SparkMax::Periodic() noexcept
         ShuffleboardPeriodic();
     }
 
+#if 0
     // This call should be safe and "free", in that it only reports information
     // collected from periodic status frames.  To capture any transient events,
     // GetStickyFaults() is used instead of GetFaults().  There is no
@@ -694,6 +699,7 @@ void SparkMax::Periodic() noexcept
     {
         faultBits_ |= std::bitset<16>(motor_->GetStickyFaults());
     }
+#endif
 
     // In microseconds.  At 50Hz, this will nominally tick by increments of 20.
     // The object here is too only continue at a rate of around 3Hz, and to
@@ -724,6 +730,7 @@ void SparkMax::Periodic() noexcept
 // appropriate.  Also construct limit switch REV objects, as appropriate.
 void SparkMax::ConfigPeriodic() noexcept
 {
+#if 0
     // First stage of state machine; this has to be there before going further.
     // This part of the state machine is orthogonal to the rest, and preempts
     // other states, at least temporarily.  This should not run more than once,
@@ -995,10 +1002,12 @@ void SparkMax::ConfigPeriodic() noexcept
     {
         PersistentConfigPeriodic();
     }
+#endif
 }
 
 void SparkMax::PersistentConfigPeriodic() noexcept
 {
+#if 0
     // At this point, handle managed config parameters.  Setting configLock_ is
     // an indication that this particular state machine is running.
     if (!configLock_)
@@ -1120,6 +1129,7 @@ void SparkMax::PersistentConfigPeriodic() noexcept
     configPush_ = false;
     configBurn_ = false;
     sequence_ = 0;
+#endif
 }
 
 void SparkMax::SetIdleMode(const SmartMotorBase::IdleMode mode) noexcept
@@ -1131,16 +1141,20 @@ void SparkMax::SetIdleMode(const SmartMotorBase::IdleMode mode) noexcept
 
     const rev::spark::SparkMax::IdleMode tmp = (mode == SmartMotorBase::IdleMode::kBrake) ? rev::spark::SparkMax::IdleMode::kBrake : rev::spark::SparkMax::IdleMode::kCoast;
 
+#if 0
     DoSafely("SetIdleMode", [&]() -> void
              { if (motor_) { motor_->SetIdleMode(tmp); } });
+#endif
 }
 
 SmartMotorBase::IdleMode SparkMax::GetIdleMode() noexcept
 {
     rev::spark::SparkMax::IdleMode mode{rev::spark::SparkMax::IdleMode::kBrake};
 
+#if 0
     DoSafely("GetIdleMode", [&]() -> void
              { if (motor_) { mode = motor_->GetIdleMode(); } });
+#endif
 
     return mode == rev::spark::SparkMax::IdleMode::kBrake ? SmartMotorBase::IdleMode::kBrake : SmartMotorBase::IdleMode::kCoast;
 }
@@ -1152,18 +1166,22 @@ void SparkMax::EnableLimit(const Direction direction) noexcept
         return;
     }
 
+    rev::spark::LimitSwitchConfig config;
+
     switch (direction)
     {
     case (Direction::kForward):
         if (forward_)
         {
-            forward_->EnableLimitSwitch(true);
+            config.SetSparkMaxDataPortConfig().ForwardLimitSwitchEnabled(true);
+
+            // forward_->EnableLimitSwitch(true);
         }
         break;
     case (Direction::kReverse):
         if (reverse_)
         {
-            reverse_->EnableLimitSwitch(true);
+            // reverse_->EnableLimitSwitch(true);
         }
         break;
     }
@@ -1181,13 +1199,13 @@ void SparkMax::DisableLimit(const Direction direction) noexcept
     case (Direction::kForward):
         if (forward_)
         {
-            forward_->EnableLimitSwitch(false);
+            // forward_->EnableLimitSwitch(false);
         }
         break;
     case (Direction::kReverse):
         if (reverse_)
         {
-            reverse_->EnableLimitSwitch(false);
+            // reverse_->EnableLimitSwitch(false);
         }
         break;
     }
@@ -1260,11 +1278,13 @@ void SparkMax::SetVoltage(const units::volt_t voltage) noexcept
 // not propagated from this context (similar to Set).
 void SparkMax::SetCurrent(const units::ampere_t current) noexcept
 {
+#if 0
     position_ = 0.0;
     velocity_ = 0.0;
 
     DoSafely("SetCurrent", [&]() -> void
              { if (!controller_ || AnyError(controller_->SetReference(current.to<double>(), rev::spark::SparkMax::ControlType::kCurrent, 0))) {} });
+#endif
 }
 
 units::volt_t SparkMax::GetVoltage() noexcept
@@ -1296,12 +1316,14 @@ void SparkMax::SpecifyPosition(const double position) noexcept
 
 void SparkMax::SeekPosition(const double position) noexcept
 {
+#if 0
     position_ = position;
     velocity_ = 0.0;
 
     // Add dynamic FeedForward (from parameter)?
     DoSafely("SeekPosition", [&]() -> void
              { if (!controller_ || AnyError(controller_->SetReference(position, rev::spark::SparkMax::ControlType::kSmartMotion, 0))) {} });
+#endif
 }
 
 bool SparkMax::CheckPosition(const double tolerance) noexcept
@@ -1323,12 +1345,14 @@ double SparkMax::GetPositionRaw() noexcept
 
 void SparkMax::SeekVelocity(const double velocity) noexcept
 {
+#if 0
     position_ = 0.0;
     velocity_ = velocity;
 
     // Add dynamic FeedForward (from parameter)?
     DoSafely("SeekVelocity", [&]() -> void
              { if (!controller_ || AnyError(controller_->SetReference(velocity, rev::spark::SparkMax::ControlType::kSmartVelocity, 1))) {} });
+#endif
 }
 
 bool SparkMax::CheckVelocity(const double tolerance) noexcept
@@ -1499,6 +1523,7 @@ std::tuple<bool, bool, std::string> SparkMax::VerifyConfig(const std::string_vie
     // This will be displayed, in the event there is an issue with the setting.
     std::string name = "Unknown";
 
+#if 0
     // In general, these are slow (round-trip to the controller) API calls.
     DoSafely("Get config parameter", [&]() -> void
              {
@@ -1936,6 +1961,7 @@ std::tuple<bool, bool, std::string> SparkMax::VerifyConfig(const std::string_vie
         }
         break;
     } });
+#endif
 
     // Now, have the desired `value`, the `default_value`, and may have the
     // `actual_value`.  Additionally, `name` contains text to display when it
@@ -2026,6 +2052,7 @@ std::string SparkMax::ApplyConfig(const std::string_view key, const ConfigValue 
     const uint *const puint = std::get_if<uint>(&value);
     const double *const pdouble = std::get_if<double>(&value);
 
+#if 0
     // In general, these are slow (round-trip to the controller) API calls.
     DoSafely("Set config parameter", [&]() -> void
              {
@@ -2640,6 +2667,7 @@ std::string SparkMax::ApplyConfig(const std::string_view key, const ConfigValue 
         }
         break;
     } });
+#endif
 
     return name;
 }

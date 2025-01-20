@@ -34,7 +34,7 @@ RobotContainer::RobotContainer() noexcept
 
   ConfigureBindings();
 
-  printf("Axis: %i; Button: %i\n", m_buttonBoard.GetAxisCount(), m_buttonBoard.GetButtonCount());
+  printf("Axis: %i; Button: %i\n", m_buttonBoard.GetHID().GetAxisCount(), m_buttonBoard.GetHID().GetButtonCount());
 }
 
 frc2::CommandPtr RobotContainer::DriveCommandFactory(RobotContainer *container) noexcept
@@ -148,7 +148,7 @@ void RobotContainer::TeleopInit() noexcept
 }
 void RobotContainer::RobotPeriodic() noexcept
 {
-  m_buttonBoard.SetOutputs(m_buttonLights.to_ulong());
+  m_buttonBoard.GetHID().SetOutputs(m_buttonLights.to_ulong());
 }
 
 void RobotContainer::LightButton(unsigned button) noexcept
@@ -179,11 +179,11 @@ void RobotContainer::ClearButton(unsigned button) noexcept
 
 void RobotContainer::ConfigureBindings() noexcept
 {
-  frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kStart).OnTrue(frc2::InstantCommand([&]() -> void
+  frc2::JoystickButton(&m_xbox.GetHID(), frc::XboxController::Button::kStart).OnTrue(frc2::InstantCommand([&]() -> void
                                                                                                  { m_slow = !m_slow; },
                                                                                                  {})
                                                                                 .ToPtr());
-  frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kBack).OnTrue(frc2::InstantCommand([&]() -> void
+  frc2::JoystickButton(&m_xbox.GetHID(), frc::XboxController::Button::kBack).OnTrue(frc2::InstantCommand([&]() -> void
                                                                                                 { m_driveSubsystem.ZeroHeading();
                                                                                             m_fieldOriented = true; },
                                                                                                 {&m_driveSubsystem})
@@ -263,11 +263,11 @@ void RobotContainer::ConfigureBindings() noexcept
                                               {&m_driveSubsystem})
                              .ToPtr());
                              */
-  frc2::POVButton(&m_xbox, 0).OnTrue(frc2::InstantCommand([&]() -> void
+  frc2::POVButton(&m_xbox.GetHID(), 0).OnTrue(frc2::InstantCommand([&]() -> void
                                                           { arm_.ShoulderUp(); },
                                                           {&arm_})
                                          .ToPtr());
-  frc2::POVButton(&m_xbox, 180).OnTrue(frc2::InstantCommand([&]() -> void
+  frc2::POVButton(&m_xbox.GetHID(), 180).OnTrue(frc2::InstantCommand([&]() -> void
                                                             { arm_.ShoulderDown(); },
                                                             {&arm_})
                                            .ToPtr());
@@ -287,7 +287,7 @@ void RobotContainer::ConfigureBindings() noexcept
                                                        {&IntakeSubsystem_})
                                       .ToPtr());
   m_buttonBoard.Button(7).OnFalse(frc2::InstantCommand([&]() -> void
-                                                       { m_buttonBoard.SetOutputs(m_buttonlights); },
+                                                       { m_buttonBoard.GetHID().SetOutputs(m_buttonlights); },
                                                        {})
                                       .ToPtr());
   m_buttonBoard.Button(6).WhileTrue(frc2::InstantCommand([&]() -> void
@@ -332,7 +332,7 @@ std::optional<frc2::CommandPtr> RobotContainer::GetAutonomousCommand() noexcept
 {
   // return PathPlannerAuto("autotest1").ToPtr();
 
-  if (m_buttonBoard.GetRawButton(9))
+  if (m_buttonBoard.GetHID().GetRawButton(9))
   {
     return LeftSide::LeftSideCommandFactory(&m_driveSubsystem, &arm_, &IntakeSubsystem_);
   }

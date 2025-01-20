@@ -330,7 +330,7 @@ void SysIdCommand::Initialize() noexcept
     };
 
     m_driveSysId = std::make_unique<frc2::sysid::SysIdRoutine>(
-        frc2::sysid::Config(std::nullopt, std::nullopt, std::nullopt, std::nullopt),
+        frc2::sysid::Config(std::nullopt, std::nullopt, std::nullopt, nullptr),
         frc2::sysid::Mechanism(driveDrive, driveLog, m_subsystem, "Drive"));
 
     auto steerDrive = [this](units::voltage::volt_t voltage) -> void
@@ -344,7 +344,7 @@ void SysIdCommand::Initialize() noexcept
     };
 
     m_steerSysId = std::make_unique<frc2::sysid::SysIdRoutine>(
-        frc2::sysid::Config(std::nullopt, std::nullopt, std::nullopt, std::nullopt),
+        frc2::sysid::Config(std::nullopt, std::nullopt, std::nullopt, nullptr),
         frc2::sysid::Mechanism(steerDrive, steerLog, m_subsystem, "Drive")); 
 }
 
