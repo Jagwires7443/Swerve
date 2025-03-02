@@ -25,9 +25,9 @@
 #include <networktables/NetworkTableInstance.h>
 #include <networktables/NetworkTableValue.h>
 #include <wpi/array.h>
-#include <pathplanner/lib/auto/AutoBuilder.h>
+//#include <pathplanner/lib/auto/AutoBuilder.h>
 // #include <pathplanner/lib/util/HolonomicPathFollowerConfig.h>
-#include <pathplanner/lib/config/PIDConstants.h>
+//#include <pathplanner/lib/config/PIDConstants.h>
 // #include <pathplanner/lib/util/ReplanningConfig.h>
 #include <frc/geometry/Pose2d.h>
 #include <frc/kinematics/ChassisSpeeds.h>
@@ -43,7 +43,7 @@
 #include <thread>
 #include <vector>
 
-using namespace pathplanner;
+
 
 DriveSubsystem::DriveSubsystem() noexcept
 {

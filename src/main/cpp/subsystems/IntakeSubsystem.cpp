@@ -1,6 +1,6 @@
 #include "subsystems/IntakeSubsystem.h"
 #include <units/voltage.h>
-
+// a lot of motor configurations are in here for some reason
 IntakeSubsystem::IntakeSubsystem() noexcept
 {
     // NEO 550.
@@ -149,37 +149,37 @@ void IntakeSubsystem::Ootas() noexcept
     //{
     //    m_triggerMotor->SetVoltage(12.0_V);}
 }
-
+// reverse
 void IntakeSubsystem::ReverseOotas() noexcept
 {
     m_triggerMotor->SetVoltage(-12.0_V);
     m_shooter1Motor->SetVoltage(-6.0_V);
     m_shooter2Motor->SetVoltage(-6.0_V);
 }
-
+// stop tha shooter moters
 void IntakeSubsystem::StopOotas() noexcept
 {
     m_shooter1Motor->Stop();
     m_shooter2Motor->Stop();
 }
-
+// IDK
 void IntakeSubsystem::StopOotasandBodyT() noexcept
 {
     m_shooter1Motor->Stop();
     m_shooter2Motor->Stop();
     m_triggerMotor->Stop();
 }
-
+// releasing the game piece??
 void IntakeSubsystem::RunTrigger() noexcept
 {
     m_triggerMotor->SetVoltage(12.0_V);
 }
-
+// stop the trigger that releases the game piece
 void IntakeSubsystem::StopTrigger() noexcept
 {
     m_triggerMotor->Stop();
 }
-
+// Climber stuff (THIS MAY NEED TO BE MOVED TO HOOKSUBSYTEMCPP)
 void IntakeSubsystem::Climb1() noexcept
 {
     m_climber1Motor->SetVoltage(6.0_V);

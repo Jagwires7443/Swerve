@@ -13,15 +13,19 @@
 #include "subsystems/DriveSubsystem.h"
 #include "subsystems/Infrastructure.h"
 #include "subsystems/IntakeSubsystem.h"
-#include "subsystems/ArmSubsystem.h"
-
+#include <frc/smartdashboard/SmartDashboard.h>
 #include <bitset>
 #include <memory>
 #include <tuple>
-// #include <frc/DriverStation.h>
-#include <pathplanner/lib/commands/PathPlannerAuto.h>
+
+
+
+//nclude <pathplanner/lib/commands/PathPlannerAuto.h>
+//nclude <pathplanner/lib/auto/NamedCommands.h>
+//nclude <pathplanner/lib/auto/AutoBuilder.h>
 
 /**
+ * 
  * This class is where the bulk of the robot should be declared.  Since
  * Command-based is a "declarative" paradigm, very little robot logic should
  * actually be handled in the {@link Robot} periodic methods (other than the
@@ -68,12 +72,14 @@ private:
   uint32_t m_buttonlights{0};
   std::bitset<12> m_buttonLights{0};
 
-  // The robot's subsystems and commands are defined here...
+  // The robot's subsystems and commands are defined here... (WILL BE CHANGED FOR 2025 BOT)
   DriveSubsystem m_driveSubsystem;
   InfrastructureSubsystem m_infrastructureSubsystem;
   IntakeSubsystem IntakeSubsystem_;
-  ArmSubsystem arm_;
+
 
   frc2::CommandXboxController m_xbox{0};
   frc2::CommandGenericHID m_buttonBoard{1};
 };
+
+

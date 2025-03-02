@@ -1,7 +1,7 @@
 plugins {
     id "cpp"
     id "google-test-test-suite"
-    id "edu.wpi.first.GradleRIO" version "2025.2.1"
+    id "edu.wpi.first.GradleRIO" version "2025.3.1"
 }
 
 // Define my targets (RoboRIO) and artifacts (deployable files)
@@ -98,4 +98,34 @@ model {
             wpi.cpp.deps.googleTest(it)
         }
     }
+}
+
+plugins {
+    id "java"
+    id "edu.wpi.first.GradleRIO" version "2025.1.1" // Adjust the version as needed
+}
+
+def ROBOT_MAIN_CLASS = "frc.robot.Main"
+
+sourceCompatibility = JavaVersion.VERSION_11
+targetCompatibility = JavaVersion.VERSION_11
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation wpi.deps.wpilib()
+    implementation wpi.deps.vendor.java()
+    testImplementation 'junit:junit:4.12'
+}
+
+def deployDir = "build/deploy"
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+
+wrapper {
+    gradleVersion = '7.3'
 }

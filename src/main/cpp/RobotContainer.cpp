@@ -27,6 +27,8 @@
 #include <units/acceleration.h>
 #include <units/velocity.h>
 
+
+
 RobotContainer::RobotContainer() noexcept
 {
 
@@ -262,7 +264,7 @@ void RobotContainer::ConfigureBindings() noexcept
                                               {m_fieldOriented = false; },
                                               {&m_driveSubsystem})
                              .ToPtr());
-                             */
+                             
   frc2::POVButton(&m_xbox.GetHID(), 0).OnTrue(frc2::InstantCommand([&]() -> void
                                                           { arm_.ShoulderUp(); },
                                                           {&arm_})
@@ -272,6 +274,7 @@ void RobotContainer::ConfigureBindings() noexcept
                                                             {&arm_})
                                            .ToPtr());
 
+*/
   // frc2::JoystickButton(&m_buttonBoard, 6).OnTrue(frc2::InstantCommand([&]() -> void
   //                                                                      { arm_.ArmAtPickup(); },
   //                                                                      {&arm_})
@@ -290,10 +293,10 @@ void RobotContainer::ConfigureBindings() noexcept
                                                        { m_buttonBoard.GetHID().SetOutputs(m_buttonlights); },
                                                        {})
                                       .ToPtr());
-  m_buttonBoard.Button(6).WhileTrue(frc2::InstantCommand([&]() -> void
+  /*m_buttonBoard.Button(6).WhileTrue(frc2::InstantCommand([&]() -> void
                                                          { arm_.ArmAtPickup(); },
                                                          {&arm_})
-                                        .ToPtr());
+                                        .ToPtr());*/
   m_buttonBoard.Button(5).WhileTrue(frc2::InstantCommand([&]() -> void
                                                          { IntakeSubsystem_.FullOotas(); },
                                                          {&IntakeSubsystem_})
@@ -311,7 +314,7 @@ void RobotContainer::ConfigureBindings() noexcept
                                                          { IntakeSubsystem_.StopOotas();},
                                                          {&IntakeSubsystem_})
                                  .ToPtr());
-  */
+  
   m_buttonBoard.Button(10).WhileTrue(frc2::InstantCommand([&]() -> void
                                                           { arm_.SpeakerFar(); },
                                                           {&arm_})
@@ -324,15 +327,16 @@ void RobotContainer::ConfigureBindings() noexcept
                                                           { arm_.Stow(); },
                                                           {&arm_})
                                          .ToPtr());
+                                         */
 }
+// "Load an Auto"
+//using namespace pathplanner;
 
-using namespace pathplanner;
-
-std::optional<frc2::CommandPtr> RobotContainer::GetAutonomousCommand() noexcept
-{
+//std::optional<frc2::CommandPtr>RobotContainer::GetAutonomousCommand() noexcept
+//{
   // return PathPlannerAuto("autotest1").ToPtr();
 
-  if (m_buttonBoard.GetHID().GetRawButton(9))
+ /* if (m_buttonBoard.GetHID().GetRawButton(9))
   {
     return LeftSide::LeftSideCommandFactory(&m_driveSubsystem, &arm_, &IntakeSubsystem_);
   }
@@ -340,7 +344,38 @@ std::optional<frc2::CommandPtr> RobotContainer::GetAutonomousCommand() noexcept
   {
     return RightSide::RightSideCommandFactory(&m_driveSubsystem, &arm_, &IntakeSubsystem_);
   }
-}
+  */
+//return PathPlannerAuto("Example Auto").ToPtr();
+//}
+
+//sendable chooser pathplanner stuff
+//using namespace pathplanner;
+//RobotContainer::RobotContainer(){
+  //Build an auto chooser. This will use frc2::cmd::None() as the default option.
+//autoChooser = AutoBuilder::buildAutoChooser();
+  //Another option that allows you to specify the default auto by its name 
+  //autoChooser = AutoBuilder::buildAutoChooser("My Default Auto");
+
+  //frc::SmartDashboard::PutData("Auto Chooser", &autoChooser);
+//}
+//frc2::Command* RobotContainer::GetAutonomousCommand() {
+// Returns a frc2::Command* that is freed at program termination
+//return autoChooser.GetSelected(); 
+//}
+
+//pathplanner named commands 
+
+//using namespace pathplanner;
+
+//RobotContainer::RobotContainer() : m_swerve(), m_exampleSubsystem() {
+  //Register named commands. You must pass either a commandptr rvalue or a share_ptr to the command, not the command directly.
+//NamedCommands::registerCommand("autoBalance", std::move(m_swerve.autoBalanceCommand())); // <- This example method returns CommandPtr
+//NamedCommands::registerCommand("exampleCommand", std::move(m_exampleSubsystem.exampleCommand())); // <- This example method returns CommandPtr
+    //NamedCommands::registerCommand("someOtherCommand", std::move(SomeOtherCommand().ToPtr()));
+    //NamedCommands::registerCommand("someOtherCommandShared", std::make_shared<frc2::SomeOtherCommand>());
+//the errors are bc they arent real commands and are examples
+//}
+
 
 // RightSide = red right
 // OpenLeftSide = red left
@@ -351,7 +386,11 @@ std::optional<frc2::CommandPtr> RobotContainer::GetAutonomousCommand() noexcept
 // Shoot2Taxi = mid for both sides
 
 // right
-//  std::optional<frc2::CommandPtr> RobotContainer::GetAutonomousCommand() noexcept
+
+ std::optional<frc2::CommandPtr> RobotContainer::GetAutonomousCommand() noexcept
+{
+  
+}
 //{
 
 /*
@@ -515,3 +554,5 @@ void RobotContainer::DisabledExit() noexcept
 
   m_driveSubsystem.DisabledExit();
 }
+
+

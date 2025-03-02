@@ -55,7 +55,7 @@ public:
   void StopClimb2() noexcept;
   void ReverseClimb1() noexcept;
   void ReverseClimb2() noexcept;
-
+// For 2025 this needs changing, we need to indentify the motors and change the names of the functions
 private:
   std::unique_ptr<SmartMotorBase> m_intakeMotor;
   std::unique_ptr<SmartMotorBase> m_shooter1Motor;
