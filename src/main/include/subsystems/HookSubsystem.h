@@ -49,6 +49,7 @@ public:
   }
 
   void SetHookAngle(units::angle::degree_t angle) noexcept;
+  
   void SetAngles(units::angle::degree_t HookAngle) noexcept
   {
     SetHookAngle(HookAngle);
@@ -62,6 +63,8 @@ public:
 
   void ArmAtAmp() noexcept;
   void ArmAtSpeaker() noexcept;
+  void ShoulderUp() noexcept;
+  void ShoulderDown() noexcept;
   void ArmAtPickup() noexcept;
   void Stow() noexcept;
   void SpeakerFar() noexcept;
@@ -76,7 +79,7 @@ private:
   std::unique_ptr<frc::ProfiledPIDController<units::angle::degrees>> HookPIDController_;
   std::unique_ptr<TuningPID> HookPIDControllerUI_;
 
-  units::angle::degree_t commandedHookAngle_{0.0};
+  units::angle::degree_t CommandedHookAngle_{0.0};
   units::angle::degree_t HookAngle_{0.0_deg};
 
   double HookControlUI_{0.0};

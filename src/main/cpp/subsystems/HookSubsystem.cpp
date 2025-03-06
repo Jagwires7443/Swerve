@@ -19,7 +19,7 @@
 HookSubsystem::HookSubsystem() noexcept
 {
     HookMotorBase_ = SparkMaxFactory::CreateSparkMax("Hook", nonDrive::kShoulderMotorCanID, nonDrive::kShoulderMotorInverted);
-    HookSensor_ = std::make_unique<HookSensor>(nonDrive::kShoulderEncoderPort, nonDrive::kShoulderAlignmentOffset);
+    HookSensor_ = std::make_unique<AngleSensor>(nonDrive::kShoulderEncoderPort, nonDrive::kShoulderAlignmentOffset);
     HookMotor_ = std::make_unique<SmartMotor<units::angle::degrees>>(*HookMotorBase_);
 
     HookMotor_->AddConfig(SmartMotorBase::ConfigMap{
@@ -130,22 +130,3 @@ void HookSubsystem::Stow() noexcept
 {
     SetHookAngle(+17.0_deg); // originally 45
 }
-
-void FlipperSubsystem::SpeakerFar() noexcept
-{
-    SetFlipperAngle(+53.0_deg);
-}
-
-
-class FlipperSubsystem {
-
-public:
-    void SpeakerFar() noexcept;
-    void BurnConfig() noexcept;
-
-private:
-    void SetFlipperAngle(units::angle::degree_t angle) noexcept;
-    std::unique_ptr<SmartMotor<units::angle::degrees>> FlipperMotor_;
-    std::unique_ptr<frc::ProfiledPIDController<units::angle::degrees>> FlipperPIDController_;
-};
-

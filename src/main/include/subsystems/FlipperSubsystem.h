@@ -23,13 +23,11 @@ class FlipperSubsystem : public frc2::SubsystemBase {
 
 public:
 
-   FlipperSubsystem();
-    
   void SetAngle(units::degree_t targetAngle);
   void Stop();
   units::degree_t GetCurrentAngle();
  
- FlipperSubsystem() noexcept;
+  FlipperSubsystem() noexcept;
 
   void Periodic() noexcept override;
 

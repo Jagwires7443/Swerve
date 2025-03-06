@@ -17,7 +17,7 @@
 FlipperSubsystem::FlipperSubsystem() noexcept
 {
     FlipperMotorBase_ = SparkMaxFactory::CreateSparkMax("Flipper", nonDrive::kShoulderMotorCanID, nonDrive::kShoulderMotorInverted);
-    FlipperSensor_ = std::make_unique<FlipperSensor>(nonDrive::kShoulderEncoderPort, nonDrive::kShoulderAlignmentOffset);
+    FlipperSensor_ = std::make_unique<AngleSensor>(nonDrive::kShoulderEncoderPort, nonDrive::kShoulderAlignmentOffset);
     FlipperMotor_ = std::make_unique<SmartMotor<units::angle::degrees>>(*FlipperMotorBase_);
 
     FlipperMotor_->AddConfig(SmartMotorBase::ConfigMap{
