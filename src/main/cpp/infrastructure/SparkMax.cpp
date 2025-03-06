@@ -765,7 +765,8 @@ void SparkMax::ConfigPeriodic() noexcept
                     }
 
             // Does not get sent to the motor controller, done locally?
-            motor_->SetInverted(inverted_); });
+            spark_config_->Inverted(inverted_);
+                 });
 
         return;
     }

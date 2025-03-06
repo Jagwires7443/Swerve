@@ -51,9 +51,3 @@ private:
         frc::SmartDashboard::PutBoolean("Upper Limit Switch", upperLimitSwitch.Get());
     }
 };
-
-#ifndef RUNNING_FRC_TESTS
-int main() {
-    return frc::StartRobot<ElevatorSubsystem>();
-}
-#endif
