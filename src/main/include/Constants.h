@@ -68,7 +68,7 @@ namespace physical
     // CAN ID and Digital I/O Port assignments.
     constexpr int kFrontLeftDriveMotorCanID = 1;
     constexpr int kFrontLeftTurningMotorCanID = 2;
-    constexpr int kFrontRightDriveMotorCanID = 3;
+    constexpr int kFrontRightDriveMotorCanID = 12;
     constexpr int kFrontRightTurningMotorCanID = 4;
     constexpr int kRearLeftDriveMotorCanID = 5;
     constexpr int kRearLeftTurningMotorCanID = 6;
