@@ -7,8 +7,10 @@
 #include <units/velocity.h>
 #include <wpi/DataLog.h>
 
-#include <rev/config/LimitSwitchConfig.h>
 #include <rev/config/AbsoluteEncoderConfig.h>
+#include <rev/config/LimitSwitchConfig.h>
+#include <rev/config/SparkFlexConfig.h>
+#include <rev/config/SparkMaxConfig.h>
 #include <rev/SparkFlex.h>
 #include <rev/SparkMax.h>
 #include <rev/SparkLowLevel.h>
@@ -157,10 +159,13 @@ namespace
         std::unique_ptr<rev::spark::SparkMax> max_motor_;
         std::unique_ptr<rev::spark::SparkFlexExternalEncoder> flex_encoder_;
         std::unique_ptr<rev::spark::SparkMaxAlternateEncoder> max_encoder_;
+        std::unique_ptr<rev::spark::SparkFlexConfig> flex_config_;
+        std::unique_ptr<rev::spark::SparkMaxConfig> max_config_;
         std::unique_ptr<rev::RelativeEncoder> builtin_encoder_;
         std::unique_ptr<rev::spark::SparkClosedLoopController> controller_;
         rev::spark::SparkBase *motor_ = nullptr;
         rev::RelativeEncoder *encoder_ = nullptr;
+        rev::spark::SparkBaseConfig *spark_config_ = nullptr;
 
         // REV object holders, only used when not using an external
         // ("alternate") encoder.
@@ -686,7 +691,6 @@ void SparkMax::Periodic() noexcept
         ShuffleboardPeriodic();
     }
 
-#if 0
     // This call should be safe and "free", in that it only reports information
     // collected from periodic status frames.  To capture any transient events,
     // GetStickyFaults() is used instead of GetFaults().  There is no
@@ -697,9 +701,8 @@ void SparkMax::Periodic() noexcept
     // and it's not terrible to draw extra attention to any problems.
     if (motor_)
     {
-        faultBits_ |= std::bitset<16>(motor_->GetStickyFaults());
+        faultBits_ |= std::bitset<16>(motor_->GetStickyFaults().rawBits);
     }
-#endif
 
     // In microseconds.  At 50Hz, this will nominally tick by increments of 20.
     // The object here is too only continue at a rate of around 3Hz, and to
@@ -730,7 +733,6 @@ void SparkMax::Periodic() noexcept
 // appropriate.  Also construct limit switch REV objects, as appropriate.
 void SparkMax::ConfigPeriodic() noexcept
 {
-#if 0
     // First stage of state machine; this has to be there before going further.
     // This part of the state machine is orthogonal to the rest, and preempts
     // other states, at least temporarily.  This should not run more than once,
@@ -746,11 +748,15 @@ void SparkMax::ConfigPeriodic() noexcept
                     {
                         flex_motor_ = std::make_unique<rev::spark::SparkFlex>(canId_, rev::spark::SparkLowLevel::MotorType::kBrushless);
                         motor_ = dynamic_cast<rev::spark::SparkBase *>(flex_motor_.get());
+                        flex_config_ = std::make_unique<rev::spark::SparkFlexConfig>();
+                        spark_config_ = dynamic_cast<rev::spark::SparkBaseConfig *>(flex_config_.get());
                     }
                     else
                     {
                         max_motor_ = std::make_unique<rev::spark::SparkMax>(canId_, rev::spark::SparkLowLevel::MotorType::kBrushless);
                         motor_ = dynamic_cast<rev::spark::SparkBase *>(max_motor_.get());
+                        max_config_ = std::make_unique<rev::spark::SparkMaxConfig>();
+                        spark_config_ = dynamic_cast<rev::spark::SparkBaseConfig *>(max_config_.get());
                     }
                     if (!motor_)
                     {
@@ -772,7 +778,9 @@ void SparkMax::ConfigPeriodic() noexcept
     {
         DoSafely("RestoreFactoryDefaults", [&]() -> void
                  {
-            if (!motor_ || AnyError(motor_->RestoreFactoryDefaults()))
+            rev::spark::SparkBaseConfig config;
+
+            if (!motor_ || AnyError(motor_->Configure(config, rev::spark::SparkBase::ResetMode::kResetSafeParameters, rev::spark::SparkBase::PersistMode::kNoPersistParameters)))
                 {
                     return;
                 } });
@@ -782,9 +790,12 @@ void SparkMax::ConfigPeriodic() noexcept
         flex_motor_ = nullptr;
         max_encoder_ = nullptr;
         flex_encoder_ = nullptr;
+        max_config_ = nullptr;
+        flex_config_ = nullptr;
         builtin_encoder_ = nullptr;
         motor_ = nullptr;
         encoder_ = nullptr;
+        spark_config_ = nullptr;
         controller_ = nullptr;
         forward_ = nullptr;
         reverse_ = nullptr;
@@ -801,18 +812,18 @@ void SparkMax::ConfigPeriodic() noexcept
                  {
             if (encoderCounts_ == 0)
             {
-             builtin_encoder_ = std::make_unique<rev::SparkRelativeEncoder>(motor_->GetEncoder());
+             builtin_encoder_ = std::make_unique<rev::spark::SparkRelativeEncoder>(motor_->GetEncoder());
                 encoder_ = builtin_encoder_.get();
             }
             else if (flex_not_max_)
             {
-                flex_encoder_ = std::make_unique<rev::SparkFlexExternalEncoder>(flex_motor_->GetExternalEncoder(encoderCounts_));
-                encoder_ = dynamic_cast<rev::SparkRelativeEncoder *>(flex_encoder_.get());
+                flex_encoder_ = std::make_unique<rev::spark::SparkFlexExternalEncoder>(flex_motor_->GetExternalEncoder());
+                encoder_ = dynamic_cast<rev::spark::SparkRelativeEncoder *>(flex_encoder_.get());
             }
             else
             {
-                max_encoder_ = std::make_unique<rev::SparkMaxAlternateEncoder>(max_motor_->GetAlternateEncoder(encoderCounts_));
-                encoder_ = dynamic_cast<rev::SparkRelativeEncoder *>(max_encoder_.get());  
+                max_encoder_ = std::make_unique<rev::spark::SparkMaxAlternateEncoder>(max_motor_->GetAlternateEncoder());
+                encoder_ = dynamic_cast<rev::spark::SparkRelativeEncoder *>(max_encoder_.get());  
             }
             if (!encoder_)
             {
@@ -828,7 +839,7 @@ void SparkMax::ConfigPeriodic() noexcept
     {
         DoSafely("controller_", [&]() -> void
                  {
-            controller_ = std::make_unique<rev::SparkPIDController>(motor_->GetPIDController());
+            controller_ = std::make_unique<rev::spark::SparkClosedLoopController>(motor_->GetClosedLoopController());
             if (!controller_)
             {
                 ++throws_;
@@ -843,7 +854,7 @@ void SparkMax::ConfigPeriodic() noexcept
     // (including resets) is driven by the call to GetStickyFaults() in the
     // main Periodic() method, by the AnyErrors() method, and by the places
     // throw() is used here in the post-reboot state machine.
-    if (motor_->GetStickyFault(rev::spark::SparkMax::FaultID::kHasReset))
+    if (motor_->GetStickyWarnings().hasReset)
     {
         configReboot_ = true;
         configGood_ = false;
@@ -902,7 +913,8 @@ void SparkMax::ConfigPeriodic() noexcept
                 // This might be local, but it isn't documented/clear behavior.
                 DoSafely("SetFeedbackDevice", [&]() -> void
                          {
-                    if (AnyError(controller_->SetFeedbackDevice(*encoder_)))
+                    spark_config_->closedLoop.SetFeedbackSensor(rev::spark::ClosedLoopConfig::FeedbackSensor::kAlternateOrExternalEncoder);
+                    if (AnyError(motor_->Configure(*spark_config_, rev::spark::SparkBase::ResetMode::kNoResetSafeParameters, rev::spark::SparkBase::PersistMode::kNoPersistParameters)))
                     {
                         ++throws_;
                         throw std::runtime_error("SetFeedbackDevice()");
@@ -917,10 +929,10 @@ void SparkMax::ConfigPeriodic() noexcept
                     tmp = std::get<uint>(config_.at("kLimitSwitchFwdPolarity"));
                 }
 
-                const rev::SparkLimitSwitch::Type polarity = tmp == 0 ? rev::SparkLimitSwitch::Type::kNormallyOpen : rev::SparkLimitSwitch::Type::kNormallyClosed;
+                const rev::spark::LimitSwitchConfig::Type polarity = tmp == 0 ? rev::spark::LimitSwitchConfig::Type::kNormallyOpen : rev::spark::LimitSwitchConfig::Type::kNormallyClosed;
                 DoSafely("forward_", [&]() -> void
                          {
-                forward_ = std::make_unique<rev::SparkLimitSwitch>(motor_->GetForwardLimitSwitch(polarity));
+                forward_ = std::make_unique<rev::spark::SparkLimitSwitch>(motor_->GetForwardLimitSwitch());
                 if (!forward_)
                 {
                     ++throws_;
@@ -937,7 +949,15 @@ void SparkMax::ConfigPeriodic() noexcept
                 // For alternate encoder, check expected counts per revolution.
                 DoSafely("GetCountsPerRevolution", [&]() -> void
                          {
-                    if (encoderCounts_ < 0 || static_cast<uint32_t>(encoderCounts_) != encoder_->GetCountsPerRevolution())
+                    int counts;
+
+                    if (flex_not_max_)
+                    {
+                        counts = flex_motor_->configAccessor.externalEncoder.GetCountsPerRevolution();
+                    } else {
+                        counts = max_motor_->configAccessor.alternateEncoder.GetCountsPerRevolution();
+                    }
+                    if (encoderCounts_ < 0 || static_cast<uint32_t>(encoderCounts_) != counts)
                     {
                         ++throws_;
                         throw std::runtime_error("GetCountsPerRevolution()");
@@ -952,10 +972,10 @@ void SparkMax::ConfigPeriodic() noexcept
                     tmp = std::get<uint>(config_.at("kLimitSwitchRevPolarity"));
                 }
 
-                const rev::SparkLimitSwitch::Type polarity = tmp == 0 ? rev::SparkLimitSwitch::Type::kNormallyOpen : rev::SparkLimitSwitch::Type::kNormallyClosed;
+                const rev::spark::LimitSwitchConfig::Type polarity = tmp == 0 ? rev::spark::LimitSwitchConfig::Type::kNormallyOpen : rev::spark::LimitSwitchConfig::Type::kNormallyClosed;
                 DoSafely("reverse_", [&]() -> void
                          {
-                reverse_ = std::make_unique<rev::SparkLimitSwitch>(motor_->GetReverseLimitSwitch(polarity));
+                reverse_ = std::make_unique<rev::spark::SparkLimitSwitch>(motor_->GetReverseLimitSwitch());
                 if (!reverse_)
                 {
                     ++throws_;
@@ -1002,7 +1022,6 @@ void SparkMax::ConfigPeriodic() noexcept
     {
         PersistentConfigPeriodic();
     }
-#endif
 }
 
 void SparkMax::PersistentConfigPeriodic() noexcept
@@ -1139,12 +1158,11 @@ void SparkMax::SetIdleMode(const SmartMotorBase::IdleMode mode) noexcept
         return;
     }
 
-    const rev::spark::SparkMax::IdleMode tmp = (mode == SmartMotorBase::IdleMode::kBrake) ? rev::spark::SparkMax::IdleMode::kBrake : rev::spark::SparkMax::IdleMode::kCoast;
+    const rev::spark::SparkBaseConfig::IdleMode tmp = (mode == SmartMotorBase::IdleMode::kBrake) ? rev::spark::SparkBaseConfig::IdleMode::kBrake : rev::spark::SparkBaseConfig::IdleMode::kCoast;
 
-#if 0
+    spark_config_->SetIdleMode(tmp);
     DoSafely("SetIdleMode", [&]() -> void
-             { if (motor_) { motor_->SetIdleMode(tmp); } });
-#endif
+             { if (motor_) { motor_->Configure(*spark_config_, rev::spark::SparkBase::ResetMode::kNoResetSafeParameters, rev::spark::SparkBase::PersistMode::kNoPersistParameters); } });
 }
 
 SmartMotorBase::IdleMode SparkMax::GetIdleMode() noexcept
@@ -1455,9 +1473,12 @@ void SparkMax::DoSafely(const char *const what, std::function<void()> work) noex
         flex_motor_ = nullptr;
         max_encoder_ = nullptr;
         flex_encoder_ = nullptr;
+        max_config_ = nullptr;
+        flex_config_ = nullptr;
         builtin_encoder_ = nullptr;
         motor_ = nullptr;
         encoder_ = nullptr;
+        spark_config_ = nullptr;
         controller_ = nullptr;
         forward_ = nullptr;
         reverse_ = nullptr;
@@ -1473,9 +1494,12 @@ void SparkMax::DoSafely(const char *const what, std::function<void()> work) noex
         flex_motor_ = nullptr;
         max_encoder_ = nullptr;
         flex_encoder_ = nullptr;
+        max_config_ = nullptr;
+        flex_config_ = nullptr;
         builtin_encoder_ = nullptr;
         motor_ = nullptr;
         encoder_ = nullptr;
+        spark_config_ = nullptr;
         controller_ = nullptr;
         forward_ = nullptr;
         reverse_ = nullptr;
