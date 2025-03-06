@@ -138,7 +138,7 @@ namespace nonDrive
     constexpr int kTriggerMotorCanID = 11;
     constexpr bool kTriggerMotorInverted = true;
 
-    constexpr int kShooter1MotorCanID = 12;
+    constexpr int kShooter1MotorCanID = 22;
     constexpr int kShooter2MotorCanID = 13;
     constexpr bool kShooter1MotorInverted = true;
     constexpr bool kShooter2MotorInverted = false;

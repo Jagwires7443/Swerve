@@ -20,11 +20,11 @@ void InfrastructureSubsystem::Periodic() noexcept
 {
     if (NoteSensor() == false)
     {
-        printf("no note");
+        // printf("no note");
     }
     else
     {
-        printf("yes note");
+        // printf("yes note");
     }
 
     if (NoteSensor() == true)
