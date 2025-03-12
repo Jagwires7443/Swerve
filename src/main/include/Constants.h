@@ -66,14 +66,15 @@ namespace physical
     constexpr units::meter_t kWheelBase = 23.75_in;
 
     // CAN ID and Digital I/O Port assignments.
-    constexpr int kFrontLeftDriveMotorCanID = 1;
-    constexpr int kFrontLeftTurningMotorCanID = 2;
-    constexpr int kFrontRightDriveMotorCanID = 12;
+    constexpr int kFrontLeftDriveMotorCanID = 5;
+    constexpr int kFrontLeftTurningMotorCanID = 1;
+    constexpr int kFrontRightDriveMotorCanID = 6;
     constexpr int kFrontRightTurningMotorCanID = 4;
-    constexpr int kRearLeftDriveMotorCanID = 5;
-    constexpr int kRearLeftTurningMotorCanID = 6;
-    constexpr int kRearRightDriveMotorCanID = 7;
-    constexpr int kRearRightTurningMotorCanID = 8;
+    constexpr int kRearLeftDriveMotorCanID = 7;
+    constexpr int kRearLeftTurningMotorCanID = 2;
+    constexpr int kRearRightDriveMotorCanID = 8;
+    constexpr int kRearRightTurningMotorCanID = 3;
+
     constexpr int kFrontLeftTurningEncoderPort = 0;
     constexpr int kFrontRightTurningEncoderPort = 1;
     constexpr int kRearLeftTurningEncoderPort = 2;
@@ -89,7 +90,7 @@ namespace pidf
 {
     constexpr units::degrees_per_second_t kTurningPositionMaxVelocity = 1250.0_deg_per_s;
     constexpr units::degrees_per_second_squared_t kTurningPositionMaxAcceleration = 12500.0_deg_per_s_sq;
-    constexpr double kTurningPositionP = 0.005;
+    constexpr double kTurningPositionP = 0.005; 
     constexpr double kTurningPositionF = 0.003;
     constexpr double kTurningPositionI = 0.0;
     constexpr double kTurningPositionIZ = 0.0;

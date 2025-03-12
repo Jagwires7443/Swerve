@@ -1,6 +1,3 @@
-
-
-
 // Copyright (c) FIRST and other WPILib contributors.
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
@@ -48,7 +45,7 @@
 DriveSubsystem::DriveSubsystem() noexcept
 {
   // Set up onboard printf-style logging.
-  m_stringLog = wpi::log::StringLogEntry(frc::DataLogManager::GetLog(), "/DriveSubsystem/");
+  // m_stringLog = wpi::log::StringLogEntry(frc::DataLogManager::GetLog(), "/DriveSubsystem/");
 
   // Set up the "navX" IMU first, so there's more time before it is used later.
   // See https://pdocs.kauailabs.com/navx-mxp/guidance/gyroaccelcalibration/.
