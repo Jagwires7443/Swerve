@@ -13,10 +13,15 @@ namespace physical
 {
     // Alignment constants, for each swerve module.  Specified on [-2048, 2048)
     // "count" scale, in (dimensionless) angular units.
-    constexpr int kFrontLeftAlignmentOffset = +1427;
-    constexpr int kFrontRightAlignmentOffset = -903;
-    constexpr int kRearLeftAlignmentOffset = +384;
-    constexpr int kRearRightAlignmentOffset = -205;
+    // Front Left = -1820
+    // Front Right = +1286
+    // Rear Left = -1937
+    // Rear Right = +1903
+    constexpr int kFrontLeftAlignmentOffset = +1820;
+    constexpr int kFrontRightAlignmentOffset = -1286;
+    constexpr int kRearLeftAlignmentOffset = +1937;
+    constexpr int kRearRightAlignmentOffset = -1903;
+
 
     // SDS Mk3 Standard (or Fast) Gear Ratio: 8.16:1 (or 6.86:1);
     // Nominal Wheel Diameter (4"): =0.1016m;
@@ -76,9 +81,9 @@ namespace physical
     constexpr int kRearRightTurningMotorCanID = 3;
 
     constexpr int kFrontLeftTurningEncoderPort = 0;
-    constexpr int kFrontRightTurningEncoderPort = 1;
-    constexpr int kRearLeftTurningEncoderPort = 2;
-    constexpr int kRearRightTurningEncoderPort = 3;
+    constexpr int kFrontRightTurningEncoderPort = 3;
+    constexpr int kRearLeftTurningEncoderPort = 1;
+    constexpr int kRearRightTurningEncoderPort = 2;
 
     // These can flip because of gearing.
     constexpr bool kRightDriveMotorInverted = true;

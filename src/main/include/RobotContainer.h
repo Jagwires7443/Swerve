@@ -75,11 +75,9 @@ private:
   // The robot's subsystems and commands are defined here... (WILL BE CHANGED FOR 2025 BOT)
   DriveSubsystem m_driveSubsystem;
   InfrastructureSubsystem m_infrastructureSubsystem;
-  IntakeSubsystem IntakeSubsystem_;
+  // IntakeSubsystem IntakeSubsystem_;
 
 
   frc2::CommandXboxController m_xbox{0};
   frc2::CommandGenericHID m_buttonBoard{1};
 };
-
-

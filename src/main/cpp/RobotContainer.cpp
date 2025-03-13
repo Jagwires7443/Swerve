@@ -131,9 +131,10 @@ void RobotContainer::AutonomousInit() noexcept
   //  m_infrastructureSubsystem.SetDefaultCommand(frc2::RunCommand([&]() -> void
   //                                                               { m_infrastructureSubsystem.SetLEDPattern(m_LEDPattern); },
   //                                                               {&m_infrastructureSubsystem}));
-
+#if 0
   IntakeSubsystem_.SetDefaultCommand(frc2::RunCommand([&]() -> void {},
                                                       {&IntakeSubsystem_}));
+#endif
 }
 
 void RobotContainer::TeleopInit() noexcept
@@ -148,6 +149,7 @@ void RobotContainer::TeleopInit() noexcept
   //                                                               { m_infrastructureSubsystem.SetLEDPattern(m_LEDPattern); },
   //                                                               {&m_infrastructureSubsystem}));
 }
+
 void RobotContainer::RobotPeriodic() noexcept
 {
   m_buttonBoard.GetHID().SetOutputs(m_buttonLights.to_ulong());
@@ -190,6 +192,7 @@ void RobotContainer::ConfigureBindings() noexcept
                                                                                             m_fieldOriented = true; },
                                                                                                 {&m_driveSubsystem})
                                                                                .ToPtr());
+#if 0
   m_xbox.LeftTrigger().WhileTrue(frc2::InstantCommand([&]() -> void
                                                       { IntakeSubsystem_.RunIntake(); },
                                                       {&IntakeSubsystem_})
@@ -255,6 +258,7 @@ void RobotContainer::ConfigureBindings() noexcept
                                           { IntakeSubsystem_.StopClimb2(); },
                                           {&IntakeSubsystem_})
                          .ToPtr());
+#endif
 
   /*m_xbox.B().OnTrue(frc2::InstantCommand([&]() -> void
                                               {m_fieldOriented = true; },
@@ -280,6 +284,7 @@ void RobotContainer::ConfigureBindings() noexcept
   //                                                                      {&arm_})
   //                                                     .ToPtr());
 
+#if 0
   m_buttonBoard.Button(7).WhileTrue(frc2::InstantCommand([&]() -> void
                                                          { IntakeSubsystem_.Ootas(); },
                                                          {&IntakeSubsystem_})
@@ -305,6 +310,7 @@ void RobotContainer::ConfigureBindings() noexcept
                                                        { IntakeSubsystem_.StopOotas(); },
                                                        {&IntakeSubsystem_})
                                       .ToPtr());
+#endif
   /*
     m_buttonBoard.Button(5).WhileTrue(frc2::InstantCommand([&]() -> void
                                                          { intakeSubsystem_.HalfOotas();},
