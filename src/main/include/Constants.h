@@ -93,10 +93,15 @@ namespace physical
 
 namespace pidf
 {
-    constexpr units::degrees_per_second_t kTurningPositionMaxVelocity = 1250.0_deg_per_s;
-    constexpr units::degrees_per_second_squared_t kTurningPositionMaxAcceleration = 12500.0_deg_per_s_sq;
-    constexpr double kTurningPositionP = 0.005; 
-    constexpr double kTurningPositionF = 0.003;
+//    constexpr units::angular_velocity::degrees_per_second_t kTurningPositionMaxVelocity = 1250.0_deg_per_s;
+//    constexpr units::angular_acceleration::degrees_per_second_squared_t kTurningPositionMaxAcceleration = 12500.0_deg_per_s_sq;
+//    constexpr double kTurningPositionP = 0.005;
+//    constexpr double kTurningPositionF = 0.003;
+
+    constexpr units::degrees_per_second_t kTurningPositionMaxVelocity = 1250.0_deg_per_s * 10000.0;
+    constexpr units::degrees_per_second_squared_t kTurningPositionMaxAcceleration = 12500.0_deg_per_s_sq * 10000.0;
+    constexpr double kTurningPositionP = 0.004 / 10.0;
+    constexpr double kTurningPositionF = 0.000 / 10.0;
     constexpr double kTurningPositionI = 0.0;
     constexpr double kTurningPositionIZ = 0.0;
     constexpr double kTurningPositionIM = 0.0;
@@ -160,6 +165,7 @@ namespace nonDrive
     //  dont use 12 unless its for climber code
 
 }
+
 namespace arm
 {
     constexpr units::angular_velocity::degrees_per_second_t kShoulderPositionMaxVelocity = 20.0_deg_per_s;

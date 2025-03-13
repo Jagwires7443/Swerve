@@ -46,6 +46,7 @@ public:
     void InitSendable(wpi::SendableBuilder &builder) noexcept override
     {
         builder.SetSmartDashboardType("PIDController");
+#if 0
         builder.AddDoubleProperty(
             "p", [&]() -> double
             { return m_p; },
@@ -76,6 +77,7 @@ public:
             { return m_e; },
             [&](bool value) -> void
             { m_e = value; });
+#endif
     }
 
     double GetP() const noexcept { return m_p; }

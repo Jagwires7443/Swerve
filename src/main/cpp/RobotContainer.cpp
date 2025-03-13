@@ -560,5 +560,3 @@ void RobotContainer::DisabledExit() noexcept
 
   m_driveSubsystem.DisabledExit();
 }
-
-
