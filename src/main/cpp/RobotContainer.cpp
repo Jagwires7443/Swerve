@@ -393,9 +393,9 @@ void RobotContainer::ConfigureBindings() noexcept
 
 // right
 
- std::optional<frc2::CommandPtr> RobotContainer::GetAutonomousCommand() noexcept
+std::optional<frc2::CommandPtr> RobotContainer::GetAutonomousCommand() noexcept
 {
-  
+  return std::nullopt;
 }
 //{
 

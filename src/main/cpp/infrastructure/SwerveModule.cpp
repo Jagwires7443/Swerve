@@ -50,6 +50,7 @@ SwerveModule::SwerveModule(
 
     // Construct turning position PID controller on the roboRIO; only used when
     // turning position control is running on the roborRIO.
+#if 0
     m_rioPIDController = std::make_unique<frc::ProfiledPIDController<units::angle::degrees>>(
         pidf::kTurningPositionP,
         pidf::kTurningPositionI,
@@ -57,8 +58,15 @@ SwerveModule::SwerveModule(
         std::move(frc::TrapezoidProfile<units::angle::degrees>::Constraints{
             pidf::kTurningPositionMaxVelocity,
             pidf::kTurningPositionMaxAcceleration}));
+#endif
 
-    m_rioPIDController->EnableContinuousInput(-180.0_deg, +180.0_deg);
+    m_rioPIDController = std::make_unique<frc::PIDController>(
+        pidf::kTurningPositionP,
+        pidf::kTurningPositionI,
+        pidf::kTurningPositionD);
+
+    // m_rioPIDController->EnableContinuousInput(-180.0_deg, +180.0_deg);
+    m_rioPIDController->EnableContinuousInput(-180.0, +180.0);
 
     // Construct turning absolute duty cycle encoder.  A `DigitalSource` is
     // required by the `DutyCycle` ctor.  Nothing here is expected to fail.
@@ -210,7 +218,7 @@ void SwerveModule::Periodic() noexcept
     }
 
     // Update (and apply below) turning position PID.
-    double calculated = m_rioPIDController->Calculate(m_turningPosition);
+    double calculated = m_rioPIDController->Calculate(m_turningPosition.value());
 
     // Feedforward is a form of open-loop control.  For turning, there is not
     // much to do, but add in a constant value based only on the direction of
@@ -227,7 +235,9 @@ void SwerveModule::Periodic() noexcept
     }
 
     // Use voltage compensation, to offset low battery voltage.
+    // if (m_name == "Front Left") {
     m_turningMotor->SetVoltage(calculated * 12.0_V);
+    // }
 }
 
 void SwerveModule::ResetTurning() noexcept
@@ -247,7 +257,8 @@ void SwerveModule::ResetTurning() noexcept
     m_turningPosition = position.value();
     m_turningMotor->SpecifyPosition(m_turningPosition);
 
-    m_rioPIDController->Reset(m_turningPosition);
+    // m_rioPIDController->Reset(m_turningPosition.value());
+    m_rioPIDController->Reset();
 }
 
 void SwerveModule::ResetDrive() noexcept
@@ -306,8 +317,8 @@ void SwerveModule::SetTurningPosition(const units::angle::degree_t position) noe
 
     m_commandedHeading = adjustedPosition;
 
-    m_rioPIDController->SetGoal(adjustedPosition);
-
+    // m_rioPIDController->SetGoal(adjustedPosition);
+    m_rioPIDController->SetSetpoint(adjustedPosition.value());
     if (m_rio || m_testModeControl || m_testModeTurningVoltage != 0.0)
     {
         return;
@@ -441,7 +452,7 @@ void SwerveModule::SetDesiredState(const frc::SwerveModuleState &referenceState)
     if (position.has_value())
     {
         m_turningPosition = position.value();
-        state = frc::SwerveModuleState::Optimize(referenceState, frc::Rotation2d(m_turningPosition));
+        // state.Optimize(frc::Rotation2d(m_turningPosition));
     }
 
     SetTurningPosition(state.angle.Degrees());
@@ -468,6 +479,7 @@ void SwerveModule::SysIdLogDrive(frc::sysid::SysIdRoutineLog *logger) noexcept
 
 void SwerveModule::SysIdLogSteer(frc::sysid::SysIdRoutineLog *logger) noexcept
 {
+#if 0
     // Use the external/absolute position sensor for turning data.  Given a
     // target velocity of zero, the velocity should be the same as the error.
     units::angle::turn_t turning_position = m_turningPosition;
@@ -478,6 +490,7 @@ void SwerveModule::SysIdLogSteer(frc::sysid::SysIdRoutineLog *logger) noexcept
         .current(m_turningMotor->GetCurrent())
         .position(turning_position)
         .velocity(turning_velocity);
+#endif
 }
 
 
@@ -786,9 +799,11 @@ void SwerveModule::TestPeriodic() noexcept
 void SwerveModule::TurningPositionPID(double P, double I, double IZ, double IM, double D, double DF, double F, double V, double A) noexcept
 {
     m_rioPIDController->SetPID(P, I, D);
+#if 0
     m_rioPIDController->SetConstraints(frc::TrapezoidProfile<units::angle::degrees>::Constraints{
         units::angular_velocity::degrees_per_second_t{V},
         units::angular_acceleration::degrees_per_second_squared_t{A}});
+#endif
     m_rioPID_F = F;
 
     m_turningPosition_P = P;

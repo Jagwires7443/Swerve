@@ -98,14 +98,15 @@ namespace pidf
 //    constexpr double kTurningPositionP = 0.005;
 //    constexpr double kTurningPositionF = 0.003;
 
-    constexpr units::degrees_per_second_t kTurningPositionMaxVelocity = 1250.0_deg_per_s * 10000.0;
-    constexpr units::degrees_per_second_squared_t kTurningPositionMaxAcceleration = 12500.0_deg_per_s_sq * 10000.0;
-    constexpr double kTurningPositionP = 0.004 / 10.0;
-    constexpr double kTurningPositionF = 0.000 / 10.0;
+    constexpr units::degrees_per_second_t kTurningPositionMaxVelocity = 1250.0_deg_per_s / 500.0;
+    constexpr units::degrees_per_second_squared_t kTurningPositionMaxAcceleration = 12500.0_deg_per_s_sq / 500.0;
+
+    constexpr double kTurningPositionP = 0.00080;  // <== 1
+    constexpr double kTurningPositionF = 0.00000;
     constexpr double kTurningPositionI = 0.0;
     constexpr double kTurningPositionIZ = 0.0;
     constexpr double kTurningPositionIM = 0.0;
-    constexpr double kTurningPositionD = 0.0;
+    constexpr double kTurningPositionD = 0.00015;  // <== 2
     constexpr double kTurningPositionDF = 0.0;
 
     constexpr double kDrivePositionMaxVelocity = 5700.0;     // Rotations per minute.

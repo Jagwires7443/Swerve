@@ -60,7 +60,7 @@ void FlipperSubsystem::Reset() noexcept
 
 void FlipperSubsystem::SetFlipperAngle(units::angle::degree_t angle) noexcept
 {
-    units::angle::degree_t rotatedAngle = angle;
+//    units::angle::degree_t rotatedAngle = angle;
     commandedFlipperAngle_ = angle;
 }
 

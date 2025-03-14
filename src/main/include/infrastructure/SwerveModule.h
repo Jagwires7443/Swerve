@@ -283,7 +283,8 @@ private:
   const bool m_rio{true};
   bool m_brakeApplied{true};
   double m_rioPID_F{pidf::kTurningPositionF};
-  std::unique_ptr<frc::ProfiledPIDController<units::angle::degrees>> m_rioPIDController;
+  // std::unique_ptr<frc::ProfiledPIDController<units::angle::degrees>> m_rioPIDController;
+  std::unique_ptr<frc::PIDController> m_rioPIDController;
 
   // Turning position PID
   double m_turningPosition_P{pidf::kTurningPositionP};

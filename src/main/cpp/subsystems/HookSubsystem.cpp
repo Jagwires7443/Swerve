@@ -62,7 +62,7 @@ void HookSubsystem::Reset() noexcept
 
 void HookSubsystem::SetHookAngle(units::angle::degree_t angle) noexcept
 {
-    units::angle::degree_t rotatedAngle = angle;
+//    units::angle::degree_t rotatedAngle = angle;
     CommandedHookAngle_ = angle;
 }
 
